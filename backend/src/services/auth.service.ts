@@ -6,7 +6,7 @@ import { prisma } from '../config/database';
 import { config } from '../config';
 import { JwtPayload } from '../interfaces';
 import { AuthenticationError, ConflictError, NotFoundError } from '../utils/errors';
-import { logger } from '../utils/logger';
+import { sendPasswordResetEmail } from '../utils/mailer';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_DURATION_MINUTES = 15;
@@ -183,7 +183,7 @@ export class AuthService {
         resetTokenExpires: resetExpires,
       },
     });
-    logger.info(`Password reset token for ${email}: ${resetToken} (expires: ${resetExpires})`);
+    await sendPasswordResetEmail(email, resetToken);
   }
 
   async resetPassword(token: string, password: string) {
