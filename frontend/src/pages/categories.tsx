@@ -1,0 +1,200 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { categoryApi } from '@/api/endpoints';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useForm } from 'react-hook-form';
+import { Plus, Trash2, Pencil, Circle } from 'lucide-react';
+
+const presetColors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#eab308'];
+
+export default function CategoriesPage() {
+  const queryClient = useQueryClient();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<any>(null);
+
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await categoryApi.getAll();
+      return res.data.data!;
+    },
+  });
+
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+    defaultValues: { name: '', color: '#6366f1', type: 'EXPENSE' },
+  });
+  const [typeText, setTypeText] = useState('EXPENSE');
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => categoryApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setFormOpen(false);
+      reset();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => categoryApi.update(editingCat!.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      setFormOpen(false);
+      reset();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => categoryApi.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+
+  const openCreate = () => {
+    setEditingCat(null);
+    reset({ name: '', color: '#6366f1', type: 'EXPENSE' });
+    setTypeText('EXPENSE');
+    setFormOpen(true);
+  };
+
+  const openEdit = (cat: any) => {
+    setEditingCat(cat);
+    setValue('name', cat.name);
+    setValue('color', cat.color);
+    setTypeText(cat.type);
+    setFormOpen(true);
+  };
+
+  const onSubmit = (data: any) => {
+    const payload = { ...data, type: typeText.toUpperCase().trim() === 'INCOME' ? 'INCOME' : 'EXPENSE' };
+    if (editingCat) {
+      updateMutation.mutate(payload);
+    } else {
+      createMutation.mutate(payload);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Categories</h1>
+        <div className="grid gap-4 md:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+        </div>
+      </div>
+    );
+  }
+
+  const incomeCats = categories?.filter((c) => c.type === 'INCOME') || [];
+  const expenseCats = categories?.filter((c) => c.type === 'EXPENSE') || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Categories</h1>
+        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Add Category</Button>
+      </div>
+
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>{editingCat ? 'Edit Category' : 'Add Category'}</DialogTitle>
+            <DialogDescription>Customize your transaction categories.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" placeholder="Category name" {...register('name', { required: true })} />
+              {errors.name && <p className="text-xs text-destructive">Name is required</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <textarea
+                rows={2}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
+                placeholder="INCOME or EXPENSE"
+                value={typeText}
+                onChange={(e) => setTypeText(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Color</Label>
+              <div className="flex gap-2 flex-wrap">
+                {presetColors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className="w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform"
+                    style={{ backgroundColor: color, borderColor: color }}
+                    onClick={() => setValue('color', color)}
+                  />
+                ))}
+              </div>
+              <input type="hidden" {...register('color')} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                {editingCat ? 'Update' : 'Create'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-3 text-green-600">Income</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            {incomeCats.map((cat) => (
+              <Card key={cat.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Circle className="h-5 w-5" style={{ fill: cat.color, color: cat.color }} />
+                    <span className="font-medium">{cat.name}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(cat)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3 text-red-600">Expenses</h2>
+          <div className="grid gap-3 md:grid-cols-3">
+            {expenseCats.map((cat) => (
+              <Card key={cat.id}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Circle className="h-5 w-5" style={{ fill: cat.color, color: cat.color }} />
+                    <span className="font-medium">{cat.name}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(cat)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

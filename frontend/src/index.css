@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 270 50% 98%;
+    --foreground: 270 60% 10%;
+    --card: 270 50% 98%;
+    --card-foreground: 270 60% 10%;
+    --popover: 270 50% 98%;
+    --popover-foreground: 270 60% 10%;
+    --primary: 285 60% 50%;
+    --primary-foreground: 285 20% 95%;
+    --secondary: 280 30% 92%;
+    --secondary-foreground: 270 60% 15%;
+    --muted: 280 20% 92%;
+    --muted-foreground: 280 20% 50%;
+    --accent: 300 40% 90%;
+    --accent-foreground: 270 60% 15%;
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 280 30% 85%;
+    --input: 280 30% 85%;
+    --ring: 285 60% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 270 50% 5%;
+    --foreground: 270 30% 90%;
+    --card: 270 50% 8%;
+    --card-foreground: 270 30% 90%;
+    --popover: 270 50% 8%;
+    --popover-foreground: 270 30% 90%;
+    --primary: 285 60% 55%;
+    --primary-foreground: 285 20% 95%;
+    --secondary: 280 30% 15%;
+    --secondary-foreground: 270 30% 90%;
+    --muted: 280 20% 15%;
+    --muted-foreground: 280 20% 60%;
+    --accent: 300 40% 15%;
+    --accent-foreground: 270 30% 90%;
+    --destructive: 0 70% 40%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 280 30% 20%;
+    --input: 280 30% 20%;
+    --ring: 285 60% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out forwards;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
+  }
+
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin 2s linear infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

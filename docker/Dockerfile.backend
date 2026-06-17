@@ -1,0 +1,27 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY backend/package.json backend/tsconfig.json ./
+RUN npm ci
+
+COPY backend/prisma ./prisma
+COPY backend/src ./src
+
+RUN npx prisma generate
+RUN npm run build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY backend/prisma ./prisma
+
+RUN npx prisma generate
+
+EXPOSE 5000
+
+CMD ["node", "dist/server.js"]

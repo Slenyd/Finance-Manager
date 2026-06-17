@@ -1,0 +1,141 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { budgetApi, categoryApi } from '@/api/endpoints';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
+import { Plus, Trash2, Pencil } from 'lucide-react';
+import { BudgetFormDialog } from '@/components/forms/budget-form';
+import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
+
+export default function BudgetsPage() {
+  const queryClient = useQueryClient();
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<any>(null);
+
+  const { data: budgets, isLoading } = useQuery({
+    queryKey: ['budgets'],
+    queryFn: async () => {
+      const res = await budgetApi.getAll();
+      return res.data.data!;
+    },
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await categoryApi.getAll();
+      return res.data.data!;
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => budgetApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  const openCreate = () => {
+    setEditingBudget(null);
+    setFormOpen(true);
+  };
+
+  const openEdit = (budget: any) => {
+    setEditingBudget(budget);
+    setFormOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <PageTransition>
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold">Budgets</h1>
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}><CardContent className="p-6"><Skeleton className="h-32 animate-pulse-soft" /></CardContent></Card>
+            ))}
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
+  const getProgressVariant = (percentage: number) => {
+    if (percentage >= 100) return 'destructive' as const;
+    if (percentage >= 90) return 'warning' as const;
+    return 'default' as const;
+  };
+
+  return (
+    <PageTransition>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Budgets</h1>
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-2" /> Add Budget
+          </Button>
+        </div>
+
+        <BudgetFormDialog
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          budget={editingBudget}
+          categories={categories || []}
+        />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {budgets?.map((budget, i) => (
+            <StaggerItem key={budget.id} index={i}>
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: budget.category.color }} />
+                      <CardTitle className="text-lg">{budget.category.name}</CardTitle>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={getProgressVariant(budget.percentage)}>
+                        {Math.round(budget.percentage)}%
+                      </Badge>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(budget)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(budget.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground capitalize">{budget.period.toLowerCase()} budget</p>
+                </CardHeader>
+                <CardContent>
+                  <Progress value={Math.min(budget.percentage, 100)} className="mb-2" />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{formatCurrency(budget.spent)} spent</span>
+                    <span className="font-medium">{formatCurrency(budget.limit)} limit</span>
+                  </div>
+                  {budget.percentage >= 90 && (
+                    <p className="text-sm text-destructive mt-2 font-medium">
+                      {budget.percentage >= 100 ? 'Budget exceeded!' : 'Almost at your limit!'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </StaggerItem>
+          ))}
+          {(!budgets || budgets.length === 0) && (
+            <Card className="col-span-full">
+              <CardContent className="p-12 text-center text-muted-foreground">
+                No budgets yet. Click "Add Budget" to start tracking your spending.
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </PageTransition>
+  );
+}

@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum RecurringInterval {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  passwordHash    String   @map("password_hash")
+  role            UserRole @default(USER)
+  isVerified      Boolean  @default(false) @map("is_verified")
+  isLocked        Boolean  @default(false) @map("is_locked")
+  failedLoginAttempts Int  @default(0) @map("failed_login_attempts")
+  lockUntil       DateTime?
+  resetToken      String?  @map("reset_token")
+  resetTokenExpires DateTime?
+  refreshTokens   RefreshToken[]
+  sessions        Session[]
+  categories      Category[]
+  transactions    Transaction[]
+  budgets         Budget[]
+  savingsGoals    SavingsGoal[]
+  recurringTransactions RecurringTransaction[]
+  notifications   Notification[]
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  userId        String          @map("user_id")
+  categoryId    String          @map("category_id")
+  amount        Decimal         @db.Decimal(12, 2)
+  description   String
+  type          TransactionType
+  date          DateTime
+  paymentMethod String?         @map("payment_method")
+  notes         String?
+  receiptUrl    String?         @map("receipt_url")
+  isRecurring   Boolean         @default(false) @map("is_recurring")
+  tags          String[]
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category        @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([type])
+  @@map("transactions")
+}
+
+model Category {
+  id            String        @id @default(uuid())
+  userId        String?       @map("user_id")
+  name          String
+  icon          String        @default("circle")
+  color         String        @default("#6366f1")
+  type          TransactionType
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+  budgets       Budget[]
+  recurringTransactions RecurringTransaction[]
+
+  @@index([userId])
+  @@map("categories")
+}
+
+model Budget {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  categoryId String       @map("category_id")
+  limit      Decimal      @db.Decimal(12, 2)
+  spent      Decimal      @default(0) @db.Decimal(12, 2)
+  period     BudgetPeriod
+  startDate  DateTime     @map("start_date")
+  endDate    DateTime     @map("end_date")
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category     @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([categoryId])
+  @@map("budgets")
+}
+
+model SavingsGoal {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  name           String
+  targetAmount   Decimal  @map("target_amount") @db.Decimal(12, 2)
+  currentAmount  Decimal  @default(0) @map("current_amount") @db.Decimal(12, 2)
+  deadline       DateTime?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("savings_goals")
+}
+
+model RecurringTransaction {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  categoryId  String            @map("category_id")
+  amount      Decimal           @db.Decimal(12, 2)
+  description String
+  type        TransactionType
+  interval    RecurringInterval
+  dayOfMonth  Int?
+  dayOfWeek   Int?
+  startDate   DateTime          @map("start_date")
+  endDate     DateTime?
+  nextDate    DateTime          @map("next_date")
+  isActive    Boolean           @default(true) @map("is_active")
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category          @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([nextDate])
+  @@map("recurring_transactions")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  type      String   @default("info")
+  isRead    Boolean  @default(false) @map("is_read")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  family    String
+  expiresAt DateTime @map("expires_at")
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  device     String?
+  ip         String?
+  lastActive DateTime @default(now()) @map("last_active")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
