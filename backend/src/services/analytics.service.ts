@@ -5,17 +5,12 @@ export class AnalyticsService {
   async getDashboard(userId: string) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    const [allTransactions, monthTransactions, yearTransactions, budgets, goals, recentTransactions] = await Promise.all([
+    const [allTransactions, monthTransactions, budgets, goals, recentTransactions] = await Promise.all([
       prisma.transaction.findMany({ where: { userId }, select: { amount: true, type: true } }),
       prisma.transaction.findMany({
         where: { userId, date: { gte: startOfMonth } },
         select: { amount: true, type: true },
-      }),
-      prisma.transaction.findMany({
-        where: { userId, date: { gte: startOfYear } },
-        select: { amount: true, type: true, date: true, categoryId: true },
       }),
       prisma.budget.findMany({ where: { userId } }),
       prisma.savingsGoal.findMany({ where: { userId } }),

@@ -8,7 +8,6 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { Spinner } from '@/components/ui/spinner';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];

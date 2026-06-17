@@ -34,7 +34,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
   const [categoryName, setCategoryName] = useState('');
   const [typeText, setTypeText] = useState('');
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<TransactionFormType>({
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<TransactionFormType>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       amount: 0,
@@ -67,7 +67,16 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
   }, [transaction, setValue, reset, categories]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => transactionApi.create(data),
+    mutationFn: (data: {
+      amount: number;
+      description: string;
+      type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+      categoryId: string;
+      date: string;
+      paymentMethod?: string;
+      notes?: string;
+      tags: string[];
+    }) => transactionApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -77,7 +86,16 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => transactionApi.update(transaction!.id, data),
+    mutationFn: (data: {
+      amount: number;
+      description: string;
+      type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+      categoryId: string;
+      date: string;
+      paymentMethod?: string;
+      notes?: string;
+      tags: string[];
+    }) => transactionApi.update(transaction!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -93,7 +111,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
     );
     const payload = {
       ...data,
-      type: ['INCOME', 'EXPENSE', 'TRANSFER'].includes(resolvedType) ? resolvedType : 'EXPENSE',
+      type: (['INCOME', 'EXPENSE', 'TRANSFER'].includes(resolvedType) ? resolvedType : 'EXPENSE') as 'INCOME' | 'EXPENSE' | 'TRANSFER',
       categoryId: matchedCategory?.id || '',
       tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
     };

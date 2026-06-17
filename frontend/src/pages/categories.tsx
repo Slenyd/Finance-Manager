@@ -2,21 +2,21 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { categoryApi } from '@/api/endpoints';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { Plus, Trash2, Pencil, Circle } from 'lucide-react';
+import { Category } from '@/types';
 
 const presetColors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#eab308'];
 
 export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
-  const [editingCat, setEditingCat] = useState<any>(null);
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
@@ -32,7 +32,7 @@ export default function CategoriesPage() {
   const [typeText, setTypeText] = useState('EXPENSE');
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => categoryApi.create(data),
+    mutationFn: (data: Record<string, unknown>) => categoryApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setFormOpen(false);
@@ -41,7 +41,7 @@ export default function CategoriesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => categoryApi.update(editingCat!.id, data),
+    mutationFn: (data: Record<string, unknown>) => categoryApi.update(editingCat!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setFormOpen(false);
@@ -61,7 +61,7 @@ export default function CategoriesPage() {
     setFormOpen(true);
   };
 
-  const openEdit = (cat: any) => {
+  const openEdit = (cat: Category) => {
     setEditingCat(cat);
     setValue('name', cat.name);
     setValue('color', cat.color);
@@ -69,7 +69,7 @@ export default function CategoriesPage() {
     setFormOpen(true);
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: Record<string, unknown>) => {
     const payload = { ...data, type: typeText.toUpperCase().trim() === 'INCOME' ? 'INCOME' : 'EXPENSE' };
     if (editingCat) {
       updateMutation.mutate(payload);

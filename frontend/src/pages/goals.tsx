@@ -14,7 +14,13 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 export default function GoalsPage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<any>(null);
+  const [editingGoal, setEditingGoal] = useState<{
+    id: string;
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    deadline: string | null;
+  } | undefined>(undefined);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [contributeGoal, setContributeGoal] = useState<{ id: string; name: string } | null>(null);
 
@@ -35,16 +41,25 @@ export default function GoalsPage() {
   });
 
   const openCreate = () => {
-    setEditingGoal(null);
+    setEditingGoal(undefined);
     setFormOpen(true);
   };
 
-  const openEdit = (goal: any) => {
+  const openEdit = (goal: {
+    id: string;
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    deadline: string | null;
+  }) => {
     setEditingGoal(goal);
     setFormOpen(true);
   };
 
-  const openContribute = (goal: any) => {
+  const openContribute = (goal: {
+    id: string;
+    name: string;
+  }) => {
     setContributeGoal({ id: goal.id, name: goal.name });
     setContributeOpen(true);
   };

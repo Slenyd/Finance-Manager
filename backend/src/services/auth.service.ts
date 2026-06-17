@@ -6,7 +6,6 @@ import { prisma } from '../config/database';
 import { config } from '../config';
 import { JwtPayload } from '../interfaces';
 import { AuthenticationError, ConflictError, NotFoundError } from '../utils/errors';
-import { generateToken } from '../utils/helpers';
 import { logger } from '../utils/logger';
 
 const MAX_FAILED_ATTEMPTS = 5;
@@ -217,20 +216,20 @@ export class AuthService {
       updateData.lockUntil = new Date(Date.now() + LOCK_DURATION_MINUTES * 60 * 1000);
     }
 
-    await prisma.user.update({ where: { id: userId }, data: updateData as any });
+    await prisma.user.update({ where: { id: userId }, data: updateData });
   }
 
   private generateAccessToken(userId: string, role: string): string {
     const payload: JwtPayload = { userId, role, type: 'access' };
     return jwt.sign(payload, config.jwt.accessSecret, {
-      expiresIn: config.jwt.accessExpiresIn as any,
+      expiresIn: config.jwt.accessExpiresIn as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`,
     });
   }
 
   private generateRefreshToken(userId: string, role: string, family: string): string {
     const payload: JwtPayload = { userId, role, type: 'refresh', tokenFamily: family };
     return jwt.sign(payload, config.jwt.refreshSecret, {
-      expiresIn: config.jwt.refreshExpiresIn as any,
+      expiresIn: config.jwt.refreshExpiresIn as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`,
     });
   }
 

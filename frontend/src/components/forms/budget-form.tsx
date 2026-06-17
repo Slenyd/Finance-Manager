@@ -55,7 +55,7 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
   }, [budget, setValue, reset, categories]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => budgetApi.create(data),
+    mutationFn: (data: BudgetFormType & { categoryId: string }) => budgetApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -65,7 +65,7 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => budgetApi.update(budget!.id, data),
+    mutationFn: (data: BudgetFormType & { categoryId: string }) => budgetApi.update(budget!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });

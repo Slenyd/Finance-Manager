@@ -9,7 +9,7 @@ export class TransactionService {
     const { page, limit, skip } = parsePagination(query);
     const where: Prisma.TransactionWhereInput = { userId };
 
-    if (query.type) where.type = query.type as any;
+    if (query.type) where.type = query.type as 'INCOME' | 'EXPENSE' | 'TRANSFER';
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.search) where.description = { contains: query.search, mode: 'insensitive' };
     if (query.paymentMethod) where.paymentMethod = query.paymentMethod;
@@ -57,6 +57,7 @@ export class TransactionService {
     return transaction;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async create(userId: string, data: any) {
     return prisma.transaction.create({
       data: { ...data, userId, date: new Date(data.date) },
@@ -64,8 +65,8 @@ export class TransactionService {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async update(userId: string, id: string, data: any) {
-    const existing = await this.findById(userId, id);
     return prisma.transaction.update({
       where: { id },
       data: {

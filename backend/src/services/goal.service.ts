@@ -35,7 +35,12 @@ export class GoalService {
     });
   }
 
-  async update(userId: string, id: string, data: any) {
+  async update(userId: string, id: string, data: Partial<{
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    deadline: string | null;
+  }>) {
     await this.findById(userId, id);
     return prisma.savingsGoal.update({
       where: { id },

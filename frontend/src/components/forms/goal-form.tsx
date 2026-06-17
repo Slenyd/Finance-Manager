@@ -47,7 +47,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
   }, [goal, setValue, reset]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => goalApi.create(data),
+    mutationFn: (data: GoalFormType) => goalApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -57,7 +57,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => goalApi.update(goal!.id, data),
+    mutationFn: (data: GoalFormType) => goalApi.update(goal!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });

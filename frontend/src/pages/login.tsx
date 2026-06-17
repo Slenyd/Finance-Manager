@@ -66,7 +66,7 @@ export default function LoginPage() {
           </div>
           {login.error && (
             <p className="text-sm text-destructive">
-              {(login.error as any)?.response?.data?.message || 'Login failed'}
+              {(login.error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Login failed'}
             </p>
           )}
         </CardContent>

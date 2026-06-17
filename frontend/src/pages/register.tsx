@@ -49,7 +49,7 @@ export default function RegisterPage() {
           </div>
           {registerMutation.error && (
             <p className="text-sm text-destructive">
-              {(registerMutation.error as any)?.response?.data?.message || 'Registration failed'}
+              {(registerMutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Registration failed'}
             </p>
           )}
         </CardContent>

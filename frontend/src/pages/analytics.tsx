@@ -35,7 +35,7 @@ export default function AnalyticsPage() {
     },
   });
 
-  const { data: cashFlow, isLoading: loadingCashFlow } = useQuery({
+  const { data: cashFlow } = useQuery({
     queryKey: ['cashFlow'],
     queryFn: async () => {
       const res = await analyticsApi.getCashFlow(12);

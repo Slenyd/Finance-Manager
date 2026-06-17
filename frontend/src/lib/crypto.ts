@@ -1,15 +1,3 @@
-const PASSPHRASE_KEY = 'auth-passphrase';
-
-function getKey(direction: 'store' | 'retrieve'): string {
-  const storage = direction === 'store' ? localStorage : sessionStorage;
-  let key = storage.getItem(PASSPHRASE_KEY);
-  if (!key) {
-    key = generatePassphrase();
-    storage.setItem(PASSPHRASE_KEY, key);
-  }
-  return key;
-}
-
 function generatePassphrase(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);

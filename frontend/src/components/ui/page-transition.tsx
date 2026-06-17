@@ -17,11 +17,9 @@ export function PageTransition({ children, className, delay = 0 }: PageTransitio
   );
 }
 
-export function StaggerChildren({ children, className, baseDelay = 50, staggerBy = 80 }: {
+export function StaggerChildren({ children, className }: {
   children: React.ReactNode;
   className?: string;
-  baseDelay?: number;
-  staggerBy?: number;
 }) {
   return (
     <div className={className}>

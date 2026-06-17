@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionApi, categoryApi } from '@/api/endpoints';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -19,7 +19,17 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingTx, setEditingTx] = useState<any>(null);
+  const [editingTx, setEditingTx] = useState<{
+    id: string;
+    amount: number;
+    description: string;
+    type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+    categoryId: string;
+    date: string;
+    paymentMethod?: string | null;
+    notes?: string | null;
+    tags: string[];
+  } | undefined>(undefined);
 
   const { data, isLoading } = useQuery({
     queryKey: ['transactions', search, typeFilter, page],
@@ -49,11 +59,21 @@ export default function TransactionsPage() {
   });
 
   const openCreate = () => {
-    setEditingTx(null);
+    setEditingTx(undefined);
     setFormOpen(true);
   };
 
-  const openEdit = (tx: any) => {
+  const openEdit = (tx: {
+    id: string;
+    amount: number;
+    description: string;
+    type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+    categoryId: string;
+    date: string;
+    paymentMethod?: string | null;
+    notes?: string | null;
+    tags: string[];
+  }) => {
     setEditingTx(tx);
     setFormOpen(true);
   };

@@ -43,7 +43,13 @@ export class BudgetService {
     });
   }
 
-  async update(userId: string, id: string, data: any) {
+  async update(userId: string, id: string, data: Partial<{
+    limit: number;
+    period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    startDate: string;
+    endDate: string;
+    categoryId: string;
+  }>) {
     await this.findById(userId, id);
     return prisma.budget.update({
       where: { id },

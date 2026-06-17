@@ -20,7 +20,7 @@ export const sanitizeUser = (user: {
   isLocked?: boolean;
   lockUntil?: Date | null;
 }) => {
-  const { passwordHash: _, failedLoginAttempts: __, isLocked: ___, lockUntil: ____, ...sanitized } = user;
+  const { ...sanitized } = user;
   return sanitized;
 };
 

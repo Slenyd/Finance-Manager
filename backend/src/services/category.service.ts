@@ -22,7 +22,12 @@ export class CategoryService {
     return prisma.category.create({ data: { ...data, userId } });
   }
 
-  async update(userId: string, id: string, data: any) {
+  async update(userId: string, id: string, data: Partial<{
+    name: string;
+    icon: string;
+    color: string;
+    type: 'INCOME' | 'EXPENSE';
+  }>) {
     const existing = await this.findById(userId, id);
     if (existing.userId !== userId) {
       throw new NotFoundError('Category');

@@ -14,7 +14,14 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 export default function BudgetsPage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<any>(null);
+  const [editingBudget, setEditingBudget] = useState<{
+    id: string;
+    categoryId: string;
+    limit: number;
+    period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    startDate: string;
+    endDate: string;
+  } | undefined>(undefined);
 
   const { data: budgets, isLoading } = useQuery({
     queryKey: ['budgets'],
@@ -41,11 +48,18 @@ export default function BudgetsPage() {
   });
 
   const openCreate = () => {
-    setEditingBudget(null);
+    setEditingBudget(undefined);
     setFormOpen(true);
   };
 
-  const openEdit = (budget: any) => {
+  const openEdit = (budget: {
+    id: string;
+    categoryId: string;
+    limit: number;
+    period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+    startDate: string;
+    endDate: string;
+  }) => {
     setEditingBudget(budget);
     setFormOpen(true);
   };
