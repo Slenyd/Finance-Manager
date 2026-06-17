@@ -52,3 +52,18 @@ export type RegisterForm = z.infer<typeof registerSchema>;
 export type TransactionForm = z.infer<typeof transactionSchema>;
 export type BudgetForm = z.infer<typeof budgetSchema>;
 export type GoalForm = z.infer<typeof goalSchema>;
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain an uppercase letter')
+    .regex(/[a-z]/, 'Must contain a lowercase letter')
+    .regex(/[0-9]/, 'Must contain a number'),
+  passwordConfirmation: z.string(),
+}).refine((d) => d.password === d.passwordConfirmation, {
+  message: 'Passwords do not match',
+  path: ['passwordConfirmation'],
+});
+
+export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;

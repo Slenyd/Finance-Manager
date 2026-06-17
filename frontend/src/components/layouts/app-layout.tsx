@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, Target, BarChart3, Bell, Settings, LogOut, Moon, Sun,
 } from 'lucide-react';
@@ -29,6 +29,10 @@ export function AppLayout() {
       navigate('/login', { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
