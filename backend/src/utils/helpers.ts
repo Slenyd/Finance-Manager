@@ -1,29 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
-
-export const generateUUID = (): string => uuidv4();
-
-export const generateToken = (length = 32): string => {
-  return crypto.randomBytes(length).toString('hex');
-};
-
-export const sanitizeUser = (user: {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  passwordHash?: string;
-  failedLoginAttempts?: number;
-  isLocked?: boolean;
-  lockUntil?: Date | null;
-}) => {
-  const { ...sanitized } = user;
-  return sanitized;
-};
-
 export const parsePagination = (query: {
   page?: string;
   limit?: string;

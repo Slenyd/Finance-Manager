@@ -44,7 +44,6 @@ model User {
   resetToken      String?  @map("reset_token")
   resetTokenExpires DateTime?
   refreshTokens   RefreshToken[]
-  sessions        Session[]
   categories      Category[]
   transactions    Transaction[]
   budgets         Budget[]
@@ -186,15 +185,3 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-model Session {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  device     String?
-  ip         String?
-  lastActive DateTime @default(now()) @map("last_active")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@index([userId])
-  @@map("sessions")
-}

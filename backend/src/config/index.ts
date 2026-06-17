@@ -31,8 +31,4 @@ export const config = {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
   },
-  upload: {
-    dir: process.env.UPLOAD_DIR || 'uploads',
-    maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880', 10),
-  },
 } as const;
