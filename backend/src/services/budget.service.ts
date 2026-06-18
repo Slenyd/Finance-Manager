@@ -28,12 +28,19 @@ export class BudgetService {
   }
 
   async create(userId: string, data: {
-    categoryId: string; limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string;
+    categoryId?: string; limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string;
   }) {
+    let categoryId = data.categoryId;
+    if (!categoryId) {
+      const fallback = await prisma.category.findFirst({
+        where: { userId, type: 'EXPENSE' },
+      });
+      categoryId = fallback?.id || '';
+    }
     return prisma.budget.create({
       data: {
         userId,
-        categoryId: data.categoryId,
+        categoryId,
         limit: data.limit,
         period: data.period,
         startDate: new Date(data.startDate),
@@ -67,7 +74,8 @@ export class BudgetService {
     await prisma.budget.delete({ where: { id } });
   }
 
-  private async calculateSpent(userId: string, categoryId: string, startDate: Date, endDate: Date): Promise<number> {
+  private async calculateSpent(userId: string, categoryId: string | null, startDate: Date, endDate: Date): Promise<number> {
+    if (!categoryId) return 0;
     const result = await prisma.transaction.aggregate({
       where: {
         userId,

@@ -47,7 +47,7 @@ export default function AnalyticsPage() {
     return (
       <PageTransition>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Analytics</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Analytics</h1>
           <div className="grid gap-4 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Card key={i}><CardContent className="p-6"><Skeleton className="h-64 animate-pulse-soft" /></CardContent></Card>
@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
   return (
     <PageTransition>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Analytics</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Analytics</h1>
 
         {dashboard && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -109,11 +109,11 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader><CardTitle>Monthly Spending Trend</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <AreaChart data={monthlySpending || []}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <defs>
                       <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
@@ -133,14 +133,14 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader><CardTitle>Category Breakdown</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
                       data={categoryBreakdown || []}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
+                      innerRadius={55}
+                      outerRadius={90}
                       dataKey="total"
                       nameKey="categoryName"
                       label={({ categoryName }) => categoryName}
@@ -160,11 +160,11 @@ export default function AnalyticsPage() {
             <Card className="md:col-span-2">
               <CardHeader><CardTitle>Cash Flow (12 months)</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={cashFlow || []}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <Bar dataKey="income" fill="#22c55e" name="Income" />
                     <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />

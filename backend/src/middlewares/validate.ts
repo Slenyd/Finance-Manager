@@ -5,11 +5,12 @@ import { ValidationError } from '../utils/errors';
 export const validate = (schema: ZodSchema) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      schema.parse({
+      const parsed = schema.parse({
         body: req.body,
         query: req.query,
         params: req.params,
       });
+      req.body = parsed.body;
       next();
     } catch (error) {
       if (error instanceof ZodError) {

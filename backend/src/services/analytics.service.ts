@@ -96,12 +96,13 @@ export class AnalyticsService {
       _count: true,
     });
 
+    const categoryIds = expenses.map((e) => e.categoryId).filter(Boolean) as string[];
     const categories = await prisma.category.findMany({
-      where: { id: { in: expenses.map((e) => e.categoryId) } },
+      where: { id: { in: categoryIds } },
     });
 
     return expenses.map((e) => {
-      const cat = categories.find((c) => c.id === e.categoryId);
+      const cat = e.categoryId ? categories.find((c) => c.id === e.categoryId) : undefined;
       return {
         categoryId: e.categoryId,
         categoryName: cat?.name || 'Unknown',

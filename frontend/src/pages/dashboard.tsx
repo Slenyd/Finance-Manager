@@ -25,7 +25,7 @@ export default function DashboardPage() {
     return (
       <PageTransition>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 animate-pulse-soft" /></CardContent></Card>
@@ -54,7 +54,7 @@ export default function DashboardPage() {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           {dashboard.healthScore.score !== null ? (
             <Badge variant={dashboard.healthScore.score >= 60 ? 'success' : 'warning'}>
               Health: {dashboard.healthScore.label} ({dashboard.healthScore.score})
@@ -82,11 +82,11 @@ export default function DashboardPage() {
             <Card>
               <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={[{ name: 'This Month', income: dashboard.monthIncome, expenses: dashboard.monthExpenses }]}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <Bar dataKey="income" fill="#22c55e" name="Income" />
                     <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
@@ -100,9 +100,9 @@ export default function DashboardPage() {
             <Card>
               <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} dataKey="value" label>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value" label>
                       {pieData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
@@ -142,10 +142,14 @@ export default function DashboardPage() {
                     style={{ animationDelay: `${100 + i * 80}ms`, animationFillMode: 'both' }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.category.color }} />
+                      {tx.category ? (
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.category.color }} />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-muted" />
+                      )}
                       <div>
                         <p className="font-medium">{tx.description}</p>
-                        <p className="text-xs text-muted-foreground">{tx.category.name} · {formatDate(tx.date)}</p>
+                        <p className="text-xs text-muted-foreground">{tx.category ? `${tx.category.name} · ` : ''}{formatDate(tx.date)}</p>
                       </div>
                     </div>
                     <span className={tx.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>

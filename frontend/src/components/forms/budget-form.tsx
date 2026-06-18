@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AxiosError } from 'axios';
 import { Category } from '@/types';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   budget?: {
     id: string;
-    categoryId: string;
+    categoryId: string | null;
     limit: number;
     period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
     startDate: string;
@@ -32,11 +33,8 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<BudgetFormType>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
-      categoryId: '',
       limit: 0,
       period: 'MONTHLY',
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
     },
   });
 
@@ -55,7 +53,7 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
   }, [budget, setValue, reset, categories]);
 
   const createMutation = useMutation({
-    mutationFn: (data: BudgetFormType & { categoryId: string }) => budgetApi.create(data),
+    mutationFn: (data: { limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string; categoryId?: string }) => budgetApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -65,7 +63,7 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: BudgetFormType & { categoryId: string }) => budgetApi.update(budget!.id, data),
+    mutationFn: (data: { limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string; categoryId?: string }) => budgetApi.update(budget!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -78,7 +76,19 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
     const matchedCategory = categories.find(
       (c) => c.name.toLowerCase() === categoryName.trim().toLowerCase(),
     );
-    const payload = { ...data, categoryId: matchedCategory?.id || '' };
+    const payload: {
+      limit: number;
+      period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+      startDate: string;
+      endDate: string;
+      categoryId?: string;
+    } = {
+      limit: data.limit,
+      period: data.period || 'MONTHLY',
+      startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
+      endDate: data.endDate ? new Date(data.endDate).toISOString() : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
+    };
+    if (matchedCategory) payload.categoryId = matchedCategory.id;
     if (isEditing) {
       updateMutation.mutate(payload);
     } else {
@@ -99,7 +109,7 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
             <textarea
               rows={2}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-              placeholder="Type category name"
+              placeholder="Optional - type a category name"
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
             />
@@ -126,15 +136,16 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
               <Input id="startDate" type="date" {...register('startDate')} />
-              {errors.startDate && <p className="text-xs text-destructive">{errors.startDate.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="endDate">End Date</Label>
               <Input id="endDate" type="date" {...register('endDate')} />
-              {errors.endDate && <p className="text-xs text-destructive">{errors.endDate.message}</p>}
             </div>
           </div>
           <DialogFooter>
+            {(createMutation.error || updateMutation.error) && (
+              <p className="text-sm text-destructive mr-auto">{((createMutation.error || updateMutation.error) as AxiosError<{message?: string}>).response?.data?.message || (createMutation.error || updateMutation.error)?.message || 'Failed to save budget'}</p>
+            )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
               {isEditing ? 'Update' : 'Create'}

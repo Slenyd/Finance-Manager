@@ -24,7 +24,7 @@ export default function TransactionsPage() {
     amount: number;
     description: string;
     type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-    categoryId: string;
+    categoryId: string | null;
     date: string;
     paymentMethod?: string | null;
     notes?: string | null;
@@ -42,7 +42,7 @@ export default function TransactionsPage() {
     },
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const res = await categoryApi.getAll();
@@ -68,7 +68,7 @@ export default function TransactionsPage() {
     amount: number;
     description: string;
     type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-    categoryId: string;
+    categoryId: string | null;
     date: string;
     paymentMethod?: string | null;
     notes?: string | null;
@@ -82,8 +82,8 @@ export default function TransactionsPage() {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <Button onClick={openCreate}>
+          <h1 className="text-2xl sm:text-3xl font-bold">Transactions</h1>
+          <Button onClick={openCreate} disabled={categoriesLoading}>
             <Plus className="h-4 w-4 mr-2" /> Add Transaction
           </Button>
         </div>
@@ -104,7 +104,7 @@ export default function TransactionsPage() {
                   <Input placeholder="Search transactions..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
                 </div>
                 <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
@@ -123,61 +123,110 @@ export default function TransactionsPage() {
                 </div>
               ) : (
                 <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="w-[120px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data?.data.map((tx, i) => (
-                        <TableRow
-                          key={tx.id}
-                          className="animate-fade-in"
-                          style={{ animationDelay: `${50 + i * 40}ms`, animationFillMode: 'both' }}
-                        >
-                          <TableCell className="font-medium">{tx.description}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.category.color }} />
-                              {tx.category.name}
-                            </div>
-                          </TableCell>
-                          <TableCell>{formatDate(tx.date)}</TableCell>
-                          <TableCell>
-                            <Badge variant={tx.type === 'INCOME' ? 'success' : tx.type === 'EXPENSE' ? 'destructive' : 'secondary'}>
-                              {tx.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className={`text-right font-medium ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                            {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => openEdit(tx)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(tx.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {(!data?.data || data.data.length === 0) && (
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                            No transactions found. Create one to get started.
-                          </TableCell>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="hidden lg:table-cell">Category</TableHead>
+                          <TableHead className="hidden lg:table-cell">Date</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="w-[120px]">Actions</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {data?.data.map((tx, i) => (
+                          <TableRow
+                            key={tx.id}
+                            className="animate-fade-in"
+                            style={{ animationDelay: `${50 + i * 40}ms`, animationFillMode: 'both' }}
+                          >
+                            <TableCell className="font-medium">{tx.description}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {tx.category ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.category.color }} />
+                                  {tx.category.name}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">Uncategorized</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">{formatDate(tx.date)}</TableCell>
+                            <TableCell>
+                              <Badge variant={tx.type === 'INCOME' ? 'success' : tx.type === 'EXPENSE' ? 'destructive' : 'secondary'}>
+                                {tx.type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className={`text-right font-medium ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                              {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => openEdit(tx)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(tx.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(!data?.data || data.data.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                              No transactions found. Create one to get started.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="md:hidden space-y-2">
+                    {data?.data.map((tx, i) => (
+                      <div
+                        key={tx.id}
+                        className="mobile-table-row animate-fade-in"
+                        style={{ animationDelay: `${50 + i * 40}ms`, animationFillMode: 'both' }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="mobile-table-value">{tx.description}</span>
+                          <div className="flex gap-1 shrink-0">
+                            <Button variant="ghost" size="icon" onClick={() => openEdit(tx)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(tx.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {tx.category ? (
+                            <>
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tx.category.color }} />
+                              <span className="text-sm text-muted-foreground">{tx.category.name}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Uncategorized</span>
+                          )}
+                          <span className="text-xs text-muted-foreground ml-auto">{formatDate(tx.date)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Badge variant={tx.type === 'INCOME' ? 'success' : tx.type === 'EXPENSE' ? 'destructive' : 'secondary'}>
+                            {tx.type}
+                          </Badge>
+                          <span className={`font-medium ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                            {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {(!data?.data || data.data.length === 0) && (
+                      <p className="text-center text-muted-foreground py-8">No transactions found. Create one to get started.</p>
+                    )}
+                  </div>
                   {data?.meta && data.meta.totalPages > 1 && (
                     <div className="flex items-center justify-between mt-4">
                       <p className="text-sm text-muted-foreground">

@@ -59,8 +59,15 @@ export class TransactionService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async create(userId: string, data: any) {
+    let categoryId = data.categoryId;
+    if (!categoryId) {
+      const fallback = await prisma.category.findFirst({
+        where: { userId, type: data.type || 'EXPENSE' },
+      });
+      categoryId = fallback?.id || '';
+    }
     return prisma.transaction.create({
-      data: { ...data, userId, date: new Date(data.date) },
+      data: { ...data, userId, categoryId, date: new Date(data.date) },
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
     });
   }

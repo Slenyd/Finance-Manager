@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@/types';
-import { encryptData, decryptData, generatePassphrase } from '@/lib/crypto';
+import { encryptData, decryptData } from '@/lib/crypto';
 
 interface AuthState {
   user: User | null;
@@ -15,17 +15,14 @@ interface AuthState {
 }
 
 const STORAGE_KEY = 'auth-storage';
-const PASSPHRASE_KEY = 'auth-passphrase';
 
 function getStorage(rememberMe: boolean): Storage {
   return rememberMe ? localStorage : sessionStorage;
 }
 
 function clearStorage() {
-  for (const key of [STORAGE_KEY, PASSPHRASE_KEY]) {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
-  }
+  localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
 }
 
 function saveToStorage(state: {
@@ -36,16 +33,9 @@ function saveToStorage(state: {
   rememberMe: boolean;
 }) {
   const storage = getStorage(state.rememberMe);
-  let passphrase = storage.getItem(PASSPHRASE_KEY);
-  if (!passphrase) {
-    passphrase = generatePassphrase();
-    storage.setItem(PASSPHRASE_KEY, passphrase);
-  }
-  const serialized = JSON.stringify(state);
-  storage.setItem(STORAGE_KEY, JSON.stringify({ c: encryptData(serialized, passphrase) }));
+  storage.setItem(STORAGE_KEY, encryptData(JSON.stringify(state)));
   const other = state.rememberMe ? sessionStorage : localStorage;
   other.removeItem(STORAGE_KEY);
-  other.removeItem(PASSPHRASE_KEY);
 }
 
 function loadFromStorage(): {
@@ -68,14 +58,7 @@ function loadFromStorage(): {
       const raw = storage.getItem(STORAGE_KEY);
       if (!raw) continue;
 
-      const parsed = JSON.parse(raw);
-      const cipher = parsed.c;
-      if (!cipher) continue;
-
-      const passphrase = storage.getItem(PASSPHRASE_KEY);
-      if (!passphrase) continue;
-
-      const decrypted = decryptData(cipher, passphrase);
+      const decrypted = decryptData(raw);
       if (!decrypted) continue;
 
       const state = JSON.parse(decrypted);

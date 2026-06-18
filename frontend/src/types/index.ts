@@ -11,7 +11,7 @@ export interface User {
 export interface Transaction {
   id: string;
   userId: string;
-  categoryId: string;
+  categoryId: string | null;
   amount: number;
   description: string;
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
@@ -21,7 +21,7 @@ export interface Transaction {
   receiptUrl?: string | null;
   isRecurring: boolean;
   tags: string[];
-  category: { id: string; name: string; icon: string; color: string };
+  category: { id: string; name: string; icon: string; color: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,13 +38,13 @@ export interface Category {
 export interface Budget {
   id: string;
   userId: string;
-  categoryId: string;
+  categoryId: string | null;
   limit: number;
   spent: number;
   period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
   startDate: string;
   endDate: string;
-  category: { id: string; name: string; icon: string; color: string };
+  category: { id: string; name: string; icon: string; color: string } | null;
   percentage: number;
 }
 

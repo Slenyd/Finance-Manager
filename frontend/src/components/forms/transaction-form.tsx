@@ -7,6 +7,7 @@ import { transactionSchema, TransactionForm as TransactionFormType } from '@/sch
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AxiosError } from 'axios';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Category } from '@/types';
@@ -19,7 +20,7 @@ interface Props {
     amount: number;
     description: string;
     type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-    categoryId: string;
+    categoryId: string | null;
     date: string;
     paymentMethod?: string | null;
     notes?: string | null;
@@ -39,9 +40,6 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
     defaultValues: {
       amount: 0,
       description: '',
-      type: 'EXPENSE',
-      categoryId: '',
-      date: new Date().toISOString().split('T')[0],
       paymentMethod: '',
       notes: '',
       tags: '',
@@ -71,11 +69,11 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       amount: number;
       description: string;
       type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-      categoryId: string;
       date: string;
       paymentMethod?: string;
       notes?: string;
       tags: string[];
+      categoryId?: string;
     }) => transactionApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -90,11 +88,11 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       amount: number;
       description: string;
       type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-      categoryId: string;
       date: string;
       paymentMethod?: string;
       notes?: string;
       tags: string[];
+      categoryId?: string;
     }) => transactionApi.update(transaction!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -109,12 +107,25 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
     const matchedCategory = categories.find(
       (c) => c.name.toLowerCase() === categoryName.trim().toLowerCase(),
     );
-    const payload = {
-      ...data,
+    const payload: {
+      amount: number;
+      description: string;
+      type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+      date: string;
+      paymentMethod?: string;
+      notes?: string;
+      tags: string[];
+      categoryId?: string;
+    } = {
+      amount: data.amount,
+      description: data.description,
       type: (['INCOME', 'EXPENSE', 'TRANSFER'].includes(resolvedType) ? resolvedType : 'EXPENSE') as 'INCOME' | 'EXPENSE' | 'TRANSFER',
-      categoryId: matchedCategory?.id || '',
+      date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
+      paymentMethod: data.paymentMethod || '',
+      notes: data.notes || '',
       tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
     };
+    if (matchedCategory) payload.categoryId = matchedCategory.id;
     if (isEditing) {
       updateMutation.mutate(payload);
     } else {
@@ -161,7 +172,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
               <textarea
                 rows={2}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-                placeholder="Type category name"
+                placeholder="Optional - type or select a category"
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
               />
@@ -169,7 +180,6 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
               <Input id="date" type="date" {...register('date')} />
-              {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
             </div>
           </div>
           <div className="space-y-2">
@@ -185,7 +195,10 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
             <Input id="tags" placeholder="food, groceries" {...register('tags')} />
           </div>
           {createMutation.error && (
-            <p className="text-sm text-destructive">Failed to save transaction</p>
+            <p className="text-sm text-destructive">{(createMutation.error as AxiosError<{message?: string}>).response?.data?.message || createMutation.error.message || 'Failed to save transaction'}</p>
+          )}
+          {updateMutation.error && (
+            <p className="text-sm text-destructive">{(updateMutation.error as AxiosError<{message?: string}>).response?.data?.message || updateMutation.error.message || 'Failed to save transaction'}</p>
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

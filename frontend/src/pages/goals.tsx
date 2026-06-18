@@ -83,7 +83,7 @@ export default function GoalsPage() {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Savings Goals</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Savings Goals</h1>
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-2" /> Add Goal
           </Button>
@@ -115,11 +115,11 @@ export default function GoalsPage() {
                       <CardTitle className="text-lg">{goal.name}</CardTitle>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(goal)}>
-                        <Pencil className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(goal)}>
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(goal.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(goal.id)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

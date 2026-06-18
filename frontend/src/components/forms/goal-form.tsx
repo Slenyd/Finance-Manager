@@ -47,7 +47,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
   }, [goal, setValue, reset]);
 
   const createMutation = useMutation({
-    mutationFn: (data: GoalFormType) => goalApi.create(data),
+    mutationFn: (data: { name: string; targetAmount: number; currentAmount?: number; deadline?: string | null }) => goalApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -57,7 +57,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: GoalFormType) => goalApi.update(goal!.id, data),
+    mutationFn: (data: { name: string; targetAmount: number; currentAmount?: number; deadline?: string | null }) => goalApi.update(goal!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -67,10 +67,16 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
   });
 
   const onSubmit = (data: GoalFormType) => {
+    const payload = {
+      name: data.name,
+      targetAmount: data.targetAmount,
+      currentAmount: data.currentAmount,
+      deadline: data.deadline ? new Date(data.deadline).toISOString() : null,
+    };
     if (isEditing) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(payload);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(payload);
     }
   };
 
@@ -95,7 +101,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="currentAmount">Current Savings ($)</Label>
-              <Input id="currentAmount" type="number" step="0.01" placeholder="0.00" {...register('currentAmount', { valueAsNumber: true })} />
+              <Input id="currentAmount" type="number" step="0.01" placeholder="0.00" {...register('currentAmount', { setValueAs: (v) => (v === '' ? undefined : parseFloat(v)) })} />
             </div>
           </div>
           <div className="space-y-2">
@@ -103,6 +109,9 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
             <Input id="deadline" type="date" {...register('deadline')} />
           </div>
           <DialogFooter>
+            {(createMutation.error || updateMutation.error) && (
+              <p className="text-sm text-destructive mr-auto">{(createMutation.error || updateMutation.error)?.message || 'Failed to save goal'}</p>
+            )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
               {isEditing ? 'Update' : 'Create'}

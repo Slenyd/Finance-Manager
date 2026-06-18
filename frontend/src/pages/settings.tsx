@@ -54,7 +54,7 @@ export default function SettingsPage() {
   return (
     <PageTransition>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
         {settingCards.map((card, i) => (
           <StaggerItem key={card.title} index={i}>
             <Card>

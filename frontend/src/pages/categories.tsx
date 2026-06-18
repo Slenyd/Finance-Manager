@@ -95,7 +95,7 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Categories</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Categories</h1>
         <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Add Category</Button>
       </div>
 
@@ -128,7 +128,7 @@ export default function CategoriesPage() {
                   <button
                     key={color}
                     type="button"
-                    className="w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform"
+                    className="w-10 h-10 rounded-full border-2 border-transparent hover:scale-110 transition-transform"
                     style={{ backgroundColor: color, borderColor: color }}
                     onClick={() => setValue('color', color)}
                   />
@@ -158,11 +158,11 @@ export default function CategoriesPage() {
                     <span className="font-medium">{cat.name}</span>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(cat)}>
-                      <Pencil className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -182,11 +182,11 @@ export default function CategoriesPage() {
                     <span className="font-medium">{cat.name}</span>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(cat)}>
-                      <Pencil className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>

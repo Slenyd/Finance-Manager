@@ -16,7 +16,7 @@ export default function BudgetsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<{
     id: string;
-    categoryId: string;
+    categoryId: string | null;
     limit: number;
     period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
     startDate: string;
@@ -31,7 +31,7 @@ export default function BudgetsPage() {
     },
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const res = await categoryApi.getAll();
@@ -54,7 +54,7 @@ export default function BudgetsPage() {
 
   const openEdit = (budget: {
     id: string;
-    categoryId: string;
+    categoryId: string | null;
     limit: number;
     period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
     startDate: string;
@@ -89,8 +89,8 @@ export default function BudgetsPage() {
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Budgets</h1>
-          <Button onClick={openCreate}>
+          <h1 className="text-2xl sm:text-3xl font-bold">Budgets</h1>
+          <Button onClick={openCreate} disabled={categoriesLoading}>
             <Plus className="h-4 w-4 mr-2" /> Add Budget
           </Button>
         </div>
@@ -108,19 +108,25 @@ export default function BudgetsPage() {
               <Card>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: budget.category.color }} />
-                      <CardTitle className="text-lg">{budget.category.name}</CardTitle>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {budget.category ? (
+                      <>
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: budget.category.color }} />
+                        <CardTitle className="text-lg">{budget.category.name}</CardTitle>
+                      </>
+                    ) : (
+                      <CardTitle className="text-lg">Uncategorized</CardTitle>
+                    )}
+                  </div>
                     <div className="flex items-center gap-1">
                       <Badge variant={getProgressVariant(budget.percentage)}>
                         {Math.round(budget.percentage)}%
                       </Badge>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(budget)}>
-                        <Pencil className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(budget)}>
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(budget.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(budget.id)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

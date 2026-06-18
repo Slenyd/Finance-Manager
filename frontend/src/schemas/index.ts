@@ -24,20 +24,20 @@ export const registerSchema = z.object({
 export const transactionSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
   description: z.string().min(1, 'Description is required'),
-  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
-  categoryId: z.string().uuid('Select a category'),
-  date: z.string(),
+  type: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']).optional(),
+  categoryId: z.string().optional(),
+  date: z.string().optional(),
   paymentMethod: z.string().optional(),
   notes: z.string().optional(),
   tags: z.string().optional(),
 });
 
 export const budgetSchema = z.object({
-  categoryId: z.string().uuid('Select a category'),
   limit: z.number().positive('Limit must be positive'),
-  period: z.enum(['WEEKLY', 'MONTHLY', 'YEARLY']),
-  startDate: z.string(),
-  endDate: z.string(),
+  categoryId: z.string().optional(),
+  period: z.enum(['WEEKLY', 'MONTHLY', 'YEARLY']).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 export const goalSchema = z.object({
