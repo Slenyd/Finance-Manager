@@ -3,6 +3,8 @@ import { config } from '../config';
 
 const isTest = config.env === 'test';
 
+const validate = { xForwardedForHeader: false };
+
 export const generalLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
   max: config.rateLimit.max,
@@ -14,6 +16,7 @@ export const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate,
 });
 
 export const authLimiter = rateLimit({
@@ -27,4 +30,5 @@ export const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  validate,
 });

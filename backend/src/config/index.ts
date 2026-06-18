@@ -25,7 +25,9 @@ export const config = {
     secret: requireEnv('COOKIE_SECRET'),
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+      : ['http://localhost:5173', 'http://localhost:4173'],
   },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
