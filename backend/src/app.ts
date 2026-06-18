@@ -41,6 +41,8 @@ app.get('/api/v1/health', (_req, res) => {
   res.json({ success: true, message: 'Finance Manager API is running', timestamp: new Date().toISOString() });
 });
 
+app.use((_req, res, next) => { res.set('x-express', 'yes'); next(); });
+
 app.use(errorHandler);
 
 export default app;
