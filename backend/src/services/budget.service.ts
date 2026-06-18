@@ -35,7 +35,19 @@ export class BudgetService {
       const fallback = await prisma.category.findFirst({
         where: { userId, type: 'EXPENSE' },
       });
-      categoryId = fallback?.id || '';
+      if (fallback) {
+        categoryId = fallback.id;
+      } else {
+        const anyCategory = await prisma.category.findFirst({ where: { userId } });
+        if (anyCategory) {
+          categoryId = anyCategory.id;
+        } else {
+          const created = await prisma.category.create({
+            data: { name: 'Miscellaneous', type: 'EXPENSE', userId, icon: 'circle', color: '#6366f1' },
+          });
+          categoryId = created.id;
+        }
+      }
     }
     return prisma.budget.create({
       data: {

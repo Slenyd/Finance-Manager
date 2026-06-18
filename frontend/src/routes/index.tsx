@@ -12,6 +12,7 @@ import LoginPage from '@/pages/login';
 import RegisterPage from '@/pages/register';
 import ForgotPasswordPage from '@/pages/forgot-password';
 import ResetPasswordPage from '@/pages/reset-password';
+import LoadingPage from '@/pages/loading';
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
+  },
+  {
+    path: '/loading',
+    element: <LoadingPage />,
   },
   {
     path: '*',

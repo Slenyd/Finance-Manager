@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
@@ -15,17 +15,20 @@ export default function LoginPage() {
   const login = useLogin();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
+  const isRedirecting = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isRedirecting.current) {
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = (data: LoginForm) => {
+    isRedirecting.current = true;
     login.mutate(data);
   };
 

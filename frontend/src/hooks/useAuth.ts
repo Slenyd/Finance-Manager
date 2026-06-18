@@ -12,7 +12,7 @@ export function useLogin() {
     onSuccess: (res, variables) => {
       const { user, accessToken, refreshToken } = res.data.data!;
       login(user, accessToken, refreshToken, variables.rememberMe ?? false);
-      navigate('/dashboard');
+      navigate('/loading');
     },
   });
 }

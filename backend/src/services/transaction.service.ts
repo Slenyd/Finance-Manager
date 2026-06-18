@@ -64,7 +64,19 @@ export class TransactionService {
       const fallback = await prisma.category.findFirst({
         where: { userId, type: data.type || 'EXPENSE' },
       });
-      categoryId = fallback?.id || '';
+      if (fallback) {
+        categoryId = fallback.id;
+      } else {
+        const anyCategory = await prisma.category.findFirst({ where: { userId } });
+        if (anyCategory) {
+          categoryId = anyCategory.id;
+        } else {
+          const created = await prisma.category.create({
+            data: { name: 'Miscellaneous', type: 'EXPENSE', userId, icon: 'circle', color: '#6366f1' },
+          });
+          categoryId = created.id;
+        }
+      }
     }
     return prisma.transaction.create({
       data: { ...data, userId, categoryId, date: new Date(data.date) },

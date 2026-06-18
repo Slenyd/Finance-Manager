@@ -15,8 +15,10 @@ function processQueue(error: unknown, token: string | null) {
   pendingQueue = [];
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api/v1';
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
@@ -34,7 +36,9 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint = originalRequest.url?.startsWith('/auth/');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           pendingQueue.push({
@@ -52,7 +56,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          '/api/v1/auth/refresh',
+          `${API_BASE}/auth/refresh`,
           {},
           { withCredentials: true },
         );
