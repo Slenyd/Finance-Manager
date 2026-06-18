@@ -3,6 +3,7 @@ import { config } from './config';
 import { logger } from './utils/logger';
 
 if (!process.env.VERCEL) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { startJobs } = require('./jobs');
   startJobs();
 }
