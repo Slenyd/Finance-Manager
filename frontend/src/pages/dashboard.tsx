@@ -22,6 +22,18 @@ export default function DashboardPage() {
     },
   });
 
+  const pieData = useMemo(() => [
+    { name: 'Income', value: dashboard?.totalIncome ?? 0 },
+    { name: 'Expenses', value: dashboard?.totalExpenses ?? 0 },
+  ], [dashboard?.totalIncome, dashboard?.totalExpenses]);
+
+  const summaryCards = useMemo(() => dashboard ? [
+    { label: 'Current Balance', value: formatCurrency(dashboard.currentBalance), color: '' },
+    { label: 'Total Income', value: formatCurrency(dashboard.totalIncome), color: 'text-green-600' },
+    { label: 'Total Expenses', value: formatCurrency(dashboard.totalExpenses), color: 'text-red-600' },
+    { label: 'Savings', value: formatCurrency(dashboard.savings), color: '' },
+  ] : [], [dashboard]);
+
   if (isLoading) {
     return (
       <PageTransition>
@@ -38,18 +50,6 @@ export default function DashboardPage() {
   }
 
   if (!dashboard) return null;
-
-  const pieData = useMemo(() => [
-    { name: 'Income', value: dashboard.totalIncome },
-    { name: 'Expenses', value: dashboard.totalExpenses },
-  ], [dashboard.totalIncome, dashboard.totalExpenses]);
-
-  const summaryCards = useMemo(() => [
-    { label: 'Current Balance', value: formatCurrency(dashboard.currentBalance), color: '' },
-    { label: 'Total Income', value: formatCurrency(dashboard.totalIncome), color: 'text-green-600' },
-    { label: 'Total Expenses', value: formatCurrency(dashboard.totalExpenses), color: 'text-red-600' },
-    { label: 'Savings', value: formatCurrency(dashboard.savings), color: '' },
-  ], [dashboard.currentBalance, dashboard.totalIncome, dashboard.totalExpenses, dashboard.savings]);
 
   return (
     <PageTransition>
