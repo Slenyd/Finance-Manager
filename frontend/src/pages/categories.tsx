@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { Plus, Trash2, Pencil, Circle } from 'lucide-react';
 import { Category } from '@/types';
@@ -17,6 +18,7 @@ export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
@@ -29,7 +31,7 @@ export default function CategoriesPage() {
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     defaultValues: { name: '', color: '#6366f1', type: 'EXPENSE' },
   });
-  const [typeText, setTypeText] = useState('EXPENSE');
+  const [typeValue, setTypeValue] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
 
   const createMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => categoryApi.create(data),
@@ -57,7 +59,7 @@ export default function CategoriesPage() {
   const openCreate = () => {
     setEditingCat(null);
     reset({ name: '', color: '#6366f1', type: 'EXPENSE' });
-    setTypeText('EXPENSE');
+    setTypeValue('EXPENSE');
     setFormOpen(true);
   };
 
@@ -65,12 +67,12 @@ export default function CategoriesPage() {
     setEditingCat(cat);
     setValue('name', cat.name);
     setValue('color', cat.color);
-    setTypeText(cat.type);
+    setTypeValue(cat.type as 'EXPENSE' | 'INCOME');
     setFormOpen(true);
   };
 
   const onSubmit = (data: Record<string, unknown>) => {
-    const payload = { ...data, type: typeText.toUpperCase().trim() === 'INCOME' ? 'INCOME' : 'EXPENSE' };
+    const payload = { ...data, type: typeValue };
     if (editingCat) {
       updateMutation.mutate(payload);
     } else {
@@ -109,17 +111,19 @@ export default function CategoriesPage() {
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" placeholder="Category name" {...register('name', { required: true })} />
-              {errors.name && <p className="text-xs text-destructive">Name is required</p>}
+              {typeof errors.name?.message === 'string' && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Type</Label>
-              <textarea
-                rows={2}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-                placeholder="INCOME or EXPENSE"
-                value={typeText}
-                onChange={(e) => setTypeText(e.target.value)}
-              />
+              <Select value={typeValue} onValueChange={(v) => setTypeValue(v as 'EXPENSE' | 'INCOME')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EXPENSE">Expense</SelectItem>
+                  <SelectItem value="INCOME">Income</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Color</Label>
@@ -131,6 +135,7 @@ export default function CategoriesPage() {
                     className="w-10 h-10 rounded-full border-2 border-transparent hover:scale-110 transition-transform"
                     style={{ backgroundColor: color, borderColor: color }}
                     onClick={() => setValue('color', color)}
+                    aria-label={`Select color ${color}`}
                   />
                 ))}
               </div>
@@ -146,6 +151,19 @@ export default function CategoriesPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null) }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+            <DialogDescription>Are you sure you want to delete this category? This action cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold mb-3 text-green-600">Income</h2>
@@ -158,10 +176,10 @@ export default function CategoriesPage() {
                     <span className="font-medium">{cat.name}</span>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(cat)} aria-label="Edit category">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(cat.id)} aria-label="Delete category">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -182,10 +200,10 @@ export default function CategoriesPage() {
                     <span className="font-medium">{cat.name}</span>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(cat)} aria-label="Edit category">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(cat.id)}>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(cat.id)} aria-label="Delete category">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

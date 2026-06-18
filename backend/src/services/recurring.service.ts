@@ -9,36 +9,42 @@ export class RecurringService {
         isActive: true,
         nextDate: { lte: now },
       },
-      include: { category: true },
     });
 
     logger.info(`Processing ${dueTransactions.length} recurring transactions`);
 
-    for (const recurring of dueTransactions) {
-      try {
-        await prisma.transaction.create({
-          data: {
-            userId: recurring.userId,
-            categoryId: recurring.categoryId,
-            amount: recurring.amount,
-            description: recurring.description,
-            type: recurring.type,
-            date: now,
-            isRecurring: true,
-          },
-        });
+    if (dueTransactions.length === 0) return;
 
-        const nextDate = this.calculateNextDate(recurring);
-        await prisma.recurringTransaction.update({
-          where: { id: recurring.id },
-          data: {
-            nextDate,
-            ...(recurring.endDate && nextDate > recurring.endDate ? { isActive: false } : {}),
-          },
-        });
-      } catch (error) {
-        logger.error(`Failed to process recurring transaction ${recurring.id}:`, error);
-      }
+    const transactionCreates = dueTransactions.map((recurring) =>
+      prisma.transaction.create({
+        data: {
+          userId: recurring.userId,
+          categoryId: recurring.categoryId,
+          amount: recurring.amount,
+          description: recurring.description,
+          type: recurring.type,
+          date: now,
+          isRecurring: true,
+        },
+      }),
+    );
+
+    const updates = dueTransactions.map((recurring) => {
+      const nextDate = this.calculateNextDate(recurring);
+      return prisma.recurringTransaction.updateMany({
+        where: { id: recurring.id },
+        data: {
+          nextDate,
+          ...(recurring.endDate && nextDate > recurring.endDate ? { isActive: false } : {}),
+        },
+      });
+    });
+
+    try {
+      await prisma.$transaction([...transactionCreates, ...updates]);
+      logger.info(`Successfully processed ${dueTransactions.length} recurring transactions`);
+    } catch (error) {
+      logger.error('Failed to process recurring transactions batch:', error);
     }
   }
 

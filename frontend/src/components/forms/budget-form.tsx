@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AxiosError } from 'axios';
 import { Category } from '@/types';
 
@@ -28,7 +29,7 @@ interface Props {
 export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Props) {
   const queryClient = useQueryClient();
   const isEditing = !!budget;
-  const [categoryName, setCategoryName] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<BudgetFormType>({
     resolver: zodResolver(budgetSchema),
@@ -38,19 +39,22 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
     },
   });
 
+  const [periodValue, setPeriodValue] = useState<'WEEKLY' | 'MONTHLY' | 'YEARLY'>('MONTHLY');
+
   useEffect(() => {
     if (budget) {
-      const cat = categories.find((c) => c.id === budget.categoryId);
-      setCategoryName(cat?.name || '');
+      setSelectedCategoryId(budget.categoryId || '');
       setValue('limit', budget.limit);
+      setPeriodValue(budget.period);
       setValue('period', budget.period);
       setValue('startDate', budget.startDate.split('T')[0]);
       setValue('endDate', budget.endDate.split('T')[0]);
     } else {
       reset();
-      setCategoryName('');
+      setSelectedCategoryId('');
+      setPeriodValue('MONTHLY');
     }
-  }, [budget, setValue, reset, categories]);
+  }, [budget, setValue, reset]);
 
   const createMutation = useMutation({
     mutationFn: (data: { limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string; categoryId?: string }) => budgetApi.create(data),
@@ -73,9 +77,6 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
   });
 
   const onSubmit = (data: BudgetFormType) => {
-    const matchedCategory = categories.find(
-      (c) => c.name.toLowerCase() === categoryName.trim().toLowerCase(),
-    );
     const payload: {
       limit: number;
       period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
@@ -84,11 +85,11 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
       categoryId?: string;
     } = {
       limit: data.limit,
-      period: data.period || 'MONTHLY',
+      period: periodValue,
       startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
       endDate: data.endDate ? new Date(data.endDate).toISOString() : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(),
     };
-    if (matchedCategory) payload.categoryId = matchedCategory.id;
+    if (selectedCategoryId) payload.categoryId = selectedCategoryId;
     if (isEditing) {
       updateMutation.mutate(payload);
     } else {
@@ -106,13 +107,16 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label>Category</Label>
-            <textarea
-              rows={2}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-              placeholder="Optional - type a category name"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-            />
+            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Optional - select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -122,14 +126,16 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
             </div>
             <div className="space-y-2">
               <Label>Period</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                {...register('period')}
-              >
-                <option value="WEEKLY">Weekly</option>
-                <option value="MONTHLY">Monthly</option>
-                <option value="YEARLY">Yearly</option>
-              </select>
+              <Select value={periodValue} onValueChange={(v) => setPeriodValue(v as 'WEEKLY' | 'MONTHLY' | 'YEARLY')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                  <SelectItem value="YEARLY">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
