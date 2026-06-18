@@ -2,14 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.ts",
-      "use": "@vercel/node@3"
+      "src": "api/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.ts" }
-  ],
-  "env": {
-    "PRISMA_GENERATE_DATAPROXY": "false"
-  }
+    { "src": "/api/(.*)", "dest": "/api/index.js" }
+  ]
 }
