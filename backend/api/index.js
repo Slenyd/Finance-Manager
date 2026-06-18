@@ -1,3 +1,3 @@
-const app = require('../dist/app').default;
-
-module.exports = app;
+module.exports = (req, res) => {
+  res.status(200).json({ status: 'ok' });
+};
