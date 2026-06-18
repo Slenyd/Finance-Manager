@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { GoalController } from '../controllers/goal.controller';
 import { authenticate } from '../middlewares/auth';
 import { validate } from '../middlewares/validate';
-import { createGoalSchema, updateGoalSchema } from '../validators/goal';
+import { createGoalSchema, updateGoalSchema, contributeGoalSchema } from '../validators/goal';
 
 const router: Router = Router();
 const controller = new GoalController();
@@ -14,6 +14,6 @@ router.get('/:id', controller.findById);
 router.post('/', validate(createGoalSchema), controller.create);
 router.put('/:id', validate(updateGoalSchema), controller.update);
 router.delete('/:id', controller.delete);
-router.post('/:id/contribute', controller.contribute);
+router.post('/:id/contribute', validate(contributeGoalSchema), controller.contribute);
 
 export default router;

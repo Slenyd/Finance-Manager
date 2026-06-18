@@ -1,44 +1,29 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { NotificationService } from '../services';
 import { AuthenticatedRequest } from '../interfaces';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const notificationService = new NotificationService();
 
 export class NotificationController {
-  async findAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const notifications = await notificationService.findAll(req.user!.id);
-      const unreadCount = await notificationService.getUnreadCount(req.user!.id);
-      res.json({ success: true, data: notifications, meta: { unreadCount } });
-    } catch (error) {
-      next(error);
-    }
-  }
+  findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const notifications = await notificationService.findAll(req.user!.id);
+    const unreadCount = await notificationService.getUnreadCount(req.user!.id);
+    res.json({ success: true, data: notifications, meta: { unreadCount } });
+  });
 
-  async markAsRead(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      await notificationService.markAsRead(req.user!.id, req.params.id);
-      res.json({ success: true, message: 'Notification marked as read' });
-    } catch (error) {
-      next(error);
-    }
-  }
+  markAsRead = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await notificationService.markAsRead(req.user!.id, req.params.id);
+    res.json({ success: true, message: 'Notification marked as read' });
+  });
 
-  async markAllAsRead(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      await notificationService.markAllAsRead(req.user!.id);
-      res.json({ success: true, message: 'All notifications marked as read' });
-    } catch (error) {
-      next(error);
-    }
-  }
+  markAllAsRead = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await notificationService.markAllAsRead(req.user!.id);
+    res.json({ success: true, message: 'All notifications marked as read' });
+  });
 
-  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      await notificationService.delete(req.user!.id, req.params.id);
-      res.json({ success: true, message: 'Notification deleted' });
-    } catch (error) {
-      next(error);
-    }
-  }
+  delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await notificationService.delete(req.user!.id, req.params.id);
+    res.json({ success: true, message: 'Notification deleted' });
+  });
 }

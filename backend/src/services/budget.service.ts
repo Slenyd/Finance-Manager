@@ -48,7 +48,6 @@ export class BudgetService {
     period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
     startDate: string;
     endDate: string;
-    categoryId: string;
   }>) {
     await this.findById(userId, id);
     return prisma.budget.update({

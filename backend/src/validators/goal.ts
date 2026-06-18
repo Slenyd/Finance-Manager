@@ -17,3 +17,9 @@ export const updateGoalSchema = z.object({
     deadline: z.string().datetime().nullable().optional(),
   }),
 });
+
+export const contributeGoalSchema = z.object({
+  body: z.object({
+    amount: z.number().positive('Contribution must be positive'),
+  }),
+});

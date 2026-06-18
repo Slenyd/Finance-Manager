@@ -30,6 +30,8 @@ export const config = {
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
+    authWindowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS || '900000', 10),
+    authMax: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10),
   },
   smtp: {
     host: process.env.SMTP_HOST || '',

@@ -67,6 +67,7 @@ export class TransactionService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async update(userId: string, id: string, data: any) {
+    await this.findById(userId, id);
     return prisma.transaction.update({
       where: { id },
       data: {

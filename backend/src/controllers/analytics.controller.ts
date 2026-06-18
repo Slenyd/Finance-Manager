@@ -1,55 +1,36 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { AnalyticsService } from '../services';
 import { AuthenticatedRequest } from '../interfaces';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const analyticsService = new AnalyticsService();
 
 export class AnalyticsController {
-  async getDashboard(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const data = await analyticsService.getDashboard(req.user!.id);
-      res.json({ success: true, data });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const data = await analyticsService.getDashboard(req.user!.id);
+    res.json({ success: true, data });
+  });
 
-  async getMonthlySpending(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const months = parseInt(req.query.months as string) || 6;
-      const data = await analyticsService.getMonthlySpending(req.user!.id, months);
-      res.json({ success: true, data });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getMonthlySpending = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const months = parseInt(req.query.months as string) || 6;
+    const data = await analyticsService.getMonthlySpending(req.user!.id, months);
+    res.json({ success: true, data });
+  });
 
-  async getCategoryBreakdown(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
-      const data = await analyticsService.getCategoryBreakdown(req.user!.id, startDate, endDate);
-      res.json({ success: true, data });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getCategoryBreakdown = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
+    const data = await analyticsService.getCategoryBreakdown(req.user!.id, startDate, endDate);
+    res.json({ success: true, data });
+  });
 
-  async getCashFlow(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const months = parseInt(req.query.months as string) || 12;
-      const data = await analyticsService.getCashFlow(req.user!.id, months);
-      res.json({ success: true, data });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getCashFlow = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const months = parseInt(req.query.months as string) || 12;
+    const data = await analyticsService.getCashFlow(req.user!.id, months);
+    res.json({ success: true, data });
+  });
 
-  async getNetWorth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const data = await analyticsService.getNetWorth(req.user!.id);
-      res.json({ success: true, data });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getNetWorth = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const data = await analyticsService.getNetWorth(req.user!.id);
+    res.json({ success: true, data });
+  });
 }

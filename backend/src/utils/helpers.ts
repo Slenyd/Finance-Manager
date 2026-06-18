@@ -2,8 +2,10 @@ export const parsePagination = (query: {
   page?: string;
   limit?: string;
 }): { page: number; limit: number; skip: number } => {
-  const page = Math.max(1, parseInt(query.page || '1', 10));
-  const limit = Math.min(100, Math.max(1, parseInt(query.limit || '10', 10)));
+  const rawPage = parseInt(query.page || '1', 10);
+  const rawLimit = parseInt(query.limit || '10', 10);
+  const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
+  const limit = Number.isFinite(rawLimit) ? Math.min(100, Math.max(1, rawLimit)) : 10;
   return { page, limit, skip: (page - 1) * limit };
 };
 
