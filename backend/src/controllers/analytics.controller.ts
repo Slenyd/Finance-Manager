@@ -7,29 +7,34 @@ const analyticsService = new AnalyticsService();
 
 export class AnalyticsController {
   getDashboard = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=60');
     const data = await analyticsService.getDashboard(req.user!.id);
     res.json({ success: true, data });
   });
 
   getMonthlySpending = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=120');
     const months = parseInt(req.query.months as string) || 6;
     const data = await analyticsService.getMonthlySpending(req.user!.id, months);
     res.json({ success: true, data });
   });
 
   getCategoryBreakdown = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=120');
     const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
     const data = await analyticsService.getCategoryBreakdown(req.user!.id, startDate, endDate);
     res.json({ success: true, data });
   });
 
   getCashFlow = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=300');
     const months = parseInt(req.query.months as string) || 12;
     const data = await analyticsService.getCashFlow(req.user!.id, months);
     res.json({ success: true, data });
   });
 
   getNetWorth = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=60');
     const data = await analyticsService.getNetWorth(req.user!.id);
     res.json({ success: true, data });
   });

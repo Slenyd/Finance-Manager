@@ -109,23 +109,26 @@ export class TransactionService {
   }
 
   async getSummary(userId: string, startDate?: string, endDate?: string) {
-    const dateFilter: Prisma.TransactionWhereInput['date'] = {};
+    const dateFilter: Record<string, unknown> = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
 
-    const transactions = await prisma.transaction.findMany({
-      where: { userId, ...(Object.keys(dateFilter).length && { date: dateFilter }) },
-      select: { amount: true, type: true, categoryId: true, date: true },
-    });
+    const [incomeAgg, expenseAgg] = await Promise.all([
+      prisma.transaction.aggregate({
+        where: { userId, type: 'INCOME', ...(Object.keys(dateFilter).length && { date: dateFilter as Prisma.TransactionWhereInput['date'] }) },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'EXPENSE', ...(Object.keys(dateFilter).length && { date: dateFilter as Prisma.TransactionWhereInput['date'] }) },
+        _sum: { amount: true },
+        _count: true,
+      }),
+    ]);
 
-    const totalIncome = transactions
-      .filter((t) => t.type === 'INCOME')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const totalIncome = Number(incomeAgg._sum.amount) || 0;
+    const totalExpenses = Number(expenseAgg._sum.amount) || 0;
 
-    const totalExpenses = transactions
-      .filter((t) => t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-
-    return { totalIncome, totalExpenses, netSavings: totalIncome - totalExpenses, transactionCount: transactions.length };
+    return { totalIncome, totalExpenses, netSavings: totalIncome - totalExpenses, transactionCount: incomeAgg._count + expenseAgg._count };
   }
 }

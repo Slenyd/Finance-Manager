@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '@/api/endpoints';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -38,17 +39,17 @@ export default function DashboardPage() {
 
   if (!dashboard) return null;
 
-  const pieData = [
+  const pieData = useMemo(() => [
     { name: 'Income', value: dashboard.totalIncome },
     { name: 'Expenses', value: dashboard.totalExpenses },
-  ];
+  ], [dashboard.totalIncome, dashboard.totalExpenses]);
 
-  const summaryCards = [
+  const summaryCards = useMemo(() => [
     { label: 'Current Balance', value: formatCurrency(dashboard.currentBalance), color: '' },
     { label: 'Total Income', value: formatCurrency(dashboard.totalIncome), color: 'text-green-600' },
     { label: 'Total Expenses', value: formatCurrency(dashboard.totalExpenses), color: 'text-red-600' },
     { label: 'Savings', value: formatCurrency(dashboard.savings), color: '' },
-  ];
+  ], [dashboard.currentBalance, dashboard.totalIncome, dashboard.totalExpenses, dashboard.savings]);
 
   return (
     <PageTransition>

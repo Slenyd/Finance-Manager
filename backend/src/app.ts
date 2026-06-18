@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -18,6 +19,7 @@ const app: express.Application = express();
 
 app.set('trust proxy', 1);
 
+app.use(compression());
 app.use(helmet());
 app.use(cors({
   origin: config.cors.origin,

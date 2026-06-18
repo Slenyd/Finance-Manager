@@ -6,11 +6,24 @@ export class AnalyticsService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [allTransactions, monthTransactions, budgets, goals, recentTransactions] = await Promise.all([
-      prisma.transaction.findMany({ where: { userId }, select: { amount: true, type: true } }),
-      prisma.transaction.findMany({
-        where: { userId, date: { gte: startOfMonth } },
-        select: { amount: true, type: true },
+    const [incomeAgg, expenseAgg, monthIncomeAgg, monthExpenseAgg, budgets, goals, recentTransactions] = await Promise.all([
+      prisma.transaction.aggregate({
+        where: { userId, type: 'INCOME' },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'EXPENSE' },
+        _sum: { amount: true },
+        _count: true,
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'INCOME', date: { gte: startOfMonth } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'EXPENSE', date: { gte: startOfMonth } },
+        _sum: { amount: true },
       }),
       prisma.budget.findMany({ where: { userId } }),
       prisma.savingsGoal.findMany({ where: { userId } }),
@@ -22,13 +35,12 @@ export class AnalyticsService {
       }),
     ]);
 
-    const totalTransactions = allTransactions.length;
-    const totalIncome = allTransactions.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-    const totalExpenses = allTransactions.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+    const totalIncome = Number(incomeAgg._sum.amount) || 0;
+    const totalExpenses = Number(expenseAgg._sum.amount) || 0;
+    const totalTransactions = incomeAgg._count + expenseAgg._count;
     const currentBalance = totalIncome - totalExpenses;
-
-    const monthIncome = monthTransactions.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-    const monthExpenses = monthTransactions.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
+    const monthIncome = Number(monthIncomeAgg._sum.amount) || 0;
+    const monthExpenses = Number(monthExpenseAgg._sum.amount) || 0;
 
     const totalBudgetLimit = budgets.reduce((s, b) => s + Number(b.limit), 0);
     const budgetCompliance = totalBudgetLimit > 0 ? Math.min(1, monthExpenses / totalBudgetLimit) : 1;
@@ -58,26 +70,31 @@ export class AnalyticsService {
   }
 
   async getMonthlySpending(userId: string, months = 6) {
-    const data: { month: string; income: number; expenses: number }[] = [];
     const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
 
+    const rows = await prisma.transaction.findMany({
+      where: { userId, date: { gte: startDate } },
+      select: { amount: true, type: true, date: true },
+    });
+
+    const monthlyMap = new Map<string, { income: number; expenses: number }>();
     for (let i = months - 1; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      const monthLabel = date.toLocaleString('default', { month: 'short', year: '2-digit' });
-
-      const transactions = await prisma.transaction.findMany({
-        where: { userId, date: { gte: date, lte: endOfMonth } },
-        select: { amount: true, type: true },
-      });
-
-      const income = transactions.filter((t) => t.type === 'INCOME').reduce((s, t) => s + Number(t.amount), 0);
-      const expenses = transactions.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0);
-
-      data.push({ month: monthLabel, income, expenses });
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+      monthlyMap.set(label, { income: 0, expenses: 0 });
     }
 
-    return data;
+    for (const t of rows) {
+      const label = t.date.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const entry = monthlyMap.get(label);
+      if (entry) {
+        if (t.type === 'INCOME') entry.income += Number(t.amount);
+        else entry.expenses += Number(t.amount);
+      }
+    }
+
+    return Array.from(monthlyMap.entries()).map(([month, data]) => ({ month, ...data }));
   }
 
   async getCategoryBreakdown(userId: string, startDate?: string, endDate?: string) {
@@ -100,18 +117,21 @@ export class AnalyticsService {
     const categories = await prisma.category.findMany({
       where: { id: { in: categoryIds } },
     });
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
-    return expenses.map((e) => {
-      const cat = e.categoryId ? categories.find((c) => c.id === e.categoryId) : undefined;
-      return {
-        categoryId: e.categoryId,
-        categoryName: cat?.name || 'Unknown',
-        categoryColor: cat?.color || '#6366f1',
-        categoryIcon: cat?.icon || 'circle',
-        total: Number(e._sum.amount) || 0,
-        count: e._count,
-      };
-    }).sort((a, b) => b.total - a.total);
+    return expenses
+      .map((e) => {
+        const cat = e.categoryId ? categoryMap.get(e.categoryId) : undefined;
+        return {
+          categoryId: e.categoryId,
+          categoryName: cat?.name || 'Unknown',
+          categoryColor: cat?.color || '#6366f1',
+          categoryIcon: cat?.icon || 'circle',
+          total: Number(e._sum.amount) || 0,
+          count: e._count,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
   }
 
   async getCashFlow(userId: string, months = 12) {
@@ -119,21 +139,36 @@ export class AnalyticsService {
   }
 
   async getNetWorth(userId: string) {
-    const transactions = await prisma.transaction.findMany({
-      where: { userId },
-      select: { amount: true, type: true, date: true },
-      orderBy: { date: 'asc' },
+    const [incomeAgg, expenseAgg] = await Promise.all([
+      prisma.transaction.aggregate({
+        where: { userId, type: 'INCOME' },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { userId, type: 'EXPENSE' },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const currentNetWorth = (Number(incomeAgg._sum.amount) || 0) - (Number(expenseAgg._sum.amount) || 0);
+
+    const monthlySnapshots = await prisma.$queryRawUnsafe<{ month: string; net: number }[]>(
+      `SELECT
+        to_char(date, 'YYYY-MM') as month,
+        SUM(CASE WHEN type = 'INCOME' THEN amount ELSE -amount END) as net
+      FROM "transactions"
+      WHERE "user_id" = $1
+      GROUP BY to_char(date, 'YYYY-MM')
+      ORDER BY month ASC`,
+      userId,
+    );
+
+    let runningTotal = 0;
+    const trend = monthlySnapshots.map((r) => {
+      runningTotal += Number(r.net);
+      return { date: r.month, netWorth: runningTotal };
     });
 
-    let netWorth = 0;
-    const trend: { date: string; netWorth: number }[] = [];
-
-    for (const t of transactions) {
-      if (t.type === 'INCOME') netWorth += Number(t.amount);
-      else netWorth -= Number(t.amount);
-      trend.push({ date: t.date.toISOString().split('T')[0], netWorth });
-    }
-
-    return { currentNetWorth: netWorth, trend };
+    return { currentNetWorth, trend };
   }
 }

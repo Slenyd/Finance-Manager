@@ -75,10 +75,10 @@ model Transaction {
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
 
-  @@index([userId])
-  @@index([categoryId])
-  @@index([date])
-  @@index([type])
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, categoryId])
+  @@index([userId, date, type])
   @@map("transactions")
 }
 

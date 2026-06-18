@@ -1,18 +1,20 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { AuthLayout } from '@/components/layouts/auth-layout';
-import DashboardPage from '@/pages/dashboard';
-import TransactionsPage from '@/pages/transactions';
-import BudgetsPage from '@/pages/budgets';
-import GoalsPage from '@/pages/goals';
-import AnalyticsPage from '@/pages/analytics';
-import NotificationsPage from '@/pages/notifications';
-import SettingsPage from '@/pages/settings';
-import LoginPage from '@/pages/login';
-import RegisterPage from '@/pages/register';
-import ForgotPasswordPage from '@/pages/forgot-password';
-import ResetPasswordPage from '@/pages/reset-password';
-import LoadingPage from '@/pages/loading';
+
+const LoginPage = lazy(() => import('@/pages/login'));
+const RegisterPage = lazy(() => import('@/pages/register'));
+const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password'));
+const ResetPasswordPage = lazy(() => import('@/pages/reset-password'));
+const DashboardPage = lazy(() => import('@/pages/dashboard'));
+const TransactionsPage = lazy(() => import('@/pages/transactions'));
+const BudgetsPage = lazy(() => import('@/pages/budgets'));
+const GoalsPage = lazy(() => import('@/pages/goals'));
+const AnalyticsPage = lazy(() => import('@/pages/analytics'));
+const NotificationsPage = lazy(() => import('@/pages/notifications'));
+const SettingsPage = lazy(() => import('@/pages/settings'));
+const LoadingPage = lazy(() => import('@/pages/loading'));
 
 export const router = createBrowserRouter([
   {

@@ -8,12 +8,26 @@ export class BudgetService {
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
     });
 
-    return Promise.all(
-      budgets.map(async (budget) => {
-        const spent = await this.calculateSpent(userId, budget.categoryId, budget.startDate, budget.endDate);
-        return { ...budget, spent, percentage: Number(budget.limit) > 0 ? (spent / Number(budget.limit)) * 100 : 0 };
-      }),
+    if (budgets.length === 0) return [];
+
+    const spentResults = await prisma.$transaction(
+      budgets.map(b =>
+        prisma.transaction.aggregate({
+          where: {
+            userId,
+            categoryId: b.categoryId!,
+            type: 'EXPENSE',
+            date: { gte: b.startDate, lte: b.endDate },
+          },
+          _sum: { amount: true },
+        })
+      ),
     );
+
+    return budgets.map((budget, i) => {
+      const spent = Number(spentResults[i]._sum.amount) || 0;
+      return { ...budget, spent, percentage: Number(budget.limit) > 0 ? (spent / Number(budget.limit)) * 100 : 0 };
+    });
   }
 
   async findById(userId: string, id: string) {
@@ -23,8 +37,17 @@ export class BudgetService {
     });
     if (!budget) throw new NotFoundError('Budget');
 
-    const spent = await this.calculateSpent(userId, budget.categoryId, budget.startDate, budget.endDate);
-    return { ...budget, spent, percentage: Number(budget.limit) > 0 ? (spent / Number(budget.limit)) * 100 : 0 };
+    const spent = await prisma.transaction.aggregate({
+      where: {
+        userId,
+        categoryId: budget.categoryId!,
+        type: 'EXPENSE',
+        date: { gte: budget.startDate, lte: budget.endDate },
+      },
+      _sum: { amount: true },
+    });
+    const spentAmount = Number(spent._sum.amount) || 0;
+    return { ...budget, spent: spentAmount, percentage: Number(budget.limit) > 0 ? (spentAmount / Number(budget.limit)) * 100 : 0 };
   }
 
   async create(userId: string, data: {
@@ -84,19 +107,5 @@ export class BudgetService {
   async delete(userId: string, id: string) {
     await this.findById(userId, id);
     await prisma.budget.delete({ where: { id } });
-  }
-
-  private async calculateSpent(userId: string, categoryId: string | null, startDate: Date, endDate: Date): Promise<number> {
-    if (!categoryId) return 0;
-    const result = await prisma.transaction.aggregate({
-      where: {
-        userId,
-        categoryId,
-        type: 'EXPENSE',
-        date: { gte: startDate, lte: endDate },
-      },
-      _sum: { amount: true },
-    });
-    return Number(result._sum.amount) || 0;
   }
 }

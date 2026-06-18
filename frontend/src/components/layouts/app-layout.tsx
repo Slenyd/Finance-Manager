@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { LoadingPage } from '@/components/ui/spinner';
 import {
   LayoutDashboard, ArrowLeftRight, PiggyBank, Target, BarChart3, Bell, Settings, LogOut, Moon, Sun,
 } from 'lucide-react';
@@ -98,7 +99,9 @@ export function AppLayout() {
           </div>
         </div>
         <div className="p-4 md:p-8">
-          <Outlet />
+          <Suspense fallback={<LoadingPage />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-md md:hidden flex items-center justify-around safe-area-bottom shadow-lg">

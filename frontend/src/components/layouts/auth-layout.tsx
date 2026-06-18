@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
+import { Spinner } from '@/components/ui/spinner';
 
 export function AuthLayout() {
   return (
@@ -10,7 +12,9 @@ export function AuthLayout() {
           <p className="text-muted-foreground mt-2">Take control of your finances</p>
         </div>
         <div className="animate-scale-in">
-          <Outlet />
+          <Suspense fallback={<div className="flex justify-center p-12"><Spinner size="lg" /></div>}>
+            <Outlet />
+          </Suspense>
         </div>
       </div>
     </div>
