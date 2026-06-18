@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { analyticsApi } from '@/api/endpoints';
+import { analyticsApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
@@ -11,7 +12,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];
 
 export default function AnalyticsPage() {
-  const { data: dashboard } = useQuery({
+  const { data: dashboard, isError: dashboardError, refetch: refetchDashboard } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
       const res = await analyticsApi.getDashboard();
@@ -19,7 +20,7 @@ export default function AnalyticsPage() {
     },
   });
 
-  const { data: monthlySpending, isLoading: loadingMonthly } = useQuery({
+  const { data: monthlySpending, isLoading: loadingMonthly, isError: monthlyError, refetch: refetchMonthly } = useQuery({
     queryKey: ['monthlySpending'],
     queryFn: async () => {
       const res = await analyticsApi.getMonthlySpending(6);
@@ -27,7 +28,7 @@ export default function AnalyticsPage() {
     },
   });
 
-  const { data: categoryBreakdown, isLoading: loadingCategories } = useQuery({
+  const { data: categoryBreakdown, isLoading: loadingCategories, isError: categoriesError, refetch: refetchCategories } = useQuery({
     queryKey: ['categoryBreakdown'],
     queryFn: async () => {
       const res = await analyticsApi.getCategoryBreakdown();
@@ -43,7 +44,10 @@ export default function AnalyticsPage() {
     },
   });
 
-  if (loadingMonthly && loadingCategories) {
+  const hasError = dashboardError || monthlyError || categoriesError;
+  const retryAll = () => { refetchDashboard(); refetchMonthly(); refetchCategories(); };
+
+if (loadingMonthly && loadingCategories) {
     return (
       <PageTransition>
         <div className="space-y-6">
@@ -53,6 +57,22 @@ export default function AnalyticsPage() {
               <Card key={i}><CardContent className="p-6"><Skeleton className="h-64 animate-pulse-soft" /></CardContent></Card>
             ))}
           </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <PageTransition>
+        <div className="space-y-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Analytics</h1>
+          <Card>
+            <CardContent className="p-12 text-center">
+              <p className="text-muted-foreground mb-4">Failed to load analytics data.</p>
+              <Button onClick={retryAll}>Try Again</Button>
+            </CardContent>
+          </Card>
         </div>
       </PageTransition>
     );

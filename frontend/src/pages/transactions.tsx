@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { transactionApi, categoryApi } from '@/api/endpoints';
+import { transactionApi, categoryApi } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Plus, Search, Trash2, Pencil } from 'lucide-react';
-import { TransactionFormDialog } from '@/components/forms/transaction-form';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
+
+const TransactionFormDialog = lazy(() => import('@/components/forms/transaction-form').then(m => ({ default: m.TransactionFormDialog })));
 
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
@@ -19,6 +21,7 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingTx, setEditingTx] = useState<{
     id: string;
     amount: number;
@@ -88,12 +91,27 @@ export default function TransactionsPage() {
           </Button>
         </div>
 
+        <Suspense fallback={null}>
         <TransactionFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}
           transaction={editingTx}
           categories={categories || []}
         />
+      </Suspense>
+
+        <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Transaction</DialogTitle>
+              <DialogDescription>Are you sure you want to delete this transaction? This action cannot be undone.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <StaggerItem index={0}>
           <Card>
@@ -164,10 +182,10 @@ export default function TransactionsPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => openEdit(tx)}>
+                                <Button variant="ghost" size="icon" onClick={() => openEdit(tx)} aria-label="Edit transaction">
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(tx.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => setDeleteId(tx.id)} aria-label="Delete transaction">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -194,10 +212,10 @@ export default function TransactionsPage() {
                         <div className="flex items-center justify-between">
                           <span className="mobile-table-value">{tx.description}</span>
                           <div className="flex gap-1 shrink-0">
-                            <Button variant="ghost" size="icon" onClick={() => openEdit(tx)}>
+                            <Button variant="ghost" size="icon" onClick={() => openEdit(tx)} aria-label="Edit transaction">
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(tx.id)}>
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(tx.id)} aria-label="Delete transaction">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

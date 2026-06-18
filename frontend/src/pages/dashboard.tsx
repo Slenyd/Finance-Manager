@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsApi } from '@/api/endpoints';
+import { analyticsApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -99,7 +99,7 @@ export default function DashboardPage() {
 
           <StaggerItem index={5}>
             <Card>
-              <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Income vs Expenses Breakdown</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>

@@ -1,19 +1,22 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { goalApi } from '@/api/endpoints';
+import { goalApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Target, Calendar, Plus, Trash2, Pencil, PiggyBank } from 'lucide-react';
-import { GoalFormDialog } from '@/components/forms/goal-form';
-import { ContributeFormDialog } from '@/components/forms/contribute-form';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
+
+const GoalFormDialog = lazy(() => import('@/components/forms/goal-form').then(m => ({ default: m.GoalFormDialog })));
+const ContributeFormDialog = lazy(() => import('@/components/forms/contribute-form').then(m => ({ default: m.ContributeFormDialog })));
 
 export default function GoalsPage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingGoal, setEditingGoal] = useState<{
     id: string;
     name: string;
@@ -89,20 +92,37 @@ export default function GoalsPage() {
           </Button>
         </div>
 
+        <Suspense fallback={null}>
         <GoalFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}
           goal={editingGoal}
         />
+      </Suspense>
 
-        {contributeGoal && (
+      {contributeGoal && (
+        <Suspense fallback={null}>
           <ContributeFormDialog
             open={contributeOpen}
             onOpenChange={setContributeOpen}
             goalId={contributeGoal.id}
             goalName={contributeGoal.name}
           />
+        </Suspense>
         )}
+
+        <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Goal</DialogTitle>
+              <DialogDescription>Are you sure you want to delete this savings goal? This action cannot be undone.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid gap-4 md:grid-cols-2">
           {goals?.map((goal, i) => (
@@ -115,10 +135,10 @@ export default function GoalsPage() {
                       <CardTitle className="text-lg">{goal.name}</CardTitle>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(goal)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(goal)} aria-label="Edit goal">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(goal.id)}>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(goal.id)} aria-label="Delete goal">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

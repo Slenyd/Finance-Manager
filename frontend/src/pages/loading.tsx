@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MorphLoading } from '@/components/ui/morph-loading';
 import { useAuthStore } from '@/store/auth';
@@ -6,16 +6,20 @@ import { useAuthStore } from '@/store/auth';
 export default function LoadingPage() {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login', { replace: true });
       return;
     }
-    const timer = setTimeout(() => {
-      navigate('/dashboard', { replace: true });
-    }, 2500);
-    return () => clearTimeout(timer);
+    if (!hasNavigated.current) {
+      hasNavigated.current = true;
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 800);
+      return () => clearTimeout(timer);
+    }
   }, [isAuthenticated, navigate]);
 
   return (

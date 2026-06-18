@@ -80,11 +80,11 @@ export function AppLayout() {
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-accent" onClick={toggle}>
+          <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-accent" onClick={toggle} aria-label="Toggle dark mode">
             {isDark ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { logout(); navigate('/login'); }}>
+          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { logout(); navigate('/login'); }} aria-label="Logout">
             <LogOut className="h-5 w-5 mr-2" /> Logout
           </Button>
         </div>
@@ -93,7 +93,7 @@ export function AppLayout() {
         <div className="md:hidden flex items-center justify-between p-4 border-b bg-card/80 backdrop-blur-md sticky top-0 z-40">
           <h1 className="text-lg font-bold text-gradient">Finance Manager</h1>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggle} className="hover:bg-accent">
+            <Button variant="ghost" size="icon" onClick={toggle} className="hover:bg-accent" aria-label="Toggle dark mode">
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
           </div>

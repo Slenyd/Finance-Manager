@@ -1,19 +1,22 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { budgetApi, categoryApi } from '@/api/endpoints';
+import { budgetApi, categoryApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils';
 import { Plus, Trash2, Pencil } from 'lucide-react';
-import { BudgetFormDialog } from '@/components/forms/budget-form';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
+
+const BudgetFormDialog = lazy(() => import('@/components/forms/budget-form').then(m => ({ default: m.BudgetFormDialog })));
 
 export default function BudgetsPage() {
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingBudget, setEditingBudget] = useState<{
     id: string;
     categoryId: string | null;
@@ -95,12 +98,27 @@ export default function BudgetsPage() {
           </Button>
         </div>
 
+        <Suspense fallback={null}>
         <BudgetFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}
           budget={editingBudget}
           categories={categories || []}
         />
+      </Suspense>
+
+        <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Budget</DialogTitle>
+              <DialogDescription>Are you sure you want to delete this budget? This action cannot be undone.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid gap-4 md:grid-cols-2">
           {budgets?.map((budget, i) => (
@@ -122,10 +140,10 @@ export default function BudgetsPage() {
                       <Badge variant={getProgressVariant(budget.percentage)}>
                         {Math.round(budget.percentage)}%
                       </Badge>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(budget)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(budget)} aria-label="Edit budget">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteMutation.mutate(budget.id)}>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(budget.id)} aria-label="Delete budget">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

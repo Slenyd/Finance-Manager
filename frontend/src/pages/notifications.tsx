@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notificationApi } from '@/api/endpoints';
+import { notificationApi } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { formatDate } from '@/lib/utils';
 import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
@@ -69,7 +72,7 @@ export default function NotificationsPage() {
                           <p className="text-xs text-muted-foreground mt-1">{formatDate(notification.createdAt)}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(notification.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(notification.id)} aria-label="Delete notification">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -82,6 +85,19 @@ export default function NotificationsPage() {
             </CardContent>
           </Card>
         </StaggerItem>
+
+        <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Notification</DialogTitle>
+              <DialogDescription>Are you sure you want to delete this notification?</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTransition>
   );

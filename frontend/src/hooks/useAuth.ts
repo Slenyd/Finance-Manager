@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '@/api/endpoints';
+import { authApi } from '@/api';
 import { useAuthStore } from '@/store/auth';
 
 export function useLogin() {
@@ -12,7 +12,7 @@ export function useLogin() {
     onSuccess: (res, variables) => {
       const { user, accessToken, refreshToken } = res.data.data!;
       login(user, accessToken, refreshToken, variables.rememberMe ?? false);
-      navigate('/loading');
+      navigate('/dashboard', { replace: true });
     },
   });
 }
@@ -43,13 +43,10 @@ export function useLogout() {
 }
 
 export function useProfile() {
-  const setUser = useAuthStore((s) => s.setUser);
-
   return useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const res = await authApi.getProfile();
-      setUser(res.data.data!.user);
       return res.data.data!.user;
     },
     retry: false,

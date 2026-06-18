@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { resetPasswordSchema, ResetPasswordForm } from '@/schemas';
-import { authApi } from '@/api/endpoints';
+import { authApi } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

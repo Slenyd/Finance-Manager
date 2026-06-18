@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { transactionApi } from '@/api/endpoints';
+import { transactionApi } from '@/api';
 import { transactionSchema, TransactionForm as TransactionFormType } from '@/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
