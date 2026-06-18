@@ -13,7 +13,7 @@ export const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '5000', 10),
   database: {
-    url: requireEnv('DATABASE_URL'),
+    url: process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL || requireEnv('DATABASE_URL'),
   },
   jwt: {
     accessSecret: requireEnv('JWT_ACCESS_SECRET'),
