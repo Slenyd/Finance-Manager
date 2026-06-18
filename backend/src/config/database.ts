@@ -6,14 +6,15 @@ const globalForPrisma = globalThis as unknown as {
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   globalForPrisma.prisma = prisma;
 }
 
-const shutdown = async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-};
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+if (!process.env.VERCEL) {
+  const shutdown = async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}
