@@ -21,6 +21,7 @@ const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
+  timeout: 15000,
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -62,7 +63,6 @@ api.interceptors.response.use(
         );
         const { accessToken: newToken, refreshToken: newRefreshToken } = data.data;
         const store = useAuthStore.getState();
-        store.setAccessToken(newToken);
         store.login(store.user!, newToken, newRefreshToken, store.rememberMe);
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;

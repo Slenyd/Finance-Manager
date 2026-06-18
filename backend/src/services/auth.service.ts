@@ -69,7 +69,7 @@ export class AuthService {
     });
 
     const tokenFamily = uuidv4();
-    const accessToken = this.generateAccessToken(user.id, user.role);
+    const accessToken = this.generateAccessToken(user.id, user.role, { name: user.name, email: user.email, isVerified: user.isVerified });
     const refreshToken = this.generateRefreshToken(user.id, user.role, tokenFamily);
     const refreshDays = data.rememberMe ? 30 : 1;
     const expiresAt = new Date(Date.now() + refreshDays * 24 * 60 * 60 * 1000);
@@ -123,7 +123,7 @@ export class AuthService {
     }
 
     const newTokenFamily = uuidv4();
-    const accessToken = this.generateAccessToken(user.id, user.role);
+    const accessToken = this.generateAccessToken(user.id, user.role, { name: user.name, email: user.email, isVerified: user.isVerified });
     const refreshToken = this.generateRefreshToken(user.id, user.role, newTokenFamily);
     const remainingMs = storedToken.expiresAt.getTime() - Date.now();
     const expiresAt = new Date(Date.now() + Math.max(remainingMs, 24 * 60 * 60 * 1000));
@@ -219,8 +219,8 @@ export class AuthService {
     await prisma.user.update({ where: { id: userId }, data: updateData });
   }
 
-  private generateAccessToken(userId: string, role: string): string {
-    const payload: JwtPayload = { userId, role, type: 'access' };
+  private generateAccessToken(userId: string, role: string, extras?: { name: string; email: string; isVerified: boolean }): string {
+    const payload: JwtPayload = { userId, role, type: 'access', ...extras };
     return jwt.sign(payload, config.jwt.accessSecret, {
       expiresIn: config.jwt.accessExpiresIn as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`,
     });

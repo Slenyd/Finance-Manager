@@ -2,11 +2,18 @@ import { prisma } from '../config/database';
 
 export class NotificationService {
   async findAll(userId: string) {
-    return prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const [notifications, unreadResult] = await Promise.all([
+      prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      prisma.notification.aggregate({
+        where: { userId, isRead: false },
+        _count: true,
+      }),
+    ]);
+    return { notifications, unreadCount: unreadResult._count };
   }
 
   async getUnreadCount(userId: string) {

@@ -49,4 +49,7 @@ export interface JwtPayload {
   role: string;
   type: 'access' | 'refresh';
   tokenFamily?: string;
+  name?: string;
+  email?: string;
+  isVerified?: boolean;
 }

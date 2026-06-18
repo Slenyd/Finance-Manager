@@ -7,6 +7,10 @@ interface ThemeState {
   setDark: (dark: boolean) => void;
 }
 
+function applyDarkClass(isDark: boolean) {
+  document.documentElement.classList.toggle('dark', isDark);
+}
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
@@ -14,14 +18,19 @@ export const useThemeStore = create<ThemeState>()(
       toggle: () =>
         set((state) => {
           const newDark = !state.isDark;
-          document.documentElement.classList.toggle('dark', newDark);
+          applyDarkClass(newDark);
           return { isDark: newDark };
         }),
       setDark: (dark) => {
-        document.documentElement.classList.toggle('dark', dark);
+        applyDarkClass(dark);
         set({ isDark: dark });
       },
     }),
-    { name: 'theme-storage' },
+    {
+      name: 'theme-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state) applyDarkClass(state.isDark);
+      },
+    },
   ),
 );

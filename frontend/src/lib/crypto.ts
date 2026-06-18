@@ -5,12 +5,6 @@ export function generateId(): string {
 }
 
 function obfuscate(data: string): string {
-  const encoded = new TextEncoder().encode(data);
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-  let result = '';
-  for (let i = 0; i < encoded.length; i++) {
-    result += charset[encoded[i] % charset.length];
-  }
   const raw = btoa(data);
   return raw.split('').reverse().join('');
 }

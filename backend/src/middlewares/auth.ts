@@ -3,13 +3,12 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { AuthenticatedRequest, JwtPayload } from '../interfaces';
 import { AuthenticationError, AuthorizationError } from '../utils/errors';
-import { prisma } from '../config/database';
 
-export const authenticate = async (
+export const authenticate = (
   req: AuthenticatedRequest,
   _res: Response,
   next: NextFunction,
-): Promise<void> => {
+): void => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -23,27 +22,14 @@ export const authenticate = async (
       throw new AuthenticationError('Invalid token type');
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isVerified: true,
-        isLocked: true,
-      },
-    });
+    req.user = {
+      id: decoded.userId,
+      name: decoded.name ?? '',
+      email: decoded.email ?? '',
+      role: decoded.role,
+      isVerified: decoded.isVerified ?? true,
+    };
 
-    if (!user) {
-      throw new AuthenticationError('User not found');
-    }
-
-    if (user.isLocked) {
-      throw new AuthenticationError('Account is locked');
-    }
-
-    req.user = user;
     next();
   } catch (error) {
     if (error instanceof AuthenticationError) {

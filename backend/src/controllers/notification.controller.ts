@@ -7,8 +7,7 @@ const notificationService = new NotificationService();
 
 export class NotificationController {
   findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const notifications = await notificationService.findAll(req.user!.id);
-    const unreadCount = await notificationService.getUnreadCount(req.user!.id);
+    const { notifications, unreadCount } = await notificationService.findAll(req.user!.id);
     res.json({ success: true, data: notifications, meta: { unreadCount } });
   });
 
