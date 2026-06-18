@@ -88,7 +88,7 @@ export default function DashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
+                    <Tooltip cursor={false} contentStyle={{ background: 'transparent', border: 'none', boxShadow: 'none' }} />
                     <Bar dataKey="income" fill="#22c55e" name="Income" />
                     <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
                   </BarChart>
