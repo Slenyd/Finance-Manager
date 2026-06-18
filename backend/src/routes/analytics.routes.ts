@@ -12,5 +12,6 @@ router.get('/monthly-spending', controller.getMonthlySpending);
 router.get('/category-breakdown', controller.getCategoryBreakdown);
 router.get('/cash-flow', controller.getCashFlow);
 router.get('/net-worth', controller.getNetWorth);
+router.get('/overview', controller.getOverview);
 
 export default router;

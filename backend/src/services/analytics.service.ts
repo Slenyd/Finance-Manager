@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { Prisma } from '@prisma/client';
 import { calculateFinancialHealth } from '../utils/helpers';
 
 export class AnalyticsService {
@@ -138,6 +139,14 @@ export class AnalyticsService {
     return this.getMonthlySpending(userId, months);
   }
 
+  async getOverview(userId: string) {
+    const [dashboard, monthlySpending] = await Promise.all([
+      this.getDashboard(userId),
+      this.getMonthlySpending(userId, 6),
+    ]);
+    return { dashboard, monthlySpending };
+  }
+
   async getNetWorth(userId: string) {
     const [incomeAgg, expenseAgg] = await Promise.all([
       prisma.transaction.aggregate({
@@ -152,15 +161,14 @@ export class AnalyticsService {
 
     const currentNetWorth = (Number(incomeAgg._sum.amount) || 0) - (Number(expenseAgg._sum.amount) || 0);
 
-    const monthlySnapshots = await prisma.$queryRawUnsafe<{ month: string; net: number }[]>(
-      `SELECT
+    const monthlySnapshots = await prisma.$queryRaw<{ month: string; net: number }[]>(
+      Prisma.sql`SELECT
         to_char(date, 'YYYY-MM') as month,
         SUM(CASE WHEN type = 'INCOME' THEN amount ELSE -amount END) as net
       FROM "transactions"
-      WHERE "user_id" = $1
+      WHERE "user_id" = ${userId}
       GROUP BY to_char(date, 'YYYY-MM')
       ORDER BY month ASC`,
-      userId,
     );
 
     let runningTotal = 0;

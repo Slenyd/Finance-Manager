@@ -16,10 +16,6 @@ export class NotificationService {
     return { notifications, unreadCount: unreadResult._count };
   }
 
-  async getUnreadCount(userId: string) {
-    return prisma.notification.count({ where: { userId, isRead: false } });
-  }
-
   async markAsRead(userId: string, id: string) {
     return prisma.notification.updateMany({
       where: { id, userId },

@@ -1,52 +1,33 @@
-import { Response, NextFunction } from 'express';
+import { Response } from 'express';
 import { BudgetService } from '../services';
 import { AuthenticatedRequest } from '../interfaces';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const budgetService = new BudgetService();
 
 export class BudgetController {
-  async findAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const budgets = await budgetService.findAll(req.user!.id);
-      res.json({ success: true, data: budgets });
-    } catch (error) {
-      next(error);
-    }
-  }
+  findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const budgets = await budgetService.findAll(req.user!.id);
+    res.json({ success: true, data: budgets });
+  });
 
-  async findById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const budget = await budgetService.findById(req.user!.id, req.params.id);
-      res.json({ success: true, data: budget });
-    } catch (error) {
-      next(error);
-    }
-  }
+  findById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const budget = await budgetService.findById(req.user!.id, req.params.id);
+    res.json({ success: true, data: budget });
+  });
 
-  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const budget = await budgetService.create(req.user!.id, req.body);
-      res.status(201).json({ success: true, data: budget, message: 'Budget created' });
-    } catch (error) {
-      next(error);
-    }
-  }
+  create = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const budget = await budgetService.create(req.user!.id, req.body);
+    res.status(201).json({ success: true, data: budget, message: 'Budget created' });
+  });
 
-  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      const budget = await budgetService.update(req.user!.id, req.params.id, req.body);
-      res.json({ success: true, data: budget, message: 'Budget updated' });
-    } catch (error) {
-      next(error);
-    }
-  }
+  update = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const budget = await budgetService.update(req.user!.id, req.params.id, req.body);
+    res.json({ success: true, data: budget, message: 'Budget updated' });
+  });
 
-  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-    try {
-      await budgetService.delete(req.user!.id, req.params.id);
-      res.json({ success: true, message: 'Budget deleted' });
-    } catch (error) {
-      next(error);
-    }
-  }
+  delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await budgetService.delete(req.user!.id, req.params.id);
+    res.json({ success: true, message: 'Budget deleted' });
+  });
 }

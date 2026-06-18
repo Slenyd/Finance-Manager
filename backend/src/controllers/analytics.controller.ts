@@ -38,4 +38,10 @@ export class AnalyticsController {
     const data = await analyticsService.getNetWorth(req.user!.id);
     res.json({ success: true, data });
   });
+
+  getOverview = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=60');
+    const data = await analyticsService.getOverview(req.user!.id);
+    res.json({ success: true, data });
+  });
 }
