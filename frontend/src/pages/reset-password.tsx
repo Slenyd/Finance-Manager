@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label htmlFor="password">New password</Label>
+              <Label htmlFor="password">New password <span className="text-destructive">*</span></Label>
               {errors.password && (
                 <span className="text-xs text-destructive font-medium animate-scale-in">Required</span>
               )}
@@ -86,7 +86,7 @@ export default function ResetPasswordPage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label htmlFor="passwordConfirmation">Confirm password</Label>
+              <Label htmlFor="passwordConfirmation">Confirm password <span className="text-destructive">*</span></Label>
               {errors.passwordConfirmation && (
                 <span className="text-xs text-destructive font-medium animate-scale-in">Required</span>
               )}

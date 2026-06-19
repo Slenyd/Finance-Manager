@@ -42,7 +42,7 @@ export default function LoginPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
               {errors.email && (
                 <span className="text-xs text-destructive font-medium animate-scale-in">Required</span>
               )}
@@ -51,7 +51,7 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
               {errors.password && (
                 <span className="text-xs text-destructive font-medium animate-scale-in">Required</span>
               )}

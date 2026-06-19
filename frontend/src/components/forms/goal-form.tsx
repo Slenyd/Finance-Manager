@@ -89,13 +89,13 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Goal Name</Label>
+            <Label htmlFor="name">Goal Name <span className="text-destructive">*</span></Label>
             <Input id="name" placeholder="e.g. Emergency Fund" {...register('name')} />
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="targetAmount">Target Amount ($)</Label>
+              <Label htmlFor="targetAmount">Target Amount ($) <span className="text-destructive">*</span></Label>
               <Input id="targetAmount" type="number" step="0.01" placeholder="0.00" {...register('targetAmount', { valueAsNumber: true })} />
               {errors.targetAmount && <p className="text-xs text-destructive">{errors.targetAmount.message}</p>}
             </div>

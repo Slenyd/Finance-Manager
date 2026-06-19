@@ -40,7 +40,7 @@ export function ContributeFormDialog({ open, onOpenChange, goalId, goalName }: P
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($)</Label>
+            <Label htmlFor="amount">Amount ($) <span className="text-destructive">*</span></Label>
             <Input id="amount" type="number" step="0.01" placeholder="0.00" {...register('amount', { valueAsNumber: true, required: true, min: 0.01 })} />
             {errors.amount && <p className="text-xs text-destructive">Enter a valid amount</p>}
           </div>

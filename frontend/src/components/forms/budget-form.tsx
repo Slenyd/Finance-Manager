@@ -120,7 +120,7 @@ export function BudgetFormDialog({ open, onOpenChange, budget, categories }: Pro
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="limit">Limit ($)</Label>
+              <Label htmlFor="limit">Limit ($) <span className="text-destructive">*</span></Label>
               <Input id="limit" type="number" step="0.01" placeholder="0.00" {...register('limit', { valueAsNumber: true })} />
               {errors.limit && <p className="text-xs text-destructive">{errors.limit.message}</p>}
             </div>

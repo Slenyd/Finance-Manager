@@ -25,6 +25,7 @@ const CURRENCIES = [
   { value: 'BRL', label: 'BRL (R$)', symbol: 'R$', locale: 'pt-BR' },
   { value: 'MXN', label: 'MXN (MX$)', symbol: 'MX$', locale: 'es-MX' },
   { value: 'CHF', label: 'CHF (Fr.)', symbol: 'Fr.', locale: 'de-CH' },
+  { value: 'ILS', label: 'ILS (\u20AA)', symbol: '\u20AA', locale: 'he-IL' },
 ];
 
 export default function SettingsPage() {
@@ -212,11 +213,11 @@ export default function SettingsPage() {
             </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); profileMutation.mutate({ name: profileName, email: profileEmail }); }} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="profile-name">Name</Label>
+                <Label htmlFor="profile-name">Name <span className="text-destructive">*</span></Label>
                 <Input id="profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="profile-email">Email</Label>
+                <Label htmlFor="profile-email">Email <span className="text-destructive">*</span></Label>
                 <Input id="profile-email" type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
               </div>
               {profileMutation.isError && (
@@ -240,15 +241,15 @@ export default function SettingsPage() {
             </DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); passwordMutation.mutate({ currentPassword, newPassword, newPasswordConfirmation: confirmPassword }); }} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
+                <Label htmlFor="current-password">Current Password <span className="text-destructive">*</span></Label>
                 <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
+                <Label htmlFor="new-password">New Password <span className="text-destructive">*</span></Label>
                 <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Label htmlFor="confirm-password">Confirm New Password <span className="text-destructive">*</span></Label>
                 <Input id="confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </div>
               {newPassword && confirmPassword && newPassword !== confirmPassword && (
@@ -275,7 +276,7 @@ export default function SettingsPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="delete-confirm">Type <strong>DELETE</strong> to confirm</Label>
+                <Label htmlFor="delete-confirm">Type <strong>DELETE</strong> to confirm <span className="text-destructive">*</span></Label>
                 <Input id="delete-confirm" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="DELETE" />
               </div>
               {deleteMutation.isError && (

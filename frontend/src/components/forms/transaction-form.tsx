@@ -175,7 +175,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">Amount <span className="text-destructive">*</span></Label>
               <Input id="amount" type="number" step="0.01" placeholder="0.00" {...register('amount', { valueAsNumber: true })} />
               {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
             </div>
@@ -194,7 +194,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description <span className="text-destructive">*</span></Label>
             <Input id="description" placeholder="What was this for?" {...register('description')} />
             {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
           </div>

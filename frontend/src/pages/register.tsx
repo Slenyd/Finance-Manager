@@ -28,22 +28,22 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Name <span className="text-destructive">*</span></Label>
             <Input id="name" placeholder="John Doe" {...register('name')} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
             <Input id="email" type="email" placeholder="user@example.com" {...register('email')} />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
             <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="passwordConfirmation">Confirm Password</Label>
+            <Label htmlFor="passwordConfirmation">Confirm Password <span className="text-destructive">*</span></Label>
             <Input id="passwordConfirmation" type="password" placeholder="••••••••" {...register('passwordConfirmation')} />
             {errors.passwordConfirmation && <p className="text-sm text-destructive">{errors.passwordConfirmation.message}</p>}
           </div>
