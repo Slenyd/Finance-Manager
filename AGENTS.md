@@ -115,6 +115,8 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - `backend/src/config/index.ts`: added cronSecret field
 - `backend/vercel.json`: Vercel Cron config for daily recurring transactions
 - `frontend/src/api/uploads.ts`: receipt upload/delete API module
+- `frontend/src/components/forms/transaction-form.tsx`: receipt file input with upload/remove, Paperclip icon
+- `frontend/src/pages/transactions.tsx`: receipt indicator (Paperclip) in desktop + mobile views
 - `backend/prisma/schema.prisma`: composite indexes on Transaction
 - `frontend/src/api/index.ts`: barrel re-export from 8 domain modules (includes uploads)
 - `frontend/src/api/client.ts`: 15s timeout, no `window.location.href` redirect
@@ -134,7 +136,6 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 
 ## Known Issues / Things That Could Still Be Improved
 - Git auto-deploy not set up on Vercel — must deploy manually via CLI
-- File upload UI on frontend not yet wired (backend API is ready; frontend `TransactionFormDialog` needs receipt file input)
 
 ## How to Deploy
 ```powershell

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { transactionApi } from '@/api';
+import { transactionApi, uploadApi } from '@/api';
 import { transactionSchema, TransactionForm as TransactionFormType } from '@/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { AxiosError } from 'axios';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Category } from '@/types';
+import { Paperclip, X, Loader2 } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -24,6 +25,7 @@ interface Props {
     date: string;
     paymentMethod?: string | null;
     notes?: string | null;
+    receiptUrl?: string | null;
     tags: string[];
   };
   categories: Category[];
@@ -34,6 +36,11 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
   const isEditing = !!transaction;
   const [categoryName, setCategoryName] = useState('');
   const [typeText, setTypeText] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(transaction?.receiptUrl ?? null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<TransactionFormType>({
     resolver: zodResolver(transactionSchema),
@@ -57,11 +64,15 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       setValue('paymentMethod', transaction.paymentMethod || '');
       setValue('notes', transaction.notes || '');
       setValue('tags', transaction.tags.join(', '));
+      setReceiptUrl(transaction.receiptUrl ?? null);
     } else {
       reset();
       setTypeText('EXPENSE');
       setCategoryName('');
+      setReceiptUrl(null);
     }
+    setReceiptFile(null);
+    setUploadError('');
   }, [transaction, setValue, reset, categories]);
 
   const createMutation = useMutation({
@@ -74,6 +85,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       notes?: string;
       tags: string[];
       categoryId?: string;
+      receiptUrl?: string | null;
     }) => transactionApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -93,6 +105,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       notes?: string;
       tags: string[];
       categoryId?: string;
+      receiptUrl?: string | null;
     }) => transactionApi.update(transaction!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -102,7 +115,24 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
     },
   });
 
-  const onSubmit = (data: TransactionFormType) => {
+  const onSubmit = async (data: TransactionFormType) => {
+    let finalReceiptUrl = receiptUrl;
+
+    if (receiptFile) {
+      setUploading(true);
+      setUploadError('');
+      try {
+        const res = await uploadApi.uploadReceipt(receiptFile);
+        finalReceiptUrl = res.data.data.url;
+        setReceiptUrl(finalReceiptUrl);
+      } catch {
+        setUploadError('Failed to upload receipt. Please try again.');
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+
     const resolvedType = typeText.toUpperCase().trim();
     const matchedCategory = categories.find(
       (c) => c.name.toLowerCase() === categoryName.trim().toLowerCase(),
@@ -116,6 +146,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       notes?: string;
       tags: string[];
       categoryId?: string;
+      receiptUrl?: string | null;
     } = {
       amount: data.amount,
       description: data.description,
@@ -124,6 +155,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       paymentMethod: data.paymentMethod || '',
       notes: data.notes || '',
       tags: data.tags ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+      receiptUrl: finalReceiptUrl,
     };
     if (matchedCategory) payload.categoryId = matchedCategory.id;
     if (isEditing) {
@@ -194,6 +226,70 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
             <Label htmlFor="tags">Tags (comma separated)</Label>
             <Input id="tags" placeholder="food, groceries" {...register('tags')} />
           </div>
+          <div className="space-y-2">
+            <Label>Receipt</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (file.size > 5 * 1024 * 1024) {
+                    setUploadError('File must be under 5MB');
+                    e.target.value = '';
+                    return;
+                  }
+                  setReceiptFile(file);
+                  setUploadError('');
+                }
+              }}
+            />
+            {receiptUrl ? (
+              <div className="flex items-center gap-2 rounded-md border border-input px-3 py-2">
+                <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline truncate flex-1">
+                  View receipt
+                </a>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => { setReceiptUrl(null); setReceiptFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                  aria-label="Remove receipt"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : receiptFile ? (
+              <div className="flex items-center gap-2 rounded-md border border-input px-3 py-2">
+                <Paperclip className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="text-sm truncate flex-1">{receiptFile.name}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => { setReceiptFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                  aria-label="Remove receipt file"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="h-4 w-4 mr-2" /> Attach receipt
+              </Button>
+            )}
+            {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
+          </div>
           {createMutation.error && (
             <p className="text-sm text-destructive">{(createMutation.error as AxiosError<{message?: string}>).response?.data?.message || createMutation.error.message || 'Failed to save transaction'}</p>
           )}
@@ -202,7 +298,8 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending || uploading}>
+              {uploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isEditing ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>

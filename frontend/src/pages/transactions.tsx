@@ -10,7 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Plus, Search, Trash2, Pencil } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, Paperclip } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 const TransactionFormDialog = lazy(() => import('@/components/forms/transaction-form').then(m => ({ default: m.TransactionFormDialog })));
@@ -31,6 +31,7 @@ export default function TransactionsPage() {
     date: string;
     paymentMethod?: string | null;
     notes?: string | null;
+    receiptUrl?: string | null;
     tags: string[];
   } | undefined>(undefined);
 
@@ -75,6 +76,7 @@ export default function TransactionsPage() {
     date: string;
     paymentMethod?: string | null;
     notes?: string | null;
+    receiptUrl?: string | null;
     tags: string[];
   }) => {
     setEditingTx(tx);
@@ -182,6 +184,13 @@ export default function TransactionsPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
+                                {tx.receiptUrl && (
+                                  <a href={tx.receiptUrl} target="_blank" rel="noopener noreferrer" aria-label="View receipt">
+                                    <Button variant="ghost" size="icon" type="button">
+                                      <Paperclip className="h-4 w-4" />
+                                    </Button>
+                                  </a>
+                                )}
                                 <Button variant="ghost" size="icon" onClick={() => openEdit(tx)} aria-label="Edit transaction">
                                   <Pencil className="h-4 w-4" />
                                 </Button>
@@ -212,6 +221,13 @@ export default function TransactionsPage() {
                         <div className="flex items-center justify-between">
                           <span className="mobile-table-value">{tx.description}</span>
                           <div className="flex gap-1 shrink-0">
+                            {tx.receiptUrl && (
+                              <a href={tx.receiptUrl} target="_blank" rel="noopener noreferrer" aria-label="View receipt">
+                                <Button variant="ghost" size="icon" type="button">
+                                  <Paperclip className="h-4 w-4" />
+                                </Button>
+                              </a>
+                            )}
                             <Button variant="ghost" size="icon" onClick={() => openEdit(tx)} aria-label="Edit transaction">
                               <Pencil className="h-4 w-4" />
                             </Button>
