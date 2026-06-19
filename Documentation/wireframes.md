@@ -2,6 +2,8 @@
 
 > Preliminary screen designs for Coin Toss. All pages use shadcn/ui components with a warm brown (`#704c35`) color scheme and support light/dark mode.
 
+Actual screenshots are in [`screenshots/`](screenshots/) (desktop at 1440×900, mobile at 390×844, both at 2× DPI).
+
 ---
 
 ## Layout Shell
@@ -53,6 +55,8 @@
 
 ## 1. Login Page (`/login`)
 
+**Desktop:** ![Login Page](screenshots/login.png) | **Mobile:** ![Login Page Mobile](screenshots/login-mobile.png)
+
 ```
 ┌──────────────────────────────────────┐
 │            background gradient        │
@@ -88,6 +92,8 @@
 
 ## 2. Register Page (`/register`)
 
+**Desktop:** ![Register Page](screenshots/register.png) | **Mobile:** ![Register Page Mobile](screenshots/register-mobile.png)
+
 ```
 ┌──────────────────────────────────────┐
 │        ┌──────────────────┐          │
@@ -122,6 +128,8 @@
 
 ## 3. Forgot Password Page (`/forgot-password`)
 
+**Desktop:** ![Forgot Password Page](screenshots/forgot-password.png) | **Mobile:** ![Forgot Password Mobile](screenshots/forgot-password-mobile.png)
+
 ```
 ┌──────────────────────────────────────┐
 │        ┌──────────────────┐          │
@@ -148,6 +156,8 @@
 
 ## 4. Reset Password Page (`/reset-password?token=xxx`)
 
+**Desktop:** ![Reset Password Page](screenshots/reset-password.png) | **Mobile:** ![Reset Password Mobile](screenshots/reset-password-mobile.png)
+
 ```
 ┌──────────────────────────────────────┐
 │        ┌──────────────────┐          │
@@ -173,6 +183,8 @@
 ---
 
 ## 5. Dashboard (`/dashboard`)
+
+**Desktop:** ![Dashboard](screenshots/dashboard.png) | **Mobile:** ![Dashboard Mobile](screenshots/dashboard-mobile.png)
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -219,6 +231,8 @@
 
 ## 6. Transactions Page (`/transactions`)
 
+**Desktop:** ![Transactions Page](screenshots/transactions.png) | **Mobile:** ![Transactions Mobile](screenshots/transactions-mobile.png)
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │  Transactions           [+ Add Transaction]          │
@@ -251,6 +265,8 @@
 ---
 
 ## 7. Budgets Page (`/budgets`)
+
+**Desktop:** ![Budgets Page](screenshots/budgets.png) | **Mobile:** ![Budgets Mobile](screenshots/budgets-mobile.png)
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -285,6 +301,8 @@
 
 ## 8. Goals Page (`/goals`)
 
+**Desktop:** ![Goals Page](screenshots/goals.png) | **Mobile:** ![Goals Mobile](screenshots/goals-mobile.png)
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │  Savings Goals                  [+ Add Goal]        │
@@ -311,6 +329,8 @@
 ---
 
 ## 9. Analytics Page (`/analytics`)
+
+**Desktop:** ![Analytics Page](screenshots/analytics.png) | **Mobile:** ![Analytics Mobile](screenshots/analytics-mobile.png)
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -349,6 +369,8 @@
 
 ## 10. Notifications Page (`/notifications`)
 
+**Desktop:** ![Notifications Page](screenshots/notifications.png) | **Mobile:** ![Notifications Mobile](screenshots/notifications-mobile.png)
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │  Notifications (3)                    [Mark all read]│
@@ -376,6 +398,8 @@
 ---
 
 ## 11. Settings Page (`/settings`)
+
+**Desktop:** ![Settings Page](screenshots/settings.png) | **Mobile:** ![Settings Mobile](screenshots/settings-mobile.png)
 
 ```
 ┌──────────────────────────────────────────────────────┐
