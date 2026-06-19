@@ -184,7 +184,7 @@ export default function SettingsPage() {
               <CardDescription>Sign out of your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" onClick={() => { logout.mutate(); navigate('/login'); }}>Sign Out</Button>
+              <Button variant="outline" disabled={logout.isPending} onClick={() => { logout.mutate(); navigate('/login'); }}>{logout.isPending ? 'Signing out...' : 'Sign Out'}</Button>
             </CardContent>
           </Card>
         </StaggerItem>

@@ -43,8 +43,8 @@ export default function NotificationsPage() {
               <Badge>{data.unreadCount} unread</Badge>
             )}
           </div>
-          <Button variant="outline" onClick={() => markAllRead.mutate()}>
-            <CheckCheck className="h-4 w-4 mr-2" /> Mark all read
+          <Button variant="outline" disabled={markAllRead.isPending} onClick={() => markAllRead.mutate()}>
+            <CheckCheck className="h-4 w-4 mr-2" /> {markAllRead.isPending ? 'Marking...' : 'Mark all read'}
           </Button>
         </div>
 
@@ -100,7 +100,7 @@ export default function NotificationsPage() {
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+              <Button variant="destructive" disabled={deleteMutation.isPending} onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

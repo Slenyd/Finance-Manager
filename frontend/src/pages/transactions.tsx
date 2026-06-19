@@ -111,7 +111,7 @@ export default function TransactionsPage() {
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Delete</Button>
+              <Button variant="destructive" disabled={deleteMutation.isPending} onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

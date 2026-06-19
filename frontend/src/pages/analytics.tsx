@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
     },
   });
 
-  const { data: cashFlow } = useQuery({
+const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = useQuery({
     queryKey: ['cashFlow'],
     queryFn: async () => {
       const res = await analyticsApi.getCashFlow(12);
@@ -45,10 +45,11 @@ export default function AnalyticsPage() {
     },
   });
 
-  const hasError = dashboardError || monthlyError || categoriesError;
-  const retryAll = () => { refetchDashboard(); refetchMonthly(); refetchCategories(); };
+  const isLoading = loadingMonthly && loadingCategories;
+const hasError = dashboardError || monthlyError || categoriesError || cashFlowError;
+  const retryAll = () => { refetchDashboard(); refetchMonthly(); refetchCategories(); refetchCashFlow(); };
 
-if (loadingMonthly && loadingCategories) {
+  if (isLoading) {
     return (
       <PageTransition>
         <div className="space-y-6">
