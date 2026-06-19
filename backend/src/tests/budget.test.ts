@@ -87,9 +87,9 @@ describe('Budgets API', () => {
       .send({
         categoryId,
         limit: 250.00,
-        period: 'MONTHLY',
+        period: 'YEARLY',
         startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
       });
 
     const res = await request(app)
@@ -108,11 +108,12 @@ describe('Budgets API', () => {
   });
 
   it('should delete a budget', async () => {
+    const incomeCat = await getDefaultCategory(userId, 'INCOME');
     const created = await request(app)
       .post('/api/v1/budgets')
       .set(auth())
       .send({
-        categoryId,
+        categoryId: incomeCat.id,
         limit: 100.00,
         period: 'MONTHLY',
         startDate: new Date().toISOString(),

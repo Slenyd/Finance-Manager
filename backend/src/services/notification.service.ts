@@ -1,3 +1,4 @@
+import { NotificationType } from '@prisma/client';
 import { prisma } from '../config/database';
 
 export class NotificationService {
@@ -30,7 +31,7 @@ export class NotificationService {
     });
   }
 
-  async create(userId: string, title: string, message: string, type = 'info') {
+  async create(userId: string, title: string, message: string, type: NotificationType = 'INFO') {
     return prisma.notification.create({
       data: { userId, title, message, type },
     });

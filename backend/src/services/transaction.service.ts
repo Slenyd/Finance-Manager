@@ -110,7 +110,13 @@ export class TransactionService {
     if (data.amount !== undefined) updateData.amount = data.amount;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.type !== undefined) updateData.type = data.type;
-    if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId! } };
+    if (data.categoryId !== undefined) {
+      if (data.categoryId === null) {
+        updateData.category = { disconnect: true };
+      } else {
+        updateData.category = { connect: { id: data.categoryId } };
+      }
+    }
     if (data.date !== undefined) updateData.date = new Date(data.date);
     if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
     if (data.notes !== undefined) updateData.notes = data.notes;

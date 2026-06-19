@@ -248,8 +248,10 @@ export class AuthService {
   }
 
   async deleteAccount(userId: string) {
-    await prisma.refreshToken.deleteMany({ where: { userId } });
-    await prisma.user.delete({ where: { id: userId } });
+    await prisma.$transaction([
+      prisma.refreshToken.deleteMany({ where: { userId } }),
+      prisma.user.delete({ where: { id: userId } }),
+    ]);
   }
 
   async forgotPassword(email: string) {

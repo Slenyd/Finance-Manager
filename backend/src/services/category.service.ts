@@ -41,34 +41,28 @@ export class CategoryService {
       throw new AuthorizationError('You cannot delete a default category');
     }
 
-    const otherCategory = await prisma.category.findFirst({
-      where: { userId, type: existing.type, id: { not: id } },
-    });
+    await prisma.$transaction(async (tx) => {
+      const otherCategory = await tx.category.findFirst({
+        where: { userId, type: existing.type, id: { not: id } },
+      });
 
-    const fallbackId = otherCategory?.id || (await this.ensureUncategorized(userId, existing.type));
+      let fallbackId = otherCategory?.id;
+      if (!fallbackId) {
+        const fallback = await tx.category.create({
+          data: { userId, name: 'Uncategorized', icon: 'circle', color: '#6b7280', type: existing.type },
+        });
+        fallbackId = fallback.id;
+      }
 
-    await prisma.$transaction([
-      prisma.transaction.updateMany({
+      await tx.transaction.updateMany({
         where: { categoryId: id, userId },
         data: { categoryId: fallbackId },
-      }),
-      prisma.budget.updateMany({
+      });
+      await tx.budget.updateMany({
         where: { categoryId: id, userId },
         data: { categoryId: fallbackId },
-      }),
-      prisma.category.delete({ where: { id } }),
-    ]);
-  }
-
-  private async ensureUncategorized(userId: string, type: TransactionType): Promise<string> {
-    const existing = await prisma.category.findFirst({
-      where: { userId, name: 'Uncategorized', type },
+      });
+      await tx.category.delete({ where: { id } });
     });
-    if (existing) return existing.id;
-
-    const created = await prisma.category.create({
-      data: { userId, name: 'Uncategorized', icon: 'circle', color: '#6b7280', type },
-    });
-    return created.id;
   }
 }

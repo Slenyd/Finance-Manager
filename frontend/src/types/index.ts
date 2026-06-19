@@ -66,9 +66,10 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: string;
+  type: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS';
   isRead: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface DashboardData {

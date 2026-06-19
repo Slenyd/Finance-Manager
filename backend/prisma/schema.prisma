@@ -9,23 +9,27 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+/// Application user roles
 enum UserRole {
   USER
   ADMIN
 }
 
+/// Transaction flow types
 enum TransactionType {
   INCOME
   EXPENSE
   TRANSFER
 }
 
+/// Budget recurrence periods
 enum BudgetPeriod {
   WEEKLY
   MONTHLY
   YEARLY
 }
 
+/// Recurring transaction intervals
 enum RecurringInterval {
   DAILY
   WEEKLY
@@ -33,6 +37,15 @@ enum RecurringInterval {
   YEARLY
 }
 
+/// Notification severity levels
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+/// Core user account. Owns all financial data.
 model User {
   id              String   @id @default(uuid())
   name            String
@@ -60,10 +73,11 @@ model User {
   @@map("users")
 }
 
+/// Single financial record (income, expense, or transfer).
 model Transaction {
   id            String          @id @default(uuid())
   userId        String          @map("user_id")
-  categoryId    String          @map("category_id")
+  categoryId    String?         @map("category_id")
   amount        Decimal         @db.Decimal(12, 2)
   description   String
   type          TransactionType
@@ -74,7 +88,7 @@ model Transaction {
   isRecurring   Boolean         @default(false) @map("is_recurring")
   tags          String[]
   user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category      Category        @relation(fields: [categoryId], references: [id])
+  category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
 
@@ -85,6 +99,7 @@ model Transaction {
   @@map("transactions")
 }
 
+/// User-defined or default category grouping for transactions and budgets.
 model Category {
   id            String        @id @default(uuid())
   userId        String?       @map("user_id")
@@ -97,10 +112,12 @@ model Category {
   budgets       Budget[]
   recurringTransactions RecurringTransaction[]
 
+  @@unique([userId, name, type])
   @@index([userId])
   @@map("categories")
 }
 
+/// Spending limit per category per period.
 model Budget {
   id         String       @id @default(uuid())
   userId     String       @map("user_id")
@@ -110,15 +127,17 @@ model Budget {
   startDate  DateTime     @map("start_date")
   endDate    DateTime     @map("end_date")
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category   Category     @relation(fields: [categoryId], references: [id])
+  category   Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   createdAt  DateTime     @default(now()) @map("created_at")
   updatedAt  DateTime     @updatedAt @map("updated_at")
 
+  @@unique([userId, categoryId, period])
   @@index([userId])
   @@index([categoryId])
   @@map("budgets")
 }
 
+/// Savings target with progress tracking.
 model SavingsGoal {
   id             String   @id @default(uuid())
   userId         String   @map("user_id")
@@ -134,6 +153,7 @@ model SavingsGoal {
   @@map("savings_goals")
 }
 
+/// Template for auto-generating transactions on a schedule.
 model RecurringTransaction {
   id          String            @id @default(uuid())
   userId      String            @map("user_id")
@@ -149,7 +169,7 @@ model RecurringTransaction {
   nextDate    DateTime          @map("next_date")
   isActive    Boolean           @default(true) @map("is_active")
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category    Category          @relation(fields: [categoryId], references: [id])
+  category    Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
 
@@ -158,21 +178,24 @@ model RecurringTransaction {
   @@map("recurring_transactions")
 }
 
+/// In-app notification for the user.
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id        String          @id @default(uuid())
+  userId    String          @map("user_id")
   title     String
   message   String
-  type      String   @default("info")
-  isRead    Boolean  @default(false) @map("is_read")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
+  type      NotificationType @default(INFO)
+  isRead    Boolean         @default(false) @map("is_read")
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([isRead])
   @@map("notifications")
 }
 
+/// JWT refresh token with family-based theft detection.
 model RefreshToken {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -182,9 +205,9 @@ model RefreshToken {
   isRevoked Boolean  @default(false) @map("is_revoked")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([token])
   @@map("refresh_tokens")
 }
-

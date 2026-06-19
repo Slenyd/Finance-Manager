@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { NotFoundError, ValidationError } from '../utils/errors';
 
@@ -62,10 +63,10 @@ export class GoalService {
     if (amount <= 0) {
       throw new ValidationError({ amount: ['Contribution amount must be positive'] });
     }
-    const goal = await this.findById(userId, id);
+    await this.findById(userId, id);
     return prisma.savingsGoal.update({
       where: { id },
-      data: { currentAmount: Number(goal.currentAmount) + amount },
+      data: { currentAmount: { increment: new Prisma.Decimal(amount) } },
     });
   }
 }

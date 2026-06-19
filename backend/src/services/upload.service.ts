@@ -1,4 +1,5 @@
 import { put, del, head } from '@vercel/blob';
+import { prisma } from '../config/database';
 import { ApiError, ValidationError } from '../utils/errors';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -69,6 +70,11 @@ export class UploadService {
       if (err instanceof ApiError) throw err;
       throw new ApiError(404, 'File not found', 'NOT_FOUND');
     }
+
+    await prisma.transaction.updateMany({
+      where: { receiptUrl: url, userId },
+      data: { receiptUrl: null },
+    });
 
     await del(url);
   }
