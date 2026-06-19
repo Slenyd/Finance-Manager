@@ -8,8 +8,8 @@ const controller = new NotificationController();
 router.use(authenticate);
 
 router.get('/', controller.findAll);
-router.patch('/:id/read', controller.markAsRead);
 router.patch('/read-all', controller.markAllAsRead);
+router.patch('/:id/read', controller.markAsRead);
 router.delete('/:id', controller.delete);
 
 export default router;
