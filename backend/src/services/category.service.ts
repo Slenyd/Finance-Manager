@@ -47,16 +47,17 @@ export class CategoryService {
 
     const fallbackId = otherCategory?.id || (await this.ensureUncategorized(userId, existing.type));
 
-    await prisma.transaction.updateMany({
-      where: { categoryId: id, userId },
-      data: { categoryId: fallbackId },
-    });
-    await prisma.budget.updateMany({
-      where: { categoryId: id, userId },
-      data: { categoryId: fallbackId },
-    });
-
-    await prisma.category.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.transaction.updateMany({
+        where: { categoryId: id, userId },
+        data: { categoryId: fallbackId },
+      }),
+      prisma.budget.updateMany({
+        where: { categoryId: id, userId },
+        data: { categoryId: fallbackId },
+      }),
+      prisma.category.delete({ where: { id } }),
+    ]);
   }
 
   private async ensureUncategorized(userId: string, type: TransactionType): Promise<string> {

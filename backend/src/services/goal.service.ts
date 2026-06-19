@@ -1,5 +1,5 @@
 import { prisma } from '../config/database';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 
 export class GoalService {
   async findAll(userId: string) {
@@ -45,8 +45,8 @@ export class GoalService {
     return prisma.savingsGoal.update({
       where: { id },
       data: {
-        ...(data.name && { name: data.name }),
-        ...(data.targetAmount && { targetAmount: data.targetAmount }),
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.targetAmount !== undefined && { targetAmount: data.targetAmount }),
         ...(data.currentAmount !== undefined && { currentAmount: data.currentAmount }),
         ...(data.deadline !== undefined && { deadline: data.deadline ? new Date(data.deadline) : null }),
       },
@@ -59,6 +59,9 @@ export class GoalService {
   }
 
   async contribute(userId: string, id: string, amount: number) {
+    if (amount <= 0) {
+      throw new ValidationError({ amount: ['Contribution amount must be positive'] });
+    }
     const goal = await this.findById(userId, id);
     return prisma.savingsGoal.update({
       where: { id },

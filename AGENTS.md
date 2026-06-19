@@ -77,6 +77,11 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - **Error handler**: production mode returns generic `'Internal server error'` — no leaking `err.message`
 - **Rate limiter**: Lua script `INCR`+`EXPIRE` only on first hit (correct fixed-window); memory store evicts expired entries; Redis failures gracefully fall back
 - **Password reset**: tokens stored as SHA-256 hash in DB; `resetPassword` hashes incoming token before lookup; all refresh tokens revoked after password reset
+- **Validation middleware**: `validate()` now reassigns `req.query` and `req.params` in addition to `req.body` — Zod coercions no longer lost
+- **Falsy value bugs**: `goal.service` and `budget.service` update methods now use `!== undefined` instead of truthiness checks — `0` and `""` are no longer silently ignored
+- **Goal contribution validation**: `contribute()` rejects non-positive amounts with `ValidationError`
+- **Atomic category deletion**: category delete now uses `prisma.$transaction()` for transaction reassignment, budget reassignment, and category deletion — no partial state on failure
+- **Database config**: `database.ts` uses `POSTGRES_PRISMA_URL || DATABASE_URL` fallback chain matching `config/index.ts`
 
 ### Frontend Performance
 - **Frontend API modules split**: `api/endpoints.ts` → 7 domain modules + barrel `index.ts`; old file deleted

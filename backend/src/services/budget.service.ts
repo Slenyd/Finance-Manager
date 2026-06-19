@@ -80,8 +80,8 @@ export class BudgetService {
       data: {
         ...(data.limit !== undefined && { limit: data.limit }),
         ...(data.period !== undefined && { period: data.period }),
-        ...(data.startDate && { startDate: new Date(data.startDate) }),
-        ...(data.endDate && { endDate: new Date(data.endDate) }),
+        ...(data.startDate !== undefined && { startDate: new Date(data.startDate) }),
+        ...(data.endDate !== undefined && { endDate: new Date(data.endDate) }),
       },
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
     });

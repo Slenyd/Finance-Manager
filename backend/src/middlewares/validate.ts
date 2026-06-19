@@ -10,7 +10,9 @@ export const validate = (schema: ZodSchema) => {
         query: req.query,
         params: req.params,
       });
-      req.body = parsed.body;
+      if (parsed.body !== undefined) req.body = parsed.body;
+      if (parsed.query !== undefined) req.query = parsed.query;
+      if (parsed.params !== undefined) req.params = parsed.params;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
