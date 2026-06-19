@@ -49,3 +49,28 @@ export const resetPasswordSchema = z.object({
     path: ['passwordConfirmation'],
   }),
 });
+
+export const updateProfileSchema = z.object({
+  body: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+    email: z.string().email('Invalid email address').optional(),
+  }),
+});
+
+export const changePasswordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: passwordSchema,
+    newPasswordConfirmation: z.string(),
+  }).refine((data) => data.newPassword === data.newPasswordConfirmation, {
+    message: 'Passwords do not match',
+    path: ['newPasswordConfirmation'],
+  }),
+});
+
+export const updatePreferencesSchema = z.object({
+  body: z.object({
+    currency: z.string().min(2).max(10).optional(),
+    locale: z.string().min(2).max(10).optional(),
+  }),
+});

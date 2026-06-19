@@ -44,6 +44,8 @@ model User {
   lockUntil       DateTime?
   resetToken      String?  @map("reset_token")
   resetTokenExpires DateTime?
+  currency        String   @default("USD") @map("currency")
+  locale          String   @default("en-US") @map("locale")
   refreshTokens   RefreshToken[]
   categories      Category[]
   transactions    Transaction[]

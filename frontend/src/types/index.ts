@@ -4,6 +4,8 @@ export interface User {
   email: string;
   role: 'USER' | 'ADMIN';
   isVerified: boolean;
+  currency: string;
+  locale: string;
   createdAt: string;
   updatedAt: string;
 }

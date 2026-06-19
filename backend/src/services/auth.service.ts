@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { prisma } from '../config/database';
 import { config } from '../config';
 import { JwtPayload } from '../interfaces';
-import { AuthenticationError, ConflictError, NotFoundError } from '../utils/errors';
+import { AuthenticationError, ConflictError, NotFoundError, ValidationError } from '../utils/errors';
 import { sendPasswordResetEmail } from '../utils/mailer';
 
 const MAX_FAILED_ATTEMPTS = 5;
@@ -96,6 +96,8 @@ export class AuthService {
         email: user.email,
         role: user.role,
         isVerified: user.isVerified,
+        currency: user.currency,
+        locale: user.locale,
       },
       rememberMe: data.rememberMe ?? false,
     };
@@ -163,6 +165,8 @@ export class AuthService {
         email: true,
         role: true,
         isVerified: true,
+        currency: true,
+        locale: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -171,6 +175,81 @@ export class AuthService {
       throw new NotFoundError('User');
     }
     return { user };
+  }
+
+  async updateProfile(userId: string, data: { name?: string; email?: string }) {
+    if (data.email) {
+      const existing = await prisma.user.findUnique({ where: { email: data.email } });
+      if (existing && existing.id !== userId) {
+        throw new ConflictError('Email already in use');
+      }
+    }
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.name && { name: data.name }),
+        ...(data.email && { email: data.email }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isVerified: true,
+        currency: true,
+        locale: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return { user };
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundError('User');
+    }
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new ValidationError({ currentPassword: ['Current password is incorrect'] });
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+    await prisma.refreshToken.updateMany({
+      where: { userId, isRevoked: false },
+      data: { isRevoked: true },
+    });
+  }
+
+  async updatePreferences(userId: string, data: { currency?: string; locale?: string }) {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.currency !== undefined && { currency: data.currency }),
+        ...(data.locale !== undefined && { locale: data.locale }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isVerified: true,
+        currency: true,
+        locale: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return { user };
+  }
+
+  async deleteAccount(userId: string) {
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+    await prisma.user.delete({ where: { id: userId } });
   }
 
   async forgotPassword(email: string) {

@@ -13,7 +13,6 @@ const BudgetsPage = lazy(() => import('@/pages/budgets'));
 const GoalsPage = lazy(() => import('@/pages/goals'));
 const AnalyticsPage = lazy(() => import('@/pages/analytics'));
 const NotificationsPage = lazy(() => import('@/pages/notifications'));
-const CategoriesPage = lazy(() => import('@/pages/categories'));
 const SettingsPage = lazy(() => import('@/pages/settings'));
 const LoadingPage = lazy(() => import('@/pages/loading'));
 
@@ -38,7 +37,6 @@ export const router = createBrowserRouter([
       { path: 'budgets', element: <BudgetsPage /> },
       { path: 'goals', element: <GoalsPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'categories', element: <CategoriesPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],

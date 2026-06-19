@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services';
 import { AuthenticatedRequest } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
+import { BadRequestError } from '../utils/errors';
 
 const authService = new AuthService();
 
@@ -26,8 +27,7 @@ export class AuthController {
   refresh = asyncHandler(async (req: Request, res: Response) => {
     const token = req.cookies?.refreshToken || req.body?.refreshToken;
     if (!token) {
-      res.status(401).json({ success: false, message: 'No refresh token', code: 'AUTHENTICATION_ERROR' });
-      return;
+      throw new BadRequestError('No refresh token');
     }
     const result = await authService.refresh(token);
     res.cookie('refreshToken', result.refreshToken, {
@@ -51,6 +51,27 @@ export class AuthController {
   getProfile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const result = await authService.getProfile(req.user!.id);
     res.json({ success: true, data: result });
+  });
+
+  updateProfile = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await authService.updateProfile(req.user!.id, req.body);
+    res.json({ success: true, data: result, message: 'Profile updated' });
+  });
+
+  changePassword = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await authService.changePassword(req.user!.id, req.body.currentPassword, req.body.newPassword);
+    res.json({ success: true, message: 'Password changed successfully' });
+  });
+
+  updatePreferences = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await authService.updatePreferences(req.user!.id, req.body);
+    res.json({ success: true, data: result, message: 'Preferences updated' });
+  });
+
+  deleteAccount = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    await authService.deleteAccount(req.user!.id);
+    res.clearCookie('refreshToken');
+    res.json({ success: true, message: 'Account deleted successfully' });
   });
 
   forgotPassword = asyncHandler(async (req: Request, res: Response) => {
