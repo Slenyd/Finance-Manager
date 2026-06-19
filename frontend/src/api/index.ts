@@ -5,3 +5,4 @@ export { budgetApi } from './budgets.js';
 export { goalApi } from './goals.js';
 export { analyticsApi } from './analytics.js';
 export { notificationApi } from './notifications.js';
+export { uploadApi } from './uploads.js';

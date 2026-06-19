@@ -1,9 +1,8 @@
 import rateLimit from 'express-rate-limit';
 import { config } from '../config';
+import { UpstashRateLimitStore } from './rateLimitStore';
 
 const isTest = config.env === 'test';
-
-const validate = { xForwardedForHeader: false };
 
 export const generalLimiter = rateLimit({
   windowMs: config.rateLimit.windowMs,
@@ -16,7 +15,8 @@ export const generalLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate,
+  validate: { xForwardedForHeader: false },
+  store: new UpstashRateLimitStore(config.rateLimit.windowMs),
 });
 
 export const authLimiter = rateLimit({
@@ -30,5 +30,6 @@ export const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate,
+  validate: { xForwardedForHeader: false },
+  store: new UpstashRateLimitStore(config.rateLimit.authWindowMs),
 });

@@ -22,6 +22,7 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - Vercel CLI 54.14.2, authenticated as `slenyd` under `slenyds-projects` scope
 - **Git auto-deploy is NOT set up** — must deploy manually via CLI after pushing
 - Frontend uses Vercel rewrite proxy (`/api/*` → backend URL) — same-origin, no CORS
+- **Required Vercel env vars for backend**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob), `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Upstash Redis for rate limiting), `CRON_SECRET` (auth for cron endpoint)
 
 ## Seeded Login
 - `user@financemanager.com` / `Password123`
@@ -36,9 +37,9 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - node-cron conditional import avoids loading the module on Vercel serverless
 - `POSTGRES_PRISMA_URL` on Vercel = Supabase pooler URL (port 6543 with PgBouncer)
 - `NODE_ENV=production` on Vercel backend
-- Rate limiter uses in-memory store — resets on each serverless cold start (acceptable)
-- Cron jobs don't run in serverless — `startJobs()` guarded with `!process.env.VERCEL`
-- File uploads need Vercel Blob or external storage in production
+- Rate limiter uses Upstash Redis store via `@upstash/redis` when `KV_REST_API_URL`/`KV_REST_API_TOKEN` env vars are set; falls back to in-memory for local dev
+- Cron jobs: Vercel Cron calls `POST /api/v1/cron/recurring` daily; node-cron still runs in non-serverless environments
+- File uploads use `@vercel/blob` for receipt storage; multer with memory storage for multipart parsing
 
 ## Completed Work
 
@@ -60,6 +61,13 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - **All backend controllers** standardized to `asyncHandler` (no more manual try/catch)
 - **Analytics overview endpoint**: `GET /api/v1/analytics/overview` combines dashboard + monthly spending
 - Unlocked 12 locked accounts via seed
+
+### Backend Infrastructure
+- **File upload support**: `@vercel/blob` + multer (memory storage) for receipt uploads; `POST /api/v1/uploads/receipt`, `DELETE /api/v1/uploads/receipt`; 5MB max, JPEG/PNG/WebP/PDF
+- **Rate limiter**: `UpstashRateLimitStore` custom store using `@upstash/redis` when `KV_REST_API_URL`/`KV_REST_API_TOKEN` are set; falls back to in-memory for local dev
+- **Vercel Cron**: `POST /api/v1/cron/recurring` endpoint protected by `CRON_SECRET` header; `backend/vercel.json` configures daily midnight schedule
+- **docker-compose.yml**: removed insecure fallback defaults (`postgres`, `change-me-in-production`, `change-me`); now uses `${VAR:?error}` pattern requiring env vars to be set; added `.env.docker.example` template
+- **RecurringService**: `processRecurringTransactions()` now returns `{ processed: number }` for cron reporting
 
 ### Frontend Performance
 - **Frontend API modules split**: `api/endpoints.ts` → 7 domain modules + barrel `index.ts`; old file deleted
@@ -97,9 +105,18 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - `backend/src/controllers/*.ts`: all use `asyncHandler`
 - `backend/src/utils/asyncHandler.ts`: simplified type signature
 - `backend/src/server.ts`: conditional `require('./jobs')` behind `!VERCEL`
-- `backend/src/config/database.ts`: explicit datasource URL, production log level
+- `backend/src/middlewares/rateLimiter.ts`: UpstashRateLimitStore with KV fallback to in-memory
+- `backend/src/middlewares/rateLimitStore.ts`: custom express-rate-limit store using @upstash/redis
+- `backend/src/services/upload.service.ts`: Vercel Blob receipt upload/delete
+- `backend/src/controllers/upload.controller.ts`: upload/delete receipt endpoints
+- `backend/src/routes/upload.routes.ts`: multer memory storage + upload routes
+- `backend/src/controllers/cron.controller.ts`: cron endpoint for recurring transactions
+- `backend/src/routes/cron.routes.ts`: cron route with CRON_SECRET auth
+- `backend/src/config/index.ts`: added cronSecret field
+- `backend/vercel.json`: Vercel Cron config for daily recurring transactions
+- `frontend/src/api/uploads.ts`: receipt upload/delete API module
 - `backend/prisma/schema.prisma`: composite indexes on Transaction
-- `frontend/src/api/index.ts`: barrel re-export from 7 domain modules
+- `frontend/src/api/index.ts`: barrel re-export from 8 domain modules (includes uploads)
 - `frontend/src/api/client.ts`: 15s timeout, no `window.location.href` redirect
 - `frontend/src/App.tsx`: ErrorBoundary wrapping, useThemeStore subscription (no useEffect)
 - `frontend/src/store/theme.ts`: `onRehydrateStorage` for initial dark class
@@ -116,11 +133,8 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - `frontend/vercel.json`: static asset caching headers, SPA rewrite, `/api/(.*)` proxy
 
 ## Known Issues / Things That Could Still Be Improved
-- `docker-compose.yml` has insecure default fallbacks for secrets (`postgres`, `change-me-in-production`, `change-me`) — fine for dev only
-- File uploads need Vercel Blob or external storage in production
-- Rate limiter uses in-memory store — resets on each serverless cold start (acceptable)
-- Cron jobs don't run in serverless — `startJobs()` guarded with `!process.env.VERCEL`
 - Git auto-deploy not set up on Vercel — must deploy manually via CLI
+- File upload UI on frontend not yet wired (backend API is ready; frontend `TransactionFormDialog` needs receipt file input)
 
 ## How to Deploy
 ```powershell

@@ -6,3 +6,4 @@ export { GoalService } from './goal.service';
 export { NotificationService } from './notification.service';
 export { AnalyticsService } from './analytics.service';
 export { RecurringService } from './recurring.service';
+export { UploadService } from './upload.service';

@@ -14,6 +14,8 @@ import budgetRoutes from './routes/budget.routes';
 import goalRoutes from './routes/goal.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import notificationRoutes from './routes/notification.routes';
+import uploadRoutes from './routes/upload.routes';
+import cronRoutes from './routes/cron.routes';
 
 const app: express.Application = express();
 
@@ -40,6 +42,8 @@ app.use('/api/v1/budgets', budgetRoutes);
 app.use('/api/v1/goals', goalRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/uploads', uploadRoutes);
+app.use('/api/v1/cron', cronRoutes);
 
 app.get('/api/v1/health', (_req, res) => {
   res.json({ success: true, message: 'Finance Manager API is running', timestamp: new Date().toISOString() });

@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: finance_manager
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
     ports:
       - '5432:5432'
     volumes:
@@ -23,15 +23,18 @@ services:
       context: .
       dockerfile: docker/Dockerfile.backend
     container_name: finance-backend
+    env_file:
+      - .env.docker
     environment:
       NODE_ENV: production
       PORT: 5000
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/finance_manager
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-me-in-production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-in-production}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/finance_manager
+      POSTGRES_PRISMA_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/finance_manager
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET must be set}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set}
       JWT_ACCESS_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 7d
-      COOKIE_SECRET: ${COOKIE_SECRET:-change-me}
+      COOKIE_SECRET: ${COOKIE_SECRET:?COOKIE_SECRET must be set}
       CORS_ORIGIN: http://localhost:80
     ports:
       - '5000:5000'

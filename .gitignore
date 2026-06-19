@@ -12,3 +12,5 @@ coverage/
 .prisma/
 .vercel
 .env*
+!.env.example
+!.env.docker.example

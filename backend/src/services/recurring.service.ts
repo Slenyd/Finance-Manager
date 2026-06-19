@@ -2,7 +2,7 @@ import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
 
 export class RecurringService {
-  async processRecurringTransactions() {
+  async processRecurringTransactions(): Promise<{ processed: number }> {
     const now = new Date();
     const dueTransactions = await prisma.recurringTransaction.findMany({
       where: {
@@ -13,7 +13,7 @@ export class RecurringService {
 
     logger.info(`Processing ${dueTransactions.length} recurring transactions`);
 
-    if (dueTransactions.length === 0) return;
+    if (dueTransactions.length === 0) return { processed: 0 };
 
     const transactionCreates = dueTransactions.map((recurring) =>
       prisma.transaction.create({
@@ -43,8 +43,10 @@ export class RecurringService {
     try {
       await prisma.$transaction([...transactionCreates, ...updates]);
       logger.info(`Successfully processed ${dueTransactions.length} recurring transactions`);
+      return { processed: dueTransactions.length };
     } catch (error) {
       logger.error('Failed to process recurring transactions batch:', error);
+      throw error;
     }
   }
 

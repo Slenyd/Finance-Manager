@@ -43,4 +43,5 @@ export const config = {
     from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@financemanager.com',
   },
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  cronSecret: process.env.CRON_SECRET || '',
 } as const;
