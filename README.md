@@ -104,7 +104,7 @@ coin-toss/
 │       └── utils/           # Error classes, helpers, logger
 ├── backend/prisma/          # Schema, migrations, seed
 ├── docker/                  # Dockerfiles for frontend & backend
-└── docs/                    # Additional documentation
+└── Documentation/         # System docs, wireframes, ERD, API ref, data dict
 ```
 
 ## API
