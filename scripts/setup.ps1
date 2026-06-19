@@ -1,4 +1,4 @@
-Write-Host "Setting up Finance Manager..." -ForegroundColor Green
+Write-Host "Setting up Coin Toss..." -ForegroundColor Green
 
 # Install root dependencies
 npm install
@@ -25,5 +25,5 @@ Write-Host "Start development:"
 Write-Host "  npm run dev"
 Write-Host ""
 Write-Host "Default accounts:"
-Write-Host "  Admin: admin@financemanager.com / Password123"
-Write-Host "  User:  user@financemanager.com / Password123"
+Write-Host "  Admin: admin@cointoss.app / Password123"
+Write-Host "  User:  user@cointoss.app / Password123"

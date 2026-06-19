@@ -1,8 +1,8 @@
 {
-  "name": "finance-manager",
+  "name": "coin-toss",
   "version": "1.0.0",
   "private": true,
-  "description": "Production-ready Personal Finance Manager and Budgeting Web Application",
+  "description": "Production-ready Personal Finance and Budgeting Manager",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",

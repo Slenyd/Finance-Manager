@@ -8,8 +8,8 @@ export function AuthLayout() {
       <div className="absolute inset-0 bg-background/20 dark:bg-background/40" />
       <div className="w-full max-w-md relative">
         <div className="text-center mb-6 sm:mb-8 animate-fade-in-up">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Finance Manager</h1>
-          <p className="text-muted-foreground mt-2">Take control of your finances</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Coin Toss</h1>
+          <p className="text-muted-foreground mt-2">Finance and budgeting, simplified</p>
         </div>
         <div className="animate-scale-in">
           <Suspense fallback={<div className="flex justify-center p-12"><Spinner size="lg" /></div>}>

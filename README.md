@@ -1,4 +1,4 @@
-# Finance Manager
+# Coin Toss
 
 A full-stack personal finance and budgeting web application built with React, Express, and PostgreSQL. Deployed on Vercel with Supabase.
 
@@ -80,7 +80,7 @@ docker-compose up --build
 ## Project Structure
 
 ```
-finance-manager/
+coin-toss/
 ├── frontend/                # React + Vite SPA
 │   └── src/
 │       ├── api/            # Domain API modules (auth, transactions, uploads, …)
@@ -132,7 +132,7 @@ The app is deployed as two Vercel projects with git auto-deploy on push to `main
 vercel --prod
 
 # Backend — from backend/ directory
-vercel --prod --project finance-manager-backend
+vercel --prod --project coin-toss-backend
 ```
 
 ### Required Vercel Environment Variables (backend)
@@ -154,8 +154,8 @@ The frontend proxies `/api/*` to the backend via `vercel.json` rewrites — no C
 
 | Role | Email | Password |
 |------|-------|----------|
-| User | `user@financemanager.com` | `Password123` |
-| Admin | `admin@financemanager.com` | `Password123` |
+| User | `user@cointoss.app` | `Password123` |
+| Admin | `admin@cointoss.app` | `Password123` |
 
 > These are for local development only. Set `SEED_PASSWORD` or change the seed script in production.
 

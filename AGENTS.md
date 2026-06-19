@@ -1,7 +1,7 @@
-# Finance Manager — Project Context
+# Coin Toss — Project Context
 
 ## Goal
-Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend) with working auth flow, then iteratively review and fix code quality, performance, UX, and accessibility issues.
+Deploy and optimize Coin Toss on Vercel (frontend + backend) with working auth flow, then iteratively review and fix code quality, performance, UX, and accessibility issues.
 
 ## Constraints & Preferences
 - Color scheme centered around hex `#704c35` (warm brown)
@@ -25,8 +25,8 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - **Required Vercel env vars for backend**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob), `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Upstash Redis for rate limiting), `CRON_SECRET` (auth for cron endpoint)
 
 ## Seeded Login
-- `user@financemanager.com` / `Password123`
-- `admin@financemanager.com` / `Password123`
+- `user@cointoss.app` / `Password123`
+- `admin@cointoss.app` / `Password123`
 
 ## Key Decisions
 - `VITE_API_URL` removed from Vercel — `.env.production` exclusively controls build-time value

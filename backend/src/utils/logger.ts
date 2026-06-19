@@ -34,6 +34,6 @@ export const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json(),
   ),
-  defaultMeta: { service: 'finance-manager-api' },
+  defaultMeta: { service: 'coin-toss-api' },
   transports,
 });

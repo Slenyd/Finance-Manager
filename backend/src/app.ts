@@ -46,7 +46,7 @@ app.use('/api/v1/uploads', uploadRoutes);
 app.use('/api/v1/cron', cronRoutes);
 
 app.get('/api/v1/health', (_req, res) => {
-  res.json({ success: true, message: 'Finance Manager API is running', timestamp: new Date().toISOString() });
+  res.json({ success: true, message: 'Coin Toss API is running', timestamp: new Date().toISOString() });
 });
 
 app.use(errorHandler);

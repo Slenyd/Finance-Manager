@@ -15,7 +15,6 @@ const navItems = [
   { href: '/budgets', label: 'Budgets', icon: PiggyBank },
   { href: '/goals', label: 'Goals', icon: Target },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -48,7 +47,7 @@ export function AppLayout() {
     <div className="flex h-screen overflow-hidden">
       <aside className="w-64 border-r bg-card hidden md:flex flex-col animate-slide-down">
         <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-gradient">Finance Manager</h1>
+          <h1 className="text-xl font-bold text-gradient">Coin Toss</h1>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item, i) => {
@@ -92,7 +91,7 @@ export function AppLayout() {
       </aside>
       <main className="flex-1 overflow-y-auto bg-background pb-16 md:pb-0">
         <div className="md:hidden flex items-center justify-between p-4 border-b bg-card/80 backdrop-blur-md sticky top-0 z-40">
-          <h1 className="text-lg font-bold text-gradient">Finance Manager</h1>
+          <h1 className="text-lg font-bold text-gradient">Coin Toss</h1>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={toggle} className="hover:bg-accent" aria-label="Toggle dark mode">
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

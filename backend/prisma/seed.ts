@@ -8,11 +8,11 @@ async function main() {
   const passwordHash = await bcrypt.hash(seedPassword, 12);
 
   await prisma.user.upsert({
-    where: { email: 'admin@financemanager.com' },
+    where: { email: 'admin@cointoss.app' },
     update: {},
     create: {
       name: 'Admin User',
-      email: 'admin@financemanager.com',
+      email: 'admin@cointoss.app',
       passwordHash,
       role: 'ADMIN',
       isVerified: true,
@@ -20,11 +20,11 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { email: 'user@financemanager.com' },
+    where: { email: 'user@cointoss.app' },
     update: {},
     create: {
       name: 'Test User',
-      email: 'user@financemanager.com',
+      email: 'user@cointoss.app',
       passwordHash,
       role: 'USER',
       isVerified: true,
@@ -32,8 +32,8 @@ async function main() {
   });
 
   console.log('Seed data created successfully');
-  console.log('Admin: admin@financemanager.com / Password123');
-  console.log('User: user@financemanager.com / Password123');
+  console.log('Admin: admin@cointoss.app / Password123');
+  console.log('User: user@cointoss.app / Password123');
 }
 
 main()

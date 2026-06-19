@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Setting up Finance Manager..."
+echo "Setting up Coin Toss..."
 
 # Install root dependencies
 npm install
@@ -27,5 +27,5 @@ echo "Start development:"
 echo "  npm run dev"
 echo ""
 echo "Default accounts:"
-echo "  Admin: admin@financemanager.com / Password123"
-echo "  User:  user@financemanager.com / Password123"
+echo "  Admin: admin@cointoss.app / Password123"
+echo "  User:  user@cointoss.app / Password123"

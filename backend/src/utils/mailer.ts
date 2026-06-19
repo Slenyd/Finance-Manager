@@ -24,7 +24,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
     await transporter.sendMail({
       from: config.smtp.from,
       to: email,
-      subject: 'Password Reset - Finance Manager',
+      subject: 'Password Reset - Coin Toss',
       html: `
         <h2>Password Reset Request</h2>
         <p>You requested a password reset. Click the link below to reset your password:</p>

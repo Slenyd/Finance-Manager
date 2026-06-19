@@ -1,8 +1,8 @@
 {
-  "name": "finance-manager-backend",
+  "name": "coin-toss-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Finance Manager Backend API",
+  "description": "Coin Toss - Finance and Budgeting Manager API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
