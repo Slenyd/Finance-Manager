@@ -20,7 +20,7 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - Frontend: `vercel --prod` from `frontend/` directory
 - Backend: `vercel --prod --project finance-manager-backend` from `backend/` directory
 - Vercel CLI 54.14.2, authenticated as `slenyd` under `slenyds-projects` scope
-- **Git auto-deploy is NOT set up** — must deploy manually via CLI after pushing
+- **Git auto-deploy is enabled** — pushes to `main` auto-deploy on Vercel
 - Frontend uses Vercel rewrite proxy (`/api/*` → backend URL) — same-origin, no CORS
 - **Required Vercel env vars for backend**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob), `KV_REST_API_URL` + `KV_REST_API_TOKEN` (Upstash Redis for rate limiting), `CRON_SECRET` (auth for cron endpoint)
 
@@ -135,7 +135,7 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - `frontend/vercel.json`: static asset caching headers, SPA rewrite, `/api/(.*)` proxy
 
 ## Known Issues / Things That Could Still Be Improved
-- Git auto-deploy not set up on Vercel — must deploy manually via CLI
+(none currently)
 
 ## How to Deploy
 ```powershell
