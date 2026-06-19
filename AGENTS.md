@@ -63,11 +63,20 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - Unlocked 12 locked accounts via seed
 
 ### Backend Infrastructure
-- **File upload support**: `@vercel/blob` + multer (memory storage) for receipt uploads; `POST /api/v1/uploads/receipt`, `DELETE /api/v1/uploads/receipt`; 5MB max, JPEG/PNG/WebP/PDF
-- **Rate limiter**: `UpstashRateLimitStore` custom store using `@upstash/redis` when `KV_REST_API_URL`/`KV_REST_API_TOKEN` are set; falls back to in-memory for local dev
-- **Vercel Cron**: `POST /api/v1/cron/recurring` endpoint protected by `CRON_SECRET` header; `backend/vercel.json` configures daily midnight schedule
-- **docker-compose.yml**: removed insecure fallback defaults (`postgres`, `change-me-in-production`, `change-me`); now uses `${VAR:?error}` pattern requiring env vars to be set; added `.env.docker.example` template
+- **File upload support**: `@vercel/blob` + multer (memory storage) for receipt uploads; `POST /api/v1/uploads/receipt`, `DELETE /api/v1/uploads/receipt`; 5MB max, JPEG/PNG/WebP/PDF; URL validation + ownership check on delete; sanitized filenames
+- **Rate limiter**: `UpstashRateLimitStore` custom store using `@upstash/redis` with Lua script for correct fixed-window behavior; falls back to in-memory for local dev; error handling with graceful fallback
+- **Vercel Cron**: `POST /api/v1/cron/recurring` endpoint requires `CRON_SECRET` header; returns 503 if not configured; `backend/vercel.json` configures daily midnight schedule
+- **docker-compose.yml**: removed insecure fallback defaults; uses `${VAR:?error}` pattern; added `.env.docker.example` template
 - **RecurringService**: `processRecurringTransactions()` now returns `{ processed: number }` for cron reporting
+
+### Security Fixes
+- **Cron auth**: endpoint denies all requests when `CRON_SECRET` missing (was previously open)
+- **Upload security**: SSRF prevention — receipt delete validates URL belongs to blob store + ownership check via `head()` API; filenames sanitized; MIME validation in service layer uses `ValidationError`/`ApiError` instead of raw `Error`
+- **Transaction field injection**: `TransactionService.create`/`update` replaced `any` types with explicit `CreateTransactionData`/`UpdateTransactionData` interfaces; only whitelisted fields passed to Prisma
+- **Auth validation**: `/auth/refresh` now uses dedicated `refreshSchema` instead of `loginSchema`; extracted `passwordSchema` to eliminate duplication
+- **Error handler**: production mode returns generic `'Internal server error'` — no leaking `err.message`
+- **Rate limiter**: Lua script `INCR`+`EXPIRE` only on first hit (correct fixed-window); memory store evicts expired entries; Redis failures gracefully fall back
+- **Password reset**: tokens stored as SHA-256 hash in DB; `resetPassword` hashes incoming token before lookup; all refresh tokens revoked after password reset
 
 ### Frontend Performance
 - **Frontend API modules split**: `api/endpoints.ts` → 7 domain modules + barrel `index.ts`; old file deleted

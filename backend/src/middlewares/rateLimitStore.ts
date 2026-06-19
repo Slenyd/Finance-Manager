@@ -20,35 +20,50 @@ interface StoreRecord {
 
 const memoryStore = new Map<string, StoreRecord>();
 
+const LUA_INCR_SCRIPT = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return count
+`;
+
 export class UpstashRateLimitStore {
   windowMs: number;
+  prefix: string;
 
   constructor(windowMs: number) {
     this.windowMs = windowMs;
+    this.prefix = `rl:${Math.random().toString(36).slice(2, 8)}:`;
   }
 
   async increment(key: string): Promise<{ totalHits: number; resetTime: Date }> {
     const r = getRedis();
+    const fullKey = `${this.prefix}${key}`;
     if (r) {
-      return this.redisIncrement(r, key);
+      try {
+        return await this.redisIncrement(r, fullKey);
+      } catch {
+        return this.memoryIncrement(fullKey);
+      }
     }
-    return this.memoryIncrement(key);
+    return this.memoryIncrement(fullKey);
   }
 
   private async redisIncrement(r: Redis, key: string): Promise<{ totalHits: number; resetTime: Date }> {
-    const results = await r
-      .multi()
-      .incr(key)
-      .expire(key, Math.ceil(this.windowMs / 1000))
-      .exec<{ result: number }[]>();
+    const ttlSeconds = Math.ceil(this.windowMs / 1000);
+    const result = await r.eval(LUA_INCR_SCRIPT, [key], [ttlSeconds.toString()]);
+    const count = typeof result === 'number' ? result : Number(result);
 
-    const count = results[0].result as number;
-    const resetTime = new Date(Date.now() + this.windowMs);
+    const ttlRaw = await r.ttl(key);
+    const ttl = typeof ttlRaw === 'number' ? ttlRaw : 0;
+    const resetTime = new Date(Date.now() + Math.max(ttl, 0) * 1000);
     return { totalHits: count, resetTime };
   }
 
   private memoryIncrement(key: string): { totalHits: number; resetTime: Date } {
     const now = Date.now();
+    this.evictExpired();
     const record = memoryStore.get(key);
 
     if (!record || now >= record.expires) {
@@ -62,23 +77,42 @@ export class UpstashRateLimitStore {
   }
 
   async decrement(key: string): Promise<void> {
+    const fullKey = `${this.prefix}${key}`;
     const r = getRedis();
     if (r) {
-      await r.decr(key);
-      return;
+      try {
+        await r.decr(fullKey);
+        return;
+      } catch {
+        // fall through to memory
+      }
     }
-    const record = memoryStore.get(key);
+    const record = memoryStore.get(fullKey);
     if (record && record.count > 0) {
       record.count--;
     }
   }
 
   async resetKey(key: string): Promise<void> {
+    const fullKey = `${this.prefix}${key}`;
     const r = getRedis();
     if (r) {
-      await r.del(key);
-      return;
+      try {
+        await r.del(fullKey);
+        return;
+      } catch {
+        // fall through to memory
+      }
     }
-    memoryStore.delete(key);
+    memoryStore.delete(fullKey);
+  }
+
+  private evictExpired(): void {
+    const now = Date.now();
+    for (const [key, record] of memoryStore) {
+      if (now >= record.expires) {
+        memoryStore.delete(key);
+      }
+    }
   }
 }

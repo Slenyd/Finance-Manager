@@ -4,6 +4,42 @@ import { NotFoundError } from '../utils/errors';
 import { parsePagination } from '../utils/helpers';
 import { TransactionQuery } from '../interfaces';
 
+interface CreateTransactionData {
+  amount: number;
+  description: string;
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+  categoryId?: string;
+  date: string;
+  paymentMethod?: string;
+  notes?: string;
+  receiptUrl?: string | null;
+  tags?: string[];
+}
+
+interface UpdateTransactionData {
+  amount?: number;
+  description?: string;
+  type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+  categoryId?: string | null;
+  date?: string;
+  paymentMethod?: string | null;
+  notes?: string | null;
+  receiptUrl?: string | null;
+  tags?: string[];
+}
+
+export async function resolveCategoryId(userId: string, type: string, fallbackCategoryId?: string): Promise<string> {
+  if (fallbackCategoryId) return fallbackCategoryId;
+  const fallback = await prisma.category.findFirst({ where: { userId, type: type as 'INCOME' | 'EXPENSE' } });
+  if (fallback) return fallback.id;
+  const anyCategory = await prisma.category.findFirst({ where: { userId } });
+  if (anyCategory) return anyCategory.id;
+  const created = await prisma.category.create({
+    data: { name: 'Miscellaneous', type: 'EXPENSE', userId, icon: 'circle', color: '#6366f1' },
+  });
+  return created.id;
+}
+
 export class TransactionService {
   async findAll(userId: string, query: TransactionQuery) {
     const { page, limit, skip } = parsePagination(query);
@@ -57,44 +93,44 @@ export class TransactionService {
     return transaction;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async create(userId: string, data: any) {
-    let categoryId = data.categoryId;
-    if (!categoryId) {
-      const fallback = await prisma.category.findFirst({
-        where: { userId, type: data.type || 'EXPENSE' },
-      });
-      if (fallback) {
-        categoryId = fallback.id;
-      } else {
-        const anyCategory = await prisma.category.findFirst({ where: { userId } });
-        if (anyCategory) {
-          categoryId = anyCategory.id;
-        } else {
-          const created = await prisma.category.create({
-            data: { name: 'Miscellaneous', type: 'EXPENSE', userId, icon: 'circle', color: '#6366f1' },
-          });
-          categoryId = created.id;
-        }
-      }
-    }
+  async create(userId: string, data: CreateTransactionData) {
+    const categoryId = await resolveCategoryId(userId, data.type || 'EXPENSE', data.categoryId);
+
     return prisma.transaction.create({
-      data: { ...data, userId, categoryId, date: new Date(data.date) },
+      data: {
+        userId,
+        categoryId,
+        amount: data.amount,
+        description: data.description,
+        type: data.type,
+        date: data.date ? new Date(data.date) : new Date(),
+        paymentMethod: data.paymentMethod || '',
+        notes: data.notes || '',
+        receiptUrl: data.receiptUrl || null,
+        isRecurring: false,
+        tags: data.tags || [],
+      },
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async update(userId: string, id: string, data: any) {
+  async update(userId: string, id: string, data: UpdateTransactionData) {
     await this.findById(userId, id);
+
+    const updateData: Prisma.TransactionUpdateInput = {};
+    if (data.amount !== undefined) updateData.amount = data.amount;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId! } };
+    if (data.date !== undefined) updateData.date = new Date(data.date);
+    if (data.paymentMethod !== undefined) updateData.paymentMethod = data.paymentMethod;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+    if (data.receiptUrl !== undefined) updateData.receiptUrl = data.receiptUrl;
+    if (data.tags !== undefined) updateData.tags = { set: data.tags };
+
     return prisma.transaction.update({
       where: { id },
-      data: {
-        ...data,
-        ...(data.date && { date: new Date(data.date) }),
-        ...(data.paymentMethod === null && { paymentMethod: null }),
-        ...(data.notes === null && { notes: null }),
-      },
+      data: updateData,
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
     });
   }
@@ -105,7 +141,9 @@ export class TransactionService {
   }
 
   async bulkDelete(userId: string, ids: string[]) {
-    await prisma.transaction.deleteMany({ where: { id: { in: ids }, userId } });
+    const result = await prisma.transaction.deleteMany({ where: { id: { in: ids }, userId } });
+    if (result.count === 0) throw new NotFoundError('Transactions');
+    return { deleted: result.count };
   }
 
   async getSummary(userId: string, startDate?: string, endDate?: string) {

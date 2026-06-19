@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError, ValidationError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { config } from '../config';
+
+const isProduction = config.env === 'production';
 
 export const errorHandler = (
   err: Error,
@@ -31,7 +34,7 @@ export const errorHandler = (
 
   res.status(500).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message: isProduction ? 'Internal server error' : (err.message || 'Internal server error'),
     code: 'INTERNAL_ERROR',
   });
 };

@@ -11,6 +11,10 @@ import { sendPasswordResetEmail } from '../utils/mailer';
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCK_DURATION_MINUTES = 15;
 
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 export class AuthService {
   async register(data: { name: string; email: string; password: string }) {
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
@@ -175,11 +179,12 @@ export class AuthService {
       return;
     }
     const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = hashToken(resetToken);
     const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        resetToken,
+        resetToken: resetTokenHash,
         resetTokenExpires: resetExpires,
       },
     });
@@ -187,9 +192,10 @@ export class AuthService {
   }
 
   async resetPassword(token: string, password: string) {
+    const tokenHash = hashToken(token);
     const user = await prisma.user.findFirst({
       where: {
-        resetToken: token,
+        resetToken: tokenHash,
         resetTokenExpires: { gt: new Date() },
       },
     });
@@ -204,6 +210,10 @@ export class AuthService {
         resetToken: null,
         resetTokenExpires: null,
       },
+    });
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id },
+      data: { isRevoked: true },
     });
   }
 

@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
+import { resolveCategoryId } from './transaction.service';
 
 export class BudgetService {
   async findAll(userId: string) {
@@ -53,25 +54,7 @@ export class BudgetService {
   async create(userId: string, data: {
     categoryId?: string; limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string;
   }) {
-    let categoryId = data.categoryId;
-    if (!categoryId) {
-      const fallback = await prisma.category.findFirst({
-        where: { userId, type: 'EXPENSE' },
-      });
-      if (fallback) {
-        categoryId = fallback.id;
-      } else {
-        const anyCategory = await prisma.category.findFirst({ where: { userId } });
-        if (anyCategory) {
-          categoryId = anyCategory.id;
-        } else {
-          const created = await prisma.category.create({
-            data: { name: 'Miscellaneous', type: 'EXPENSE', userId, icon: 'circle', color: '#6366f1' },
-          });
-          categoryId = created.id;
-        }
-      }
-    }
+    const categoryId = await resolveCategoryId(userId, 'EXPENSE', data.categoryId);
     return prisma.budget.create({
       data: {
         userId,
