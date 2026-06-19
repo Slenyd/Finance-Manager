@@ -109,19 +109,20 @@ coin-toss/
 
 ## API
 
-All endpoints are under `/api/v1`.
+All endpoints are under `/api/v1`. See [`Documentation/api-reference.md`](Documentation/api-reference.md) for the complete endpoint reference with request/response schemas.
 
-| Domain | Key Endpoints |
-|--------|--------------|
-| Auth | `POST /register`, `POST /login`, `POST /logout`, `POST /refresh`, `GET /me` |
-| Transactions | CRUD + `GET /summary`, `DELETE /bulk`, filters & pagination |
-| Categories | CRUD with type filtering |
-| Budgets | CRUD with spending progress |
-| Goals | CRUD with contribution tracking |
-| Analytics | `GET /overview`, net worth, spending breakdown, monthly trends |
-| Notifications | List, mark read, delete |
-| Uploads | `POST /receipt` (multipart), `DELETE /receipt` |
-| Cron | `POST /recurring` (daily, protected by `CRON_SECRET`) |
+| Domain | Methods | Key Endpoints |
+|--------|---------|--------------|
+| Auth | POST, GET, PATCH, DELETE | `/auth/register`, `/auth/login`, `/auth/logout`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/me`, `/auth/profile`, `/auth/me/password`, `/auth/preferences`, `/auth/account` |
+| Transactions | GET, POST, PUT, DELETE | CRUD + `GET /summary`, `POST /bulk-delete` |
+| Categories | GET, POST, PUT, DELETE | CRUD with automatic reassignment on delete |
+| Budgets | GET, POST, PUT, DELETE | CRUD with real-time spending progress |
+| Goals | GET, POST, PUT, DELETE | CRUD + `POST /:id/contribute` |
+| Recurring | GET, POST, PATCH, DELETE | CRUD for recurring transaction templates |
+| Analytics | GET | `/dashboard`, `/overview`, `/monthly-spending`, `/category-breakdown`, `/cash-flow`, `/net-worth` |
+| Notifications | GET, PATCH, DELETE | List, mark read, mark all read, delete |
+| Uploads | POST | `POST /receipt`, `POST /receipt/delete` |
+| Cron | POST | `POST /recurring` (daily, protected by `CRON_SECRET`) |
 
 ## Deployment (Vercel)
 
