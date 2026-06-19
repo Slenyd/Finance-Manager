@@ -189,7 +189,7 @@ describe('Transactions API', () => {
       });
 
     const res = await request(app)
-      .delete('/api/v1/transactions/bulk')
+      .post('/api/v1/transactions/bulk-delete')
       .set(auth())
       .send({ ids: [t1.body.data.id, t2.body.data.id] });
     expect(res.status).toBe(200);

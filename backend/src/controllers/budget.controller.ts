@@ -28,6 +28,6 @@ export class BudgetController {
 
   delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await budgetService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, message: 'Budget deleted' });
+    res.json({ success: true, data: null, message: 'Budget deleted' });
   });
 }

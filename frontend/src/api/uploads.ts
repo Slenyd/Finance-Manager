@@ -8,5 +8,5 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  deleteReceipt: (url: string) => api.delete<{ success: boolean; message: string }>('/uploads/receipt', { data: { url } }),
+  deleteReceipt: (url: string) => api.post<{ success: boolean; message: string }>('/uploads/receipt/delete', { url }),
 };

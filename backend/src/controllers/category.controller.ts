@@ -28,6 +28,6 @@ export class CategoryController {
 
   delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await categoryService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, message: 'Category deleted' });
+    res.json({ success: true, data: null, message: 'Category deleted' });
   });
 }

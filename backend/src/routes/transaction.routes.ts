@@ -14,7 +14,7 @@ router.get('/summary', controller.getSummary);
 router.get('/:id', controller.findById);
 router.post('/', validate(createTransactionSchema), controller.create);
 router.put('/:id', validate(updateTransactionSchema), controller.update);
-router.delete('/bulk', validate(bulkDeleteSchema), controller.bulkDelete);
+router.post('/bulk-delete', validate(bulkDeleteSchema), controller.bulkDelete);
 router.delete('/:id', controller.delete);
 
 export default router;

@@ -37,6 +37,6 @@ export class NotificationService {
   }
 
   async delete(userId: string, id: string) {
-    await prisma.notification.deleteMany({ where: { id, userId } });
+    return prisma.notification.deleteMany({ where: { id, userId } });
   }
 }

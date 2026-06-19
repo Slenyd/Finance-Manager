@@ -102,7 +102,7 @@ describe('Auth API', () => {
       .get('/api/v1/auth/me')
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.status).toBe(200);
-    expect(res.body.data.user.email).toBe(email);
+    expect(res.body.data.email).toBe(email);
   });
 
   it('should reject unauthenticated profile access', async () => {

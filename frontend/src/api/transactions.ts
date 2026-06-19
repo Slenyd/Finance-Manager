@@ -8,7 +8,7 @@ export const transactionApi = {
   create: (data: Partial<Transaction>) => api.post<ApiResponse<Transaction>>('/transactions', data),
   update: (id: string, data: Partial<Transaction>) => api.put<ApiResponse<Transaction>>(`/transactions/${id}`, data),
   delete: (id: string) => api.delete(`/transactions/${id}`),
-  bulkDelete: (ids: string[]) => api.delete('/transactions/bulk', { data: { ids } }),
+  bulkDelete: (ids: string[]) => api.post('/transactions/bulk-delete', { ids }),
   getSummary: (params?: { startDate?: string; endDate?: string }) =>
     api.get('/transactions/summary', { params }),
 };

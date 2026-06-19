@@ -18,9 +18,9 @@ router.post('/reset-password', authLimiter, validate(resetPasswordSchema), contr
 router.use(authenticate);
 
 router.get('/me', controller.getProfile);
-router.put('/profile', validate(updateProfileSchema), controller.updateProfile);
-router.put('/password', validate(changePasswordSchema), controller.changePassword);
-router.put('/preferences', validate(updatePreferencesSchema), controller.updatePreferences);
+router.patch('/profile', validate(updateProfileSchema), controller.updateProfile);
+router.patch('/me/password', validate(changePasswordSchema), controller.changePassword);
+router.patch('/preferences', validate(updatePreferencesSchema), controller.updatePreferences);
 router.delete('/account', controller.deleteAccount);
 
 export default router;

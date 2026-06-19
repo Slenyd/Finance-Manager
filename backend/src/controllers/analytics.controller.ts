@@ -14,7 +14,7 @@ export class AnalyticsController {
 
   getMonthlySpending = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     res.set('Cache-Control', 'private, max-age=120');
-    const months = parseInt(req.query.months as string) || 6;
+    const months = req.query.months as unknown as number;
     const data = await analyticsService.getMonthlySpending(req.user!.id, months);
     res.json({ success: true, data });
   });
@@ -28,7 +28,7 @@ export class AnalyticsController {
 
   getCashFlow = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     res.set('Cache-Control', 'private, max-age=300');
-    const months = parseInt(req.query.months as string) || 12;
+    const months = req.query.months as unknown as number;
     const data = await analyticsService.getCashFlow(req.user!.id, months);
     res.json({ success: true, data });
   });

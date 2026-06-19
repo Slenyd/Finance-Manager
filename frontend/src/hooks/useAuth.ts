@@ -47,7 +47,7 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: async () => {
       const res = await authApi.getProfile();
-      return res.data.data!.user;
+      return res.data.data!;
     },
     retry: false,
   });

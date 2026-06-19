@@ -2,28 +2,35 @@ import { Response } from 'express';
 import { NotificationService } from '../services';
 import { AuthenticatedRequest } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
+import { NotFoundError } from '../utils/errors';
 
 const notificationService = new NotificationService();
 
 export class NotificationController {
   findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
+    const limit = req.query.limit as unknown as number;
     const { notifications, unreadCount } = await notificationService.findAll(req.user!.id, limit);
     res.json({ success: true, data: notifications, meta: { unreadCount } });
   });
 
   markAsRead = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    await notificationService.markAsRead(req.user!.id, req.params.id);
-    res.json({ success: true, message: 'Notification marked as read' });
+    const result = await notificationService.markAsRead(req.user!.id, req.params.id);
+    if (result.count === 0) {
+      throw new NotFoundError('Notification');
+    }
+    res.json({ success: true, data: null, message: 'Notification marked as read' });
   });
 
   markAllAsRead = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await notificationService.markAllAsRead(req.user!.id);
-    res.json({ success: true, message: 'All notifications marked as read' });
+    res.json({ success: true, data: null, message: 'All notifications marked as read' });
   });
 
   delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    await notificationService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, message: 'Notification deleted' });
+    const result = await notificationService.delete(req.user!.id, req.params.id);
+    if (result.count === 0) {
+      throw new NotFoundError('Notification');
+    }
+    res.json({ success: true, data: null, message: 'Notification deleted' });
   });
 }

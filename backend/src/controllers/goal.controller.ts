@@ -28,7 +28,7 @@ export class GoalController {
 
   delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await goalService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, message: 'Goal deleted' });
+    res.json({ success: true, data: null, message: 'Goal deleted' });
   });
 
   contribute = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

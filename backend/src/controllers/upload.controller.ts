@@ -28,6 +28,6 @@ export class UploadController {
     }
 
     await uploadService.deleteReceipt(req.user!.id, url);
-    res.json({ success: true, message: 'File deleted' });
+    res.json({ success: true, data: null, message: 'File deleted' });
   });
 }

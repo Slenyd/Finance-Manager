@@ -28,12 +28,12 @@ export class TransactionController {
 
   delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await transactionService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, message: 'Transaction deleted' });
+    res.json({ success: true, data: null, message: 'Transaction deleted' });
   });
 
   bulkDelete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     await transactionService.bulkDelete(req.user!.id, req.body.ids);
-    res.json({ success: true, message: 'Transactions deleted' });
+    res.json({ success: true, data: null, message: 'Transactions deleted' });
   });
 
   getSummary = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
