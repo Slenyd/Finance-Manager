@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { useFormatters } from '@/hooks/useFormatters';
 import { Target, Calendar, Plus, Trash2, Pencil, PiggyBank } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
@@ -14,6 +14,7 @@ const GoalFormDialog = lazy(() => import('@/components/forms/goal-form').then(m 
 const ContributeFormDialog = lazy(() => import('@/components/forms/contribute-form').then(m => ({ default: m.ContributeFormDialog })));
 
 export default function GoalsPage() {
+  const { formatCurrency, formatDate } = useFormatters();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);

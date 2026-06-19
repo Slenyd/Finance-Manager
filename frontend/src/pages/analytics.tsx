@@ -3,7 +3,7 @@ import { analyticsApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/utils';
+import { useFormatters } from '@/hooks/useFormatters';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from 'recharts';
@@ -12,6 +12,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];
 
 export default function AnalyticsPage() {
+  const { formatCurrency } = useFormatters();
   const { data: dashboard, isError: dashboardError, refetch: refetchDashboard } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {

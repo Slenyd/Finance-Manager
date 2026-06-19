@@ -9,13 +9,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { useFormatters } from '@/hooks/useFormatters';
 import { Plus, Search, Trash2, Pencil, Paperclip } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 const TransactionFormDialog = lazy(() => import('@/components/forms/transaction-form').then(m => ({ default: m.TransactionFormDialog })));
 
 export default function TransactionsPage() {
+  const { formatCurrency, formatDate } = useFormatters();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');

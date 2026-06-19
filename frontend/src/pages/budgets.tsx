@@ -7,13 +7,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency } from '@/lib/utils';
+import { useFormatters } from '@/hooks/useFormatters';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 const BudgetFormDialog = lazy(() => import('@/components/forms/budget-form').then(m => ({ default: m.BudgetFormDialog })));
 
 export default function BudgetsPage() {
+  const { formatCurrency } = useFormatters();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);

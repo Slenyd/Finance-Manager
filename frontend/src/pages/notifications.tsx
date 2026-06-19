@@ -6,11 +6,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { formatDate } from '@/lib/utils';
+import { useFormatters } from '@/hooks/useFormatters';
 import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 export default function NotificationsPage() {
+  const { formatDate } = useFormatters();
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 

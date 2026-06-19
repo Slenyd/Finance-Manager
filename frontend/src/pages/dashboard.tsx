@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { useFormatters } from '@/hooks/useFormatters';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
@@ -14,6 +14,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];
 
 export default function DashboardPage() {
+  const { formatCurrency, formatDate } = useFormatters();
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
@@ -32,7 +33,7 @@ export default function DashboardPage() {
     { label: 'Total Income', value: formatCurrency(dashboard.totalIncome), color: 'text-green-600' },
     { label: 'Total Expenses', value: formatCurrency(dashboard.totalExpenses), color: 'text-red-600' },
     { label: 'Savings', value: formatCurrency(dashboard.savings), color: '' },
-  ] : [], [dashboard]);
+  ] : [], [dashboard, formatCurrency]);
 
   if (isLoading) {
     return (
