@@ -3,6 +3,13 @@ import app from '../app';
 import { cleanupUser, uniqueEmail } from './helpers';
 import { prisma } from '../config/database';
 
+jest.mock('../utils/mailer', () => ({
+  sendPasswordResetEmail: jest.fn(),
+}));
+
+import { sendPasswordResetEmail } from '../utils/mailer';
+import crypto from 'crypto';
+
 describe('Auth API', () => {
   let userId: string;
   let email: string;
@@ -159,17 +166,18 @@ describe('Auth API', () => {
         passwordConfirmation: 'TestPass123',
       });
 
+    (sendPasswordResetEmail as jest.Mock).mockClear();
     await request(app)
       .post('/api/v1/auth/forgot-password')
       .send({ email: resetEmail });
 
-    const user = await prisma.user.findUnique({ where: { email: resetEmail } });
-    const resetToken = user!.resetToken!;
+    const rawToken = (sendPasswordResetEmail as jest.Mock).mock.calls[0][1] as string;
+    expect(rawToken).toBeTruthy();
 
     const res = await request(app)
       .post('/api/v1/auth/reset-password')
       .send({
-        token: resetToken,
+        token: rawToken,
         password: 'NewPass456',
         passwordConfirmation: 'NewPass456',
       });
