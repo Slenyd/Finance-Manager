@@ -27,7 +27,7 @@ export default function BudgetsPage() {
     endDate: string;
   } | undefined>(undefined);
 
-  const { data: budgets, isLoading } = useQuery({
+  const { data: budgets, isLoading, isError, refetch } = useQuery({
     queryKey: ['budgets'],
     queryFn: async () => {
       const res = await budgetApi.getAll();
@@ -68,16 +68,32 @@ export default function BudgetsPage() {
     setFormOpen(true);
   };
 
-  if (isLoading) {
+if (isLoading) {
     return (
       <PageTransition>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Budgets</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Budgets</h1>
           <div className="grid gap-4 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Card key={i}><CardContent className="p-6"><Skeleton className="h-32 animate-pulse-soft" /></CardContent></Card>
             ))}
           </div>
+        </div>
+      </PageTransition>
+    );
+  }
+
+  if (isError) {
+    return (
+      <PageTransition>
+        <div className="space-y-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Budgets</h1>
+          <Card>
+            <CardContent className="p-12 text-center">
+              <p className="text-muted-foreground mb-4">Failed to load budgets.</p>
+              <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
+            </CardContent>
+          </Card>
         </div>
       </PageTransition>
     );

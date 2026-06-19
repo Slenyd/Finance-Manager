@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AxiosError } from 'axios';
 
 interface Props {
   open: boolean;
@@ -44,10 +45,13 @@ export function ContributeFormDialog({ open, onOpenChange, goalId, goalName }: P
             <Input id="amount" type="number" step="0.01" placeholder="0.00" {...register('amount', { valueAsNumber: true, required: true, min: 0.01 })} />
             {errors.amount && <p className="text-xs text-destructive">Enter a valid amount</p>}
           </div>
+          {contributeMutation.isError && (
+            <p className="text-sm text-destructive">{(contributeMutation.error as AxiosError<{message?: string}>)?.response?.data?.message || contributeMutation.error?.message || 'Failed to contribute'}</p>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={contributeMutation.isPending}>
-              Contribute
+              {contributeMutation.isPending ? 'Contributing...' : 'Contribute'}
             </Button>
           </DialogFooter>
         </form>

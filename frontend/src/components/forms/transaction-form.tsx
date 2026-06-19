@@ -173,7 +173,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
           <DialogDescription>Fill in the details below.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Amount <span className="text-destructive">*</span></Label>
               <Input id="amount" type="number" step="0.01" placeholder="0.00" {...register('amount', { valueAsNumber: true })} />
@@ -198,16 +198,22 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
             <Input id="description" placeholder="What was this for?" {...register('description')} />
             {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Category</Label>
-              <textarea
-                rows={2}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-                placeholder="Optional - type or select a category"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-              />
+              <Select value={categories.find(c => c.name.toLowerCase() === categoryName.trim().toLowerCase())?.id || ''} onValueChange={(id) => {
+                const cat = categories.find(c => c.id === id);
+                setCategoryName(cat?.name || '');
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Optional - select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>

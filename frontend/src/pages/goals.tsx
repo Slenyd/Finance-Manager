@@ -28,7 +28,7 @@ export default function GoalsPage() {
   const [contributeOpen, setContributeOpen] = useState(false);
   const [contributeGoal, setContributeGoal] = useState<{ id: string; name: string } | null>(null);
 
-  const { data: goals, isLoading } = useQuery({
+  const { data: goals, isLoading, isError, refetch } = useQuery({
     queryKey: ['goals'],
     queryFn: async () => {
       const res = await goalApi.getAll();
@@ -68,11 +68,11 @@ export default function GoalsPage() {
     setContributeOpen(true);
   };
 
-  if (isLoading) {
+if (isLoading) {
     return (
       <PageTransition>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Savings Goals</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Savings Goals</h1>
           <div className="grid gap-4 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Card key={i}><CardContent className="p-6"><Skeleton className="h-32 animate-pulse-soft" /></CardContent></Card>
@@ -82,6 +82,22 @@ export default function GoalsPage() {
       </PageTransition>
     );
   }
+
+  if (isError) {
+    return (
+      <PageTransition>
+        <div className="space-y-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Savings Goals</h1>
+          <Card>
+            <CardContent className="p-12 text-center">
+              <p className="text-muted-foreground mb-4">Failed to load savings goals.</p>
+              <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </PageTransition>
+    );
+}
 
   return (
     <PageTransition>

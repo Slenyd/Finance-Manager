@@ -36,7 +36,7 @@ export default function TransactionsPage() {
     tags: string[];
   } | undefined>(undefined);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['transactions', search, typeFilter, page],
     queryFn: async () => {
       const params: Record<string, string> = { page: String(page), limit: '15' };
@@ -137,12 +137,17 @@ export default function TransactionsPage() {
                 </Select>
               </div>
             </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 animate-pulse-soft" />)}
-                </div>
-              ) : (
+<CardContent>
+               {isLoading ? (
+                 <div className="space-y-3">
+                   {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 animate-pulse-soft" />)}
+                 </div>
+               ) : isError ? (
+                 <div className="text-center py-8">
+                   <p className="text-muted-foreground mb-4">Failed to load transactions.</p>
+                   <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
+                 </div>
+               ) : (
                 <>
                   <div className="hidden md:block">
                     <Table>

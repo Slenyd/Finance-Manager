@@ -5,20 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       await authApi.forgotPassword(email);
       setSent(true);
     } catch {
       setError('Failed to send reset email');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,7 +57,9 @@ export default function ForgotPasswordPage() {
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full">Send reset link</Button>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? <><Spinner size="sm" className="mr-2 inline-block" /> Sending...</> : 'Send reset link'}
+          </Button>
         </form>
       </CardContent>
       <CardFooter>

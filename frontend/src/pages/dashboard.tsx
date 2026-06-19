@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { useFormatters } from '@/hooks/useFormatters';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,7 +16,7 @@ const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6'
 
 export default function DashboardPage() {
   const { formatCurrency, formatDate, convertFromBase } = useFormatters();
-  const { data: dashboard, isLoading } = useQuery({
+  const { data: dashboard, isLoading, isError, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
       const res = await analyticsApi.getDashboard();
@@ -50,7 +51,21 @@ export default function DashboardPage() {
     );
   }
 
-  if (!dashboard) return null;
+  if (isError || !dashboard) {
+    return (
+      <PageTransition>
+        <div className="space-y-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+          <Card>
+            <CardContent className="p-12 text-center">
+              <p className="text-muted-foreground mb-4">Failed to load dashboard data.</p>
+              <Button onClick={() => refetch()}>Try Again</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>

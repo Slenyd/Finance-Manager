@@ -15,7 +15,7 @@ export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const res = await notificationApi.getAll();
@@ -51,13 +51,18 @@ export default function NotificationsPage() {
         <StaggerItem index={0}>
           <Card>
             <CardContent className="p-6">
-              {isLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex gap-4"><Skeleton className="h-16 w-full animate-pulse-soft" /></div>
-                  ))}
-                </div>
-              ) : (
+{isLoading ? (
+                 <div className="space-y-4">
+                   {Array.from({ length: 5 }).map((_, i) => (
+                     <div key={i} className="flex gap-4"><Skeleton className="h-16 w-full animate-pulse-soft" /></div>
+                   ))}
+                 </div>
+               ) : isError ? (
+                 <div className="text-center py-8">
+                   <p className="text-muted-foreground mb-4">Failed to load notifications.</p>
+                   <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
+                 </div>
+               ) : (
                 <div className="space-y-2">
                   {data?.data.map((notification, i) => (
                     <div
