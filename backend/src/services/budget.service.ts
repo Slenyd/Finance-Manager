@@ -1,6 +1,6 @@
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
-import { resolveCategoryId } from './transaction.service';
+import { resolveCategoryId } from '../utils/category.helpers';
 
 export class BudgetService {
   async findAll(userId: string) {

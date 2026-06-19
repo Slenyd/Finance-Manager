@@ -1,6 +1,6 @@
 import { TransactionType } from '@prisma/client';
 import { prisma } from '../config/database';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, AuthorizationError } from '../utils/errors';
 
 export class CategoryService {
   async findAll(userId: string) {
@@ -30,7 +30,7 @@ export class CategoryService {
   }>) {
     const existing = await this.findById(userId, id);
     if (existing.userId !== userId) {
-      throw new NotFoundError('Category');
+      throw new AuthorizationError('You cannot modify a default category');
     }
     return prisma.category.update({ where: { id }, data });
   }
@@ -38,7 +38,7 @@ export class CategoryService {
   async delete(userId: string, id: string) {
     const existing = await this.findById(userId, id);
     if (existing.userId !== userId) {
-      throw new NotFoundError('Category');
+      throw new AuthorizationError('You cannot delete a default category');
     }
 
     const otherCategory = await prisma.category.findFirst({

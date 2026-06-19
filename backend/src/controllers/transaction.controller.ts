@@ -8,7 +8,7 @@ const transactionService = new TransactionService();
 export class TransactionController {
   findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const result = await transactionService.findAll(req.user!.id, req.query as unknown as TransactionQuery);
-    res.json({ success: true, ...result });
+    res.json({ success: true, data: result.data, meta: result.meta });
   });
 
   findById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

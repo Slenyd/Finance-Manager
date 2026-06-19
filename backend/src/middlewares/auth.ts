@@ -36,12 +36,8 @@ export const authenticate = (
       next(error);
       return;
     }
-    if (error instanceof jwt.JsonWebTokenError) {
-      next(new AuthenticationError('Invalid token'));
-      return;
-    }
-    if (error instanceof jwt.TokenExpiredError) {
-      next(new AuthenticationError('Token expired'));
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+      next(new AuthenticationError('Invalid or expired token'));
       return;
     }
     next(new AuthenticationError('Authentication failed'));

@@ -1,12 +1,12 @@
 import { prisma } from '../config/database';
 
 export class NotificationService {
-  async findAll(userId: string) {
+  async findAll(userId: string, limit = 50) {
     const [notifications, unreadResult] = await Promise.all([
       prisma.notification.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
-        take: 50,
+        take: limit,
       }),
       prisma.notification.aggregate({
         where: { userId, isRead: false },

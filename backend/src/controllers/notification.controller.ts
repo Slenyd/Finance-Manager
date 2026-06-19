@@ -7,7 +7,8 @@ const notificationService = new NotificationService();
 
 export class NotificationController {
   findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { notifications, unreadCount } = await notificationService.findAll(req.user!.id);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
+    const { notifications, unreadCount } = await notificationService.findAll(req.user!.id, limit);
     res.json({ success: true, data: notifications, meta: { unreadCount } });
   });
 

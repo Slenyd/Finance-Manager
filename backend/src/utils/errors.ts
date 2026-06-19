@@ -32,6 +32,12 @@ export class AuthorizationError extends ApiError {
   }
 }
 
+export class BadRequestError extends ApiError {
+  constructor(message = 'Bad request') {
+    super(400, message, 'BAD_REQUEST');
+  }
+}
+
 export class NotFoundError extends ApiError {
   constructor(resource = 'Resource') {
     super(404, `${resource} not found`, 'NOT_FOUND');

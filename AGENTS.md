@@ -83,6 +83,18 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - **Atomic category deletion**: category delete now uses `prisma.$transaction()` for transaction reassignment, budget reassignment, and category deletion — no partial state on failure
 - **Database config**: `database.ts` uses `POSTGRES_PRISMA_URL || DATABASE_URL` fallback chain matching `config/index.ts`
 
+### Architecture Fixes (Round 2)
+- **BadRequestError** added to error class hierarchy — used by upload/cron controllers instead of inline JSON responses
+- **express.urlencoded** changed from `extended: true` (qs) to `extended: false` (querystring) — removes deeply-nested payload DoS vector
+- **resolveCategoryId** moved from `transaction.service.ts` to `utils/category.helpers.ts` — shared utility, no cross-domain coupling
+- **Transaction controller** response format fixed: `{ success: true, data: ..., meta: ... }` instead of spreading service result
+- **Upload controller** inline `res.status(400).json(...)` replaced with `throw new BadRequestError(...)` — flows through error handler
+- **Cron controller** inline `res.status(503/401).json(...)` replaced with `throw new ApiError(...)` / `throw new AuthenticationError(...)` — flows through error handler
+- **Category service** authorization failures now return 403 `AuthorizationError` instead of misleading 404 `NotFoundError`
+- **Auth middleware** JWT error messages consolidated: `Invalid token` + `Token expired` → `Invalid or expired token` (prevents token-guessing attacks)
+- **Notification service** `findAll` now accepts `limit` param (default 50, capped 100) instead of hardcoded `take: 50`
+- **Notification controller** passes `req.query.limit` to service
+
 ### Frontend Performance
 - **Frontend API modules split**: `api/endpoints.ts` → 7 domain modules + barrel `index.ts`; old file deleted
 - **Form dialogs lazy-loaded**: `TransactionFormDialog`, `BudgetFormDialog`, `GoalFormDialog`, `ContributeFormDialog` via `React.lazy()` + `Suspense`
@@ -111,7 +123,9 @@ Deploy and optimize the full-stack Finance Manager on Vercel (frontend + backend
 - **CI fix**: Added `POSTGRES_PRISMA_URL` to `.github/workflows/ci.yml`
 
 ## Relevant Files
-- `backend/src/middlewares/auth.ts`: JWT-only auth, no DB query, user claims in token
+- `backend/src/utils/errors.ts`: `ApiError` base + `BadRequestError`, `ValidationError`, `AuthenticationError`, `AuthorizationError`, `NotFoundError`, `ConflictError`
+- `backend/src/utils/category.helpers.ts`: shared `resolveCategoryId` utility (decoupled from transaction.service)
+- `backend/src/middlewares/auth.ts`: JWT-only auth, consolidated error messages, user claims in token
 - `backend/src/services/analytics.service.ts`: aggregates + `$queryRaw` with `Prisma.sql`; `getOverview` combined endpoint
 - `backend/src/services/budget.service.ts`: `$transaction` for batched aggregates
 - `backend/src/services/recurring.service.ts`: batched `$transaction` instead of N+1 loop
