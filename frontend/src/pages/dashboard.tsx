@@ -14,7 +14,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];
 
 export default function DashboardPage() {
-  const { formatCurrency, formatDate } = useFormatters();
+  const { formatCurrency, formatDate, convertFromBase } = useFormatters();
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
@@ -29,11 +29,11 @@ export default function DashboardPage() {
   ], [dashboard?.totalIncome, dashboard?.totalExpenses]);
 
   const summaryCards = useMemo(() => dashboard ? [
-    { label: 'Current Balance', value: formatCurrency(dashboard.currentBalance), color: '' },
-    { label: 'Total Income', value: formatCurrency(dashboard.totalIncome), color: 'text-green-600' },
-    { label: 'Total Expenses', value: formatCurrency(dashboard.totalExpenses), color: 'text-red-600' },
-    { label: 'Savings', value: formatCurrency(dashboard.savings), color: '' },
-  ] : [], [dashboard, formatCurrency]);
+    { label: 'Current Balance', value: formatCurrency(convertFromBase(dashboard.currentBalance)), color: '' },
+    { label: 'Total Income', value: formatCurrency(convertFromBase(dashboard.totalIncome)), color: 'text-green-600' },
+    { label: 'Total Expenses', value: formatCurrency(convertFromBase(dashboard.totalExpenses)), color: 'text-red-600' },
+    { label: 'Savings', value: formatCurrency(convertFromBase(dashboard.savings)), color: '' },
+  ] : [], [dashboard, formatCurrency, convertFromBase]);
 
   if (isLoading) {
     return (
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={[{ name: 'This Month', income: dashboard.monthIncome, expenses: dashboard.monthExpenses }]}>
+                  <BarChart data={[{ name: 'This Month', income: convertFromBase(dashboard.monthIncome), expenses: convertFromBase(dashboard.monthExpenses) }]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
@@ -123,8 +123,8 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>{formatCurrency(dashboard.monthExpenses)} spent</span>
-                  <span>{formatCurrency(dashboard.totalIncome)} budget</span>
+                  <span>{formatCurrency(convertFromBase(dashboard.monthExpenses))} spent</span>
+                  <span>{formatCurrency(convertFromBase(dashboard.totalIncome))} budget</span>
                 </div>
                 <Progress value={(dashboard.monthExpenses / Math.max(dashboard.totalIncome, 1)) * 100} />
               </div>
@@ -155,7 +155,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <span className={tx.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                      {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                      {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(convertFromBase(tx.amount))}
                     </span>
                   </div>
                 ))}

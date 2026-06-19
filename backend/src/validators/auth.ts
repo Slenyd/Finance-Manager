@@ -70,7 +70,7 @@ export const changePasswordSchema = z.object({
 
 export const updatePreferencesSchema = z.object({
   body: z.object({
-    currency: z.string().min(2).max(10).optional(),
+    currency: z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'INR', 'ILS']).optional(),
     locale: z.string().min(2).max(10).optional(),
   }),
 });

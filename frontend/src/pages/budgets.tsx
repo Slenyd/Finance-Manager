@@ -14,7 +14,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const BudgetFormDialog = lazy(() => import('@/components/forms/budget-form').then(m => ({ default: m.BudgetFormDialog })));
 
 export default function BudgetsPage() {
-  const { formatCurrency } = useFormatters();
+  const { formatCurrency, convertFromBase } = useFormatters();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -154,8 +154,8 @@ export default function BudgetsPage() {
                 <CardContent>
                   <Progress value={Math.min(budget.percentage, 100)} className="mb-2" />
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{formatCurrency(budget.spent)} spent</span>
-                    <span className="font-medium">{formatCurrency(budget.limit)} limit</span>
+                    <span className="text-muted-foreground">{formatCurrency(convertFromBase(budget.spent))} spent</span>
+                    <span className="font-medium">{formatCurrency(convertFromBase(budget.limit))} limit</span>
                   </div>
                   {budget.percentage >= 90 && (
                     <p className="text-sm text-destructive mt-2 font-medium">

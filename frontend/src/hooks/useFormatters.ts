@@ -1,31 +1,33 @@
 import { useMemo } from 'react';
 import { useAuthStore } from '@/store/auth';
+import { useExchangeRates } from './useExchangeRates';
 
 const CURRENCY_MAP: Record<string, { symbol: string; locale: string }> = {
   USD: { symbol: '$', locale: 'en-US' },
   EUR: { symbol: '€', locale: 'de-DE' },
   GBP: { symbol: '£', locale: 'en-GB' },
   JPY: { symbol: '¥', locale: 'ja-JP' },
-  CAD: { symbol: 'C$', locale: 'en-CA' },
-  AUD: { symbol: 'A$', locale: 'en-AU' },
+  CNY: { symbol: '¥', locale: 'zh-CN' },
   INR: { symbol: '₹', locale: 'en-IN' },
-  BRL: { symbol: 'R$', locale: 'pt-BR' },
-  MXN: { symbol: 'MX$', locale: 'es-MX' },
-  CHF: { symbol: 'Fr.', locale: 'de-CH' },
   ILS: { symbol: '₪', locale: 'he-IL' },
 };
+
+export const SUPPORTED_CURRENCIES = Object.keys(CURRENCY_MAP);
 
 export function useFormatters() {
   const user = useAuthStore((s) => s.user);
   const currency = user?.currency || 'USD';
   const locale = user?.locale || CURRENCY_MAP[currency]?.locale || 'en-US';
+  const currencyInfo = CURRENCY_MAP[currency] || CURRENCY_MAP.USD;
+
+  const { data: ratesData } = useExchangeRates('USD');
 
   const formatCurrency = useMemo(() => {
     const formatter = new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+      maximumFractionDigits: currency === 'JPY' ? 0 : 2,
     });
     return (amount: number) => formatter.format(amount);
   }, [currency, locale]);
@@ -39,7 +41,28 @@ export function useFormatters() {
     return (date: string | Date) => formatter.format(new Date(date));
   }, [locale]);
 
-  const currencyInfo = CURRENCY_MAP[currency] || CURRENCY_MAP.USD;
+  const convertFromBase = useMemo(() => {
+    const rates = ratesData?.rates;
+    if (!rates || !rates[currency]) {
+      return (amount: number) => amount;
+    }
+    return (amount: number) => amount * rates[currency];
+  }, [ratesData?.rates, currency]);
 
-  return { formatCurrency, formatDate, currency, currencySymbol: currencyInfo.symbol };
+  const convertToBase = useMemo(() => {
+    const rates = ratesData?.rates;
+    if (!rates || !rates[currency]) {
+      return (amount: number) => amount;
+    }
+    return (amount: number) => amount / rates[currency];
+  }, [ratesData?.rates, currency]);
+
+  return {
+    formatCurrency,
+    formatDate,
+    convertFromBase,
+    convertToBase,
+    currency,
+    currencySymbol: currencyInfo.symbol,
+  };
 }

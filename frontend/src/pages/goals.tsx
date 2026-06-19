@@ -14,7 +14,7 @@ const GoalFormDialog = lazy(() => import('@/components/forms/goal-form').then(m 
 const ContributeFormDialog = lazy(() => import('@/components/forms/contribute-form').then(m => ({ default: m.ContributeFormDialog })));
 
 export default function GoalsPage() {
-  const { formatCurrency, formatDate } = useFormatters();
+  const { formatCurrency, formatDate, convertFromBase } = useFormatters();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -148,8 +148,8 @@ export default function GoalsPage() {
                 <CardContent className="space-y-3">
                   <Progress value={Math.min(goal.progress, 100)} />
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{formatCurrency(goal.currentAmount)} saved</span>
-                    <span className="font-medium">{formatCurrency(goal.targetAmount)} target</span>
+                    <span className="text-muted-foreground">{formatCurrency(convertFromBase(goal.currentAmount))} saved</span>
+                    <span className="font-medium">{formatCurrency(convertFromBase(goal.targetAmount))} target</span>
                   </div>
                   <div className="flex justify-between text-sm items-center">
                     <span className="text-muted-foreground">{Math.round(goal.progress)}% complete</span>

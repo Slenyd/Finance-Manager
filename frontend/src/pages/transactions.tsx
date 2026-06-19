@@ -16,7 +16,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const TransactionFormDialog = lazy(() => import('@/components/forms/transaction-form').then(m => ({ default: m.TransactionFormDialog })));
 
 export default function TransactionsPage() {
-  const { formatCurrency, formatDate } = useFormatters();
+  const { formatCurrency, formatDate, convertFromBase } = useFormatters();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
@@ -181,7 +181,7 @@ export default function TransactionsPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className={`text-right font-medium ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                              {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                              {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(convertFromBase(tx.amount))}
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
@@ -253,7 +253,7 @@ export default function TransactionsPage() {
                             {tx.type}
                           </Badge>
                           <span className={`font-medium ${tx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                            {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                            {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(convertFromBase(tx.amount))}
                           </span>
                         </div>
                       </div>

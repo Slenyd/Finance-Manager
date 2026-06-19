@@ -19,12 +19,8 @@ const CURRENCIES = [
   { value: 'EUR', label: 'EUR (\u20ac)', symbol: '\u20ac', locale: 'de-DE' },
   { value: 'GBP', label: 'GBP (\u00a3)', symbol: '\u00a3', locale: 'en-GB' },
   { value: 'JPY', label: 'JPY (\u00a5)', symbol: '\u00a5', locale: 'ja-JP' },
-  { value: 'CAD', label: 'CAD (C$)', symbol: 'C$', locale: 'en-CA' },
-  { value: 'AUD', label: 'AUD (A$)', symbol: 'A$', locale: 'en-AU' },
+  { value: 'CNY', label: 'CNY (\u00a5)', symbol: '\u00a5', locale: 'zh-CN' },
   { value: 'INR', label: 'INR (\u20b9)', symbol: '\u20b9', locale: 'en-IN' },
-  { value: 'BRL', label: 'BRL (R$)', symbol: 'R$', locale: 'pt-BR' },
-  { value: 'MXN', label: 'MXN (MX$)', symbol: 'MX$', locale: 'es-MX' },
-  { value: 'CHF', label: 'CHF (Fr.)', symbol: 'Fr.', locale: 'de-CH' },
   { value: 'ILS', label: 'ILS (\u20AA)', symbol: '\u20AA', locale: 'he-IL' },
 ];
 

@@ -12,7 +12,7 @@ import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];
 
 export default function AnalyticsPage() {
-  const { formatCurrency } = useFormatters();
+  const { formatCurrency, convertFromBase } = useFormatters();
   const { data: dashboard, isError: dashboardError, refetch: refetchDashboard } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
@@ -90,7 +90,7 @@ if (loadingMonthly && loadingCategories) {
               <Card>
                 <CardContent className="p-6">
                   <p className="text-sm text-muted-foreground">Avg Monthly Spending</p>
-                  <p className="text-2xl font-bold">{formatCurrency(dashboard.monthExpenses)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(convertFromBase(dashboard.monthExpenses))}</p>
                 </CardContent>
               </Card>
             </StaggerItem>
@@ -118,7 +118,7 @@ if (loadingMonthly && loadingCategories) {
               <Card>
                 <CardContent className="p-6">
                   <p className="text-sm text-muted-foreground">Net Worth</p>
-                  <p className="text-2xl font-bold">{formatCurrency(dashboard.currentBalance)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(convertFromBase(dashboard.currentBalance))}</p>
                 </CardContent>
               </Card>
             </StaggerItem>
