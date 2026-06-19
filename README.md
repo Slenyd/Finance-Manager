@@ -1,85 +1,79 @@
-<<<<<<< HEAD
-# Finance-Manager
-Final Project for SVCollage: Finance and Budgeting Manager
-=======
-# Personal Finance Manager
+# Finance Manager
 
-A production-ready Personal Finance Manager and Budgeting Web Application built with React, TypeScript, Express, and PostgreSQL.
+A full-stack personal finance and budgeting web application built with React, Express, and PostgreSQL. Deployed on Vercel with Supabase.
 
 ## Tech Stack
 
-**Frontend:** React 19, TypeScript, Vite, TanStack Query, Zustand, TailwindCSS, Shadcn/UI, Recharts
-
-**Backend:** Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, JWT Authentication, RBAC
-
-**Deployment:** Docker, Vercel, Netlify, Railway, Render
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | React 19, TypeScript, Vite, TanStack Query, Zustand, TailwindCSS, shadcn/ui, Recharts |
+| **Backend** | Node.js, Express, TypeScript, Prisma ORM, JWT (access + refresh tokens) |
+| **Database** | Supabase PostgreSQL (PgBouncer pooler) |
+| **Storage** | Vercel Blob (receipt uploads) |
+| **Infra** | Vercel (serverless), Upstash Redis (rate limiting), Vercel Cron |
 
 ## Features
 
-- Dashboard with financial health score and charts
-- Transaction management (income, expense, transfer)
-- Budget tracking with alerts at 50%, 75%, 90%, 100%
-- Savings goals with progress tracking
-- Financial analytics with charts and KPIs
-- Recurring transactions (daily, weekly, monthly, yearly)
-- JWT authentication with refresh tokens
-- Role-based access control (User/Admin)
-- Dark mode support
-- Mobile responsive
-- CSV import/export
-- Receipt upload
+- Dashboard with financial health score, income/expense charts, and KPIs
+- Transaction management — income, expense, transfer — with receipt uploads
+- Budget tracking with progressive alerts at 50%, 75%, 90%, 100%
+- Savings goals with progress tracking and contribution history
+- Financial analytics — net worth, spending breakdown, monthly trends
+- Category management (CRUD, type filtering)
+- Notification system
+- Recurring transactions processed daily via Vercel Cron
+- JWT authentication with refresh-token rotation and role-based access control
+- Dark mode with system preference detection
+- Mobile-responsive layout
+- Lazy-loaded form dialogs, cached formatters, compressed responses
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
-- PostgreSQL 16+
-- Docker (optional)
+- PostgreSQL 16+ (or Supabase account)
 
-### Environment Setup
+### 1. Install dependencies
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/finance-manager.git
-   cd finance-manager
-   ```
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
 
-2. Install dependencies:
-   ```bash
-   cd backend && npm install
-   cd ../frontend && npm install
-   cd ..
-   npm install
-   ```
+### 2. Set up environment variables
 
-3. Set up environment variables:
-   ```bash
-   cp backend/.env.example backend/.env
-   cp frontend/.env.example frontend/.env
-   ```
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
 
-4. Start PostgreSQL and create the database:
-   ```bash
-   createdb finance_manager
-   ```
+Edit `backend/.env` with your database URL, JWT secrets, and cookie secret.
 
-5. Run database migrations and seed:
-   ```bash
-   cd backend
-   npx prisma migrate dev
-   npx prisma db seed
-   ```
+### 3. Database
 
-6. Start development servers:
-   ```bash
-   # From root directory
-   npm run dev
-   ```
+```bash
+cd backend
+npx prisma migrate dev
+npx prisma db seed
+```
+
+### 4. Run development servers
+
+```bash
+# Terminal 1 — backend
+cd backend && npm run dev
+
+# Terminal 2 — frontend
+cd frontend && npm run dev
+```
+
+The frontend runs on `http://localhost:5173` and proxies `/api/*` to the backend on port 5000.
 
 ### Docker
 
 ```bash
+cp .env.docker.example .env.docker   # fill in secrets
 docker-compose up --build
 ```
 
@@ -87,83 +81,84 @@ docker-compose up --build
 
 ```
 finance-manager/
-├── frontend/          # React + Vite application
+├── frontend/                # React + Vite SPA
 │   └── src/
-│       ├── api/       # API client and endpoints
-│       ├── components/# UI components
-│       ├── hooks/     # Custom React hooks
-│       ├── pages/     # Page components
-│       ├── routes/    # Router configuration
-│       ├── store/     # Zustand stores
-│       ├── schemas/   # Zod schemas
-│       └── types/     # TypeScript types
-├── backend/           # Express + Prisma API
+│       ├── api/            # Domain API modules (auth, transactions, uploads, …)
+│       ├── components/     # UI components, forms, layouts
+│       ├── hooks/          # Custom React hooks
+│       ├── pages/          # Route page components
+│       ├── routes/          # React Router config
+│       ├── store/           # Zustand stores
+│       ├── schemas/         # Zod validation schemas
+│       ├── lib/             # Utilities, formatters
+│       └── types/           # Shared TypeScript types
+├── backend/                 # Express + Prisma API
 │   └── src/
-│       ├── config/    # Configuration
-│       ├── controllers/ # Route handlers
-│       ├── services/  # Business logic
-│       ├── middlewares/ # Express middlewares
-│       ├── routes/    # API routes
-│       ├── validators/# Zod validation schemas
-│       ├── jobs/      # Background jobs
-│       └── utils/     # Utilities
-├── docker/            # Docker configuration
-├── docs/              # Documentation
-└── scripts/           # Utility scripts
+│       ├── config/          # Env config, database
+│       ├── controllers/     # Route handlers
+│       ├── services/        # Business logic
+│       ├── middlewares/     # Auth, rate limiting, validation, logging
+│       ├── routes/          # Express routers
+│       ├── validators/      # Zod request schemas
+│       ├── jobs/            # Background cron jobs
+│       └── utils/           # Error classes, helpers, logger
+├── backend/prisma/          # Schema, migrations, seed
+├── docker/                  # Dockerfiles for frontend & backend
+└── docs/                    # Additional documentation
 ```
 
-## API Documentation
+## API
 
-### Auth
-- `POST /api/v1/auth/register` - Register a new user
-- `POST /api/v1/auth/login` - Login
-- `POST /api/v1/auth/logout` - Logout
-- `POST /api/v1/auth/refresh` - Refresh access token
-- `POST /api/v1/auth/forgot-password` - Request password reset
-- `POST /api/v1/auth/reset-password` - Reset password
-- `GET /api/v1/auth/me` - Get current user profile
+All endpoints are under `/api/v1`.
 
-### Transactions
-- `GET /api/v1/transactions` - List transactions (with pagination, filtering)
-- `POST /api/v1/transactions` - Create transaction
-- `GET /api/v1/transactions/:id` - Get transaction
-- `PUT /api/v1/transactions/:id` - Update transaction
-- `DELETE /api/v1/transactions/:id` - Delete transaction
-- `DELETE /api/v1/transactions/bulk` - Bulk delete transactions
+| Domain | Key Endpoints |
+|--------|--------------|
+| Auth | `POST /register`, `POST /login`, `POST /logout`, `POST /refresh`, `GET /me` |
+| Transactions | CRUD + `GET /summary`, `DELETE /bulk`, filters & pagination |
+| Categories | CRUD with type filtering |
+| Budgets | CRUD with spending progress |
+| Goals | CRUD with contribution tracking |
+| Analytics | `GET /overview`, net worth, spending breakdown, monthly trends |
+| Notifications | List, mark read, delete |
+| Uploads | `POST /receipt` (multipart), `DELETE /receipt` |
+| Cron | `POST /recurring` (daily, protected by `CRON_SECRET`) |
 
-### Categories, Budgets, Goals, Analytics, Notifications
-All follow RESTful conventions under `/api/v1/`.
+## Deployment (Vercel)
 
-## Deployment
+The app is deployed as two Vercel projects with git auto-deploy on push to `main`:
 
-### Frontend (Vercel/Netlify)
 ```bash
-cd frontend
-npm run build
-```
-Deploy the `dist/` folder.
+# Frontend — from frontend/ directory
+vercel --prod
 
-### Backend (Railway/Render)
-```bash
-cd backend
-npm run build
-```
-Set environment variables in the dashboard.
-
-### Database (Supabase/Neon)
-Use the connection string as `DATABASE_URL` and run:
-```bash
-npx prisma migrate deploy
+# Backend — from backend/ directory
+vercel --prod --project finance-manager-backend
 ```
 
-## Default Users (Seed)
+### Required Vercel Environment Variables (backend)
 
-> **Security Note:** These credentials are for local development only. Change them in production by setting `SEED_PASSWORD` env var or updating the seed script.
+| Variable | Purpose |
+|----------|---------|
+| `POSTGRES_PRISMA_URL` | Supabase pooler connection string (port 6543) |
+| `JWT_ACCESS_SECRET` | Access token signing key |
+| `JWT_REFRESH_SECRET` | Refresh token signing key |
+| `COOKIE_SECRET` | Cookie signing key |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage (receipt uploads) |
+| `KV_REST_API_URL` | Upstash Redis URL (rate limiting) |
+| `KV_REST_API_TOKEN` | Upstash Redis token |
+| `CRON_SECRET` | Auth header for cron endpoint |
 
-- **Admin:** admin@financemanager.com / Password123
-- **User:** user@financemanager.com / Password123
+The frontend proxies `/api/*` to the backend via `vercel.json` rewrites — no CORS needed.
+
+## Seed Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| User | `user@financemanager.com` | `Password123` |
+| Admin | `admin@financemanager.com` | `Password123` |
+
+> These are for local development only. Set `SEED_PASSWORD` or change the seed script in production.
 
 ## License
 
 MIT
->>>>>>> a8ec3af (initial commit)
