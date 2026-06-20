@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
     queryKey: ['monthlySpending'],
     queryFn: async () => {
       const res = await analyticsApi.getMonthlySpending(6);
-      return res.data.data as { month: string; income: number; expenses: number }[];
+      return res.data.data!;
     },
   });
 
@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
     queryKey: ['categoryBreakdown'],
     queryFn: async () => {
       const res = await analyticsApi.getCategoryBreakdown();
-      return res.data.data as { categoryName: string; total: number; categoryColor: string; count: number }[];
+      return res.data.data!;
     },
   });
 
@@ -41,7 +41,7 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
     queryKey: ['cashFlow'],
     queryFn: async () => {
       const res = await analyticsApi.getCashFlow(12);
-      return res.data.data as { month: string; income: number; expenses: number }[];
+      return res.data.data!;
     },
   });
 

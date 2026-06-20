@@ -1,10 +1,10 @@
 import api from './client.js';
-import { ApiResponse, Category } from '@/types';
+import { ApiResponse, Category, CreateCategoryDTO, UpdateCategoryDTO } from '@/types';
 
 export const categoryApi = {
   getAll: () => api.get<ApiResponse<Category[]>>('/categories'),
   getById: (id: string) => api.get<ApiResponse<Category>>(`/categories/${id}`),
-  create: (data: Partial<Category>) => api.post<ApiResponse<Category>>('/categories', data),
-  update: (id: string, data: Partial<Category>) => api.put<ApiResponse<Category>>(`/categories/${id}`, data),
-  delete: (id: string) => api.delete(`/categories/${id}`),
+  create: (data: CreateCategoryDTO) => api.post<ApiResponse<Category>>('/categories', data),
+  update: (id: string, data: UpdateCategoryDTO) => api.put<ApiResponse<Category>>(`/categories/${id}`, data),
+  delete: (id: string) => api.delete<ApiResponse<null>>(`/categories/${id}`),
 };

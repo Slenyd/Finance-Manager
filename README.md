@@ -104,12 +104,12 @@ coin-toss/
 │       └── utils/           # Error classes, helpers, logger
 ├── backend/prisma/          # Schema, migrations, seed
 ├── docker/                  # Dockerfiles for frontend & backend
-└── Documentation/         # System docs, wireframes, ERD, API ref, data dict
+└── Documentation/         # overview/, architecture/, api/, design/ + AGENTS.md
 ```
 
 ## API
 
-All endpoints are under `/api/v1`. See [`Documentation/api-reference.md`](Documentation/api-reference.md) for the complete endpoint reference with request/response schemas.
+All endpoints are under `/api/v1`. See [`Documentation/api/api-reference.md`](Documentation/api/api-reference.md) for the complete endpoint reference with request/response schemas.
 
 | Domain | Methods | Key Endpoints |
 |--------|---------|--------------|

@@ -1,38 +1,38 @@
 import { Response } from 'express';
 import { GoalService } from '../services';
-import { AuthenticatedRequest } from '../interfaces';
+import { AuthorizedRequest, ApiResponse, SavingsGoalWithProgress, CreateGoalData, UpdateGoalData } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const goalService = new GoalService();
 
 export class GoalController {
-  findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const goals = await goalService.findAll(req.user!.id);
-    res.json({ success: true, data: goals });
+  findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const goals = await goalService.findAll(req.user.id);
+    res.json({ success: true, data: goals } satisfies ApiResponse<SavingsGoalWithProgress[]>);
   });
 
-  findById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const goal = await goalService.findById(req.user!.id, req.params.id);
-    res.json({ success: true, data: goal });
+  findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const goal = await goalService.findById(req.user.id, req.params.id);
+    res.json({ success: true, data: goal } satisfies ApiResponse<SavingsGoalWithProgress>);
   });
 
-  create = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const goal = await goalService.create(req.user!.id, req.body);
-    res.status(201).json({ success: true, data: goal, message: 'Goal created' });
+  create = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const goal = await goalService.create(req.user.id, req.body as CreateGoalData);
+    res.status(201).json({ success: true, data: goal, message: 'Goal created' } satisfies ApiResponse);
   });
 
-  update = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const goal = await goalService.update(req.user!.id, req.params.id, req.body);
-    res.json({ success: true, data: goal, message: 'Goal updated' });
+  update = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const goal = await goalService.update(req.user.id, req.params.id, req.body as UpdateGoalData);
+    res.json({ success: true, data: goal, message: 'Goal updated' } satisfies ApiResponse);
   });
 
-  delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    await goalService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, data: null, message: 'Goal deleted' });
+  delete = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    await goalService.delete(req.user.id, req.params.id);
+    res.json({ success: true, data: null, message: 'Goal deleted' } satisfies ApiResponse<null>);
   });
 
-  contribute = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const goal = await goalService.contribute(req.user!.id, req.params.id, req.body.amount);
-    res.json({ success: true, data: goal, message: 'Contribution added' });
+  contribute = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const goal = await goalService.contribute(req.user.id, req.params.id, req.body.amount);
+    res.json({ success: true, data: goal, message: 'Contribution added' } satisfies ApiResponse);
   });
 }

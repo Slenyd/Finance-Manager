@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { AuthenticatedRequest, JwtPayload } from '../interfaces';
+import { AuthenticatedRequest, AuthorizedRequest, JwtPayload } from '../interfaces';
 import { AuthenticationError, AuthorizationError } from '../utils/errors';
 
 export const authenticate = (
@@ -45,7 +45,7 @@ export const authenticate = (
 };
 
 export const authorize = (...roles: string[]) => {
-  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+  return (req: AuthorizedRequest, _res: Response, next: NextFunction): void => {
     if (!req.user) {
       next(new AuthenticationError('Not authenticated'));
       return;

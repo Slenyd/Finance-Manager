@@ -9,7 +9,6 @@ interface AuthState {
   isAuthenticated: boolean;
   rememberMe: boolean;
   setUser: (user: User) => void;
-  setAccessToken: (token: string) => void;
   login: (user: User, accessToken: string, refreshToken: string, rememberMe?: boolean) => void;
   logout: () => void;
 }
@@ -85,11 +84,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   setUser: (user) => {
     set({ user });
     saveToStorage({ ...get(), user });
-  },
-
-  setAccessToken: (token) => {
-    set({ accessToken: token, isAuthenticated: true });
-    saveToStorage({ ...get(), accessToken: token, isAuthenticated: true });
   },
 
   login: (user, accessToken, refreshToken, rememberMe = false) => {

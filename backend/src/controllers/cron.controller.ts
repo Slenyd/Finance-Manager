@@ -3,6 +3,7 @@ import { RecurringService } from '../services/recurring.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { config } from '../config';
 import { ApiError, AuthenticationError } from '../utils/errors';
+import { ApiResponse } from '../interfaces';
 
 const recurringService = new RecurringService();
 
@@ -18,6 +19,6 @@ export class CronController {
     }
 
     const result = await recurringService.processRecurringTransactions();
-    res.json({ success: true, data: result, message: 'Recurring transactions processed' });
+    res.json({ success: true, data: result, message: 'Recurring transactions processed' } satisfies ApiResponse<{ processed: number }>);
   });
 }

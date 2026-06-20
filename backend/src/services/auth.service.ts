@@ -2,9 +2,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { config } from '../config';
-import { JwtPayload } from '../interfaces';
+import { JwtPayload, AuthResult, RefreshResult, SafeUser, RegisterData, LoginData, UpdateProfileData, UpdatePreferencesData } from '../interfaces';
 import { AuthenticationError, ConflictError, NotFoundError, ValidationError } from '../utils/errors';
 import { sendPasswordResetEmail } from '../utils/mailer';
 
@@ -15,8 +16,24 @@ function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+type UserSelect = Prisma.UserGetPayload<{ select: { id: true; name: true; email: true; role: true; isVerified: true; currency: true; locale: true; createdAt: true; updatedAt: true } }>;
+
+function toSafeUser(user: UserSelect): SafeUser {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    isVerified: user.isVerified,
+    currency: user.currency,
+    locale: user.locale,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
 export class AuthService {
-  async register(data: { name: string; email: string; password: string }) {
+  async register(data: RegisterData): Promise<{ user: SafeUser }> {
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) {
       throw new ConflictError('Registration failed');
@@ -42,10 +59,10 @@ export class AuthService {
 
     await this.createDefaultCategories(user.id);
 
-    return { user };
+    return { user: toSafeUser({ ...user, currency: 'USD', locale: 'en-US' }) };
   }
 
-  async login(data: { email: string; password: string; rememberMe?: boolean }) {
+  async login(data: LoginData): Promise<AuthResult> {
     const user = await prisma.user.findUnique({ where: { email: data.email } });
     if (!user) {
       throw new AuthenticationError('Invalid email or password');
@@ -103,13 +120,12 @@ export class AuthService {
     };
   }
 
-  async refresh(token: string) {
+  async refresh(token: string): Promise<RefreshResult> {
     const storedToken = await prisma.refreshToken.findUnique({ where: { token } });
     if (!storedToken || storedToken.expiresAt < new Date()) {
       throw new AuthenticationError('Invalid refresh token');
     }
 
-    // Theft detection: if a revoked token from this family was already used, revoke all
     if (storedToken.isRevoked) {
       await prisma.refreshToken.updateMany({
         where: { family: storedToken.family, isRevoked: false },
@@ -146,7 +162,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async logout(token: string) {
+  async logout(token: string): Promise<void> {
     const storedToken = await prisma.refreshToken.findUnique({ where: { token } });
     if (storedToken) {
       await prisma.refreshToken.updateMany({
@@ -156,7 +172,7 @@ export class AuthService {
     }
   }
 
-  async getProfile(userId: string) {
+  async getProfile(userId: string): Promise<{ user: SafeUser }> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -174,10 +190,10 @@ export class AuthService {
     if (!user) {
       throw new NotFoundError('User');
     }
-    return { user };
+    return { user: toSafeUser(user) };
   }
 
-  async updateProfile(userId: string, data: { name?: string; email?: string }) {
+  async updateProfile(userId: string, data: UpdateProfileData): Promise<{ user: SafeUser }> {
     if (data.email) {
       const existing = await prisma.user.findUnique({ where: { email: data.email } });
       if (existing && existing.id !== userId) {
@@ -202,10 +218,10 @@ export class AuthService {
         updatedAt: true,
       },
     });
-    return { user };
+    return { user: toSafeUser(user) };
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundError('User');
@@ -225,7 +241,7 @@ export class AuthService {
     });
   }
 
-  async updatePreferences(userId: string, data: { currency?: string; locale?: string }) {
+  async updatePreferences(userId: string, data: UpdatePreferencesData): Promise<{ user: SafeUser }> {
     const user = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -244,17 +260,17 @@ export class AuthService {
         updatedAt: true,
       },
     });
-    return { user };
+    return { user: toSafeUser(user) };
   }
 
-  async deleteAccount(userId: string) {
+  async deleteAccount(userId: string): Promise<void> {
     await prisma.$transaction([
       prisma.refreshToken.deleteMany({ where: { userId } }),
       prisma.user.delete({ where: { id: userId } }),
     ]);
   }
 
-  async forgotPassword(email: string) {
+  async forgotPassword(email: string): Promise<void> {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return;
@@ -272,7 +288,7 @@ export class AuthService {
     await sendPasswordResetEmail(email, resetToken);
   }
 
-  async resetPassword(token: string, password: string) {
+  async resetPassword(token: string, password: string): Promise<void> {
     const tokenHash = hashToken(token);
     const user = await prisma.user.findFirst({
       where: {
@@ -298,9 +314,9 @@ export class AuthService {
     });
   }
 
-  private async handleFailedLogin(userId: string, currentAttempts: number) {
+  private async handleFailedLogin(userId: string, currentAttempts: number): Promise<void> {
     const newAttempts = currentAttempts + 1;
-    const updateData: Record<string, unknown> = { failedLoginAttempts: newAttempts };
+    const updateData: Prisma.UserUpdateInput = { failedLoginAttempts: newAttempts };
 
     if (newAttempts >= MAX_FAILED_ATTEMPTS) {
       updateData.isLocked = true;
@@ -310,7 +326,7 @@ export class AuthService {
     await prisma.user.update({ where: { id: userId }, data: updateData });
   }
 
-  private generateAccessToken(userId: string, role: string, extras?: { name: string; email: string; isVerified: boolean }): string {
+  private generateAccessToken(userId: string, role: string, extras: { name: string; email: string; isVerified: boolean }): string {
     const payload: JwtPayload = { userId, role, type: 'access', ...extras };
     return jwt.sign(payload, config.jwt.accessSecret, {
       expiresIn: config.jwt.accessExpiresIn as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`,
@@ -324,7 +340,7 @@ export class AuthService {
     });
   }
 
-  private async createDefaultCategories(userId: string) {
+  private async createDefaultCategories(userId: string): Promise<void> {
     const defaultCategories = [
       { name: 'Salary', icon: 'briefcase', color: '#22c55e', type: 'INCOME' as const },
       { name: 'Freelance', icon: 'laptop', color: '#3b82f6', type: 'INCOME' as const },

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { goalApi } from '@/api';
 import { goalSchema, GoalForm as GoalFormType } from '@/schemas';
+import type { CreateGoalDTO } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,7 +49,7 @@ export function GoalFormDialog({ open, onOpenChange, goal }: Props) {
   }, [goal, setValue, reset]);
 
   const createMutation = useMutation({
-    mutationFn: (data: { name: string; targetAmount: number; currentAmount?: number; deadline?: string | null }) => goalApi.create(data),
+    mutationFn: (data: CreateGoalDTO) => goalApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });

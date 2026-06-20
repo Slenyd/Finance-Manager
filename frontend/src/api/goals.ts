@@ -1,11 +1,11 @@
 import api from './client.js';
-import { ApiResponse, SavingsGoal } from '@/types';
+import { ApiResponse, SavingsGoal, CreateGoalDTO, UpdateGoalDTO } from '@/types';
 
 export const goalApi = {
   getAll: () => api.get<ApiResponse<SavingsGoal[]>>('/goals'),
   getById: (id: string) => api.get<ApiResponse<SavingsGoal>>(`/goals/${id}`),
-  create: (data: Partial<SavingsGoal>) => api.post<ApiResponse<SavingsGoal>>('/goals', data),
-  update: (id: string, data: Partial<SavingsGoal>) => api.put<ApiResponse<SavingsGoal>>(`/goals/${id}`, data),
-  delete: (id: string) => api.delete(`/goals/${id}`),
-  contribute: (id: string, amount: number) => api.post(`/goals/${id}/contribute`, { amount }),
+  create: (data: CreateGoalDTO) => api.post<ApiResponse<SavingsGoal>>('/goals', data),
+  update: (id: string, data: UpdateGoalDTO) => api.put<ApiResponse<SavingsGoal>>(`/goals/${id}`, data),
+  delete: (id: string) => api.delete<ApiResponse<null>>(`/goals/${id}`),
+  contribute: (id: string, amount: number) => api.post<ApiResponse<SavingsGoal>>(`/goals/${id}/contribute`, { amount }),
 };

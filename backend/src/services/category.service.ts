@@ -1,16 +1,17 @@
-import { TransactionType } from '@prisma/client';
 import { prisma } from '../config/database';
+import { Prisma } from '@prisma/client';
 import { NotFoundError, AuthorizationError } from '../utils/errors';
+import { CreateCategoryData, UpdateCategoryData, Category } from '../interfaces';
 
 export class CategoryService {
-  async findAll(userId: string) {
+  async findAll(userId: string): Promise<Category[]> {
     return prisma.category.findMany({
       where: { OR: [{ userId }, { userId: null }] },
       orderBy: { name: 'asc' },
     });
   }
 
-  async findById(userId: string, id: string) {
+  async findById(userId: string, id: string): Promise<Category> {
     const category = await prisma.category.findFirst({
       where: { id, OR: [{ userId }, { userId: null }] },
     });
@@ -18,24 +19,24 @@ export class CategoryService {
     return category;
   }
 
-  async create(userId: string, data: { name: string; icon?: string; color?: string; type: 'INCOME' | 'EXPENSE' }) {
+  async create(userId: string, data: CreateCategoryData): Promise<Category> {
     return prisma.category.create({ data: { ...data, userId } });
   }
 
-  async update(userId: string, id: string, data: Partial<{
-    name: string;
-    icon: string;
-    color: string;
-    type: 'INCOME' | 'EXPENSE';
-  }>) {
+  async update(userId: string, id: string, data: UpdateCategoryData): Promise<Category> {
     const existing = await this.findById(userId, id);
     if (existing.userId !== userId) {
       throw new AuthorizationError('You cannot modify a default category');
     }
-    return prisma.category.update({ where: { id }, data });
+    const updateData: Prisma.CategoryUpdateInput = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.icon !== undefined) updateData.icon = data.icon;
+    if (data.color !== undefined) updateData.color = data.color;
+    if (data.type !== undefined) updateData.type = data.type;
+    return prisma.category.update({ where: { id }, data: updateData });
   }
 
-  async delete(userId: string, id: string) {
+  async delete(userId: string, id: string): Promise<void> {
     const existing = await this.findById(userId, id);
     if (existing.userId !== userId) {
       throw new AuthorizationError('You cannot delete a default category');

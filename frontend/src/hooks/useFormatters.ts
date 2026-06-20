@@ -12,8 +12,6 @@ const CURRENCY_MAP: Record<string, { symbol: string; locale: string }> = {
   ILS: { symbol: '₪', locale: 'he-IL' },
 };
 
-export const SUPPORTED_CURRENCIES = Object.keys(CURRENCY_MAP);
-
 export function useFormatters() {
   const user = useAuthStore((s) => s.user);
   const currency = user?.currency || 'USD';
@@ -49,19 +47,10 @@ export function useFormatters() {
     return (amount: number) => amount * rates[currency];
   }, [ratesData?.rates, currency]);
 
-  const convertToBase = useMemo(() => {
-    const rates = ratesData?.rates;
-    if (!rates || !rates[currency]) {
-      return (amount: number) => amount;
-    }
-    return (amount: number) => amount / rates[currency];
-  }, [ratesData?.rates, currency]);
-
   return {
     formatCurrency,
     formatDate,
     convertFromBase,
-    convertToBase,
     currency,
     currencySymbol: currencyInfo.symbol,
   };

@@ -1,8 +1,9 @@
 import { prisma } from '../config/database';
+import { TransactionType } from '@prisma/client';
 
-export async function resolveCategoryId(userId: string, type: string, fallbackCategoryId?: string): Promise<string> {
+export async function resolveCategoryId(userId: string, type: TransactionType, fallbackCategoryId?: string): Promise<string> {
   if (fallbackCategoryId) return fallbackCategoryId;
-  const fallback = await prisma.category.findFirst({ where: { userId, type: type as 'INCOME' | 'EXPENSE' } });
+  const fallback = await prisma.category.findFirst({ where: { userId, type } });
   if (fallback) return fallback.id;
   const anyCategory = await prisma.category.findFirst({ where: { userId } });
   if (anyCategory) return anyCategory.id;

@@ -6,7 +6,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const SCREENSHOT_DIR = path.join(__dirname, '..', 'Documentation', 'screenshots');
+const SCREENSHOT_DIR = path.join(__dirname, '..', 'Documentation', 'design', 'screenshots');
 const BASE_URL = 'http://localhost:5173';
 const API_URL = 'http://localhost:5000';
 
@@ -76,7 +76,7 @@ async function main() {
   }
 
   await browser.close();
-  console.log('\nDone! Screenshots saved to Documentation/screenshots/');
+  console.log('\nDone! Screenshots saved to Documentation/design/screenshots/');
 }
 
 main().catch(console.error);

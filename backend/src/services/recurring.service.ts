@@ -1,9 +1,15 @@
 import { prisma } from '../config/database';
+import { Prisma, RecurringInterval } from '@prisma/client';
 import { NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { CreateRecurringData, UpdateRecurringData } from '../interfaces';
+
+type RecurringWithCategory = Prisma.RecurringTransactionGetPayload<{
+  include: { category: { select: { id: true; name: true; icon: true; color: true } } };
+}>;
 
 export class RecurringService {
-  async findAll(userId: string) {
+  async findAll(userId: string): Promise<RecurringWithCategory[]> {
     return prisma.recurringTransaction.findMany({
       where: { userId },
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
@@ -11,7 +17,7 @@ export class RecurringService {
     });
   }
 
-  async findById(userId: string, id: string) {
+  async findById(userId: string, id: string): Promise<RecurringWithCategory> {
     const recurring = await prisma.recurringTransaction.findFirst({
       where: { id, userId },
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
@@ -20,17 +26,7 @@ export class RecurringService {
     return recurring;
   }
 
-  async create(userId: string, data: {
-    categoryId: string;
-    amount: number;
-    description: string;
-    type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-    interval: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-    dayOfMonth?: number | null;
-    dayOfWeek?: number | null;
-    startDate?: string;
-    endDate?: string | null;
-  }) {
+  async create(userId: string, data: CreateRecurringData): Promise<RecurringWithCategory> {
     const startDate = data.startDate ? new Date(data.startDate) : new Date();
     const nextDate = this.calculateNextDateFromStart(data.interval, startDate, data.dayOfMonth);
 
@@ -52,22 +48,11 @@ export class RecurringService {
     });
   }
 
-  async update(userId: string, id: string, data: Partial<{
-    categoryId: string;
-    amount: number;
-    description: string;
-    type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-    interval: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-    dayOfMonth: number | null;
-    dayOfWeek: number | null;
-    startDate: string;
-    endDate: string | null;
-    isActive: boolean;
-  }>) {
+  async update(userId: string, id: string, data: UpdateRecurringData): Promise<RecurringWithCategory> {
     await this.findById(userId, id);
 
-    const updateData: Record<string, unknown> = {};
-    if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    const updateData: Prisma.RecurringTransactionUpdateInput = {};
+    if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };
     if (data.amount !== undefined) updateData.amount = data.amount;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.type !== undefined) updateData.type = data.type;
@@ -95,7 +80,7 @@ export class RecurringService {
     });
   }
 
-  async delete(userId: string, id: string) {
+  async delete(userId: string, id: string): Promise<void> {
     await this.findById(userId, id);
     await prisma.recurringTransaction.delete({ where: { id } });
   }
@@ -148,11 +133,11 @@ export class RecurringService {
     }
   }
 
-  private calculateNextDate(recurring: { interval: string; nextDate: Date; dayOfMonth?: number | null; dayOfWeek?: number | null }): Date {
+  private calculateNextDate(recurring: { interval: RecurringInterval; nextDate: Date; dayOfMonth?: number | null; dayOfWeek?: number | null }): Date {
     return this.calculateNextDateFromStart(recurring.interval, recurring.nextDate, recurring.dayOfMonth);
   }
 
-  private calculateNextDateFromStart(interval: string, startDate: Date, dayOfMonth?: number | null): Date {
+  private calculateNextDateFromStart(interval: RecurringInterval, startDate: Date, dayOfMonth?: number | null): Date {
     const next = new Date(startDate);
     switch (interval) {
       case 'DAILY':

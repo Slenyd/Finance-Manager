@@ -1,9 +1,15 @@
 import { prisma } from '../config/database';
+import { Prisma } from '@prisma/client';
 import { NotFoundError } from '../utils/errors';
 import { resolveCategoryId } from '../utils/category.helpers';
+import { BudgetWithSpent, CreateBudgetData, UpdateBudgetData } from '../interfaces';
+
+type BudgetWithCategory = Prisma.BudgetGetPayload<{
+  include: { category: { select: { id: true; name: true; icon: true; color: true } } };
+}>;
 
 export class BudgetService {
-  async findAll(userId: string) {
+  async findAll(userId: string): Promise<BudgetWithSpent[]> {
     const budgets = await prisma.budget.findMany({
       where: { userId },
       include: { category: { select: { id: true, name: true, icon: true, color: true } } },
@@ -31,7 +37,7 @@ export class BudgetService {
     });
   }
 
-  async findById(userId: string, id: string) {
+  async findById(userId: string, id: string): Promise<BudgetWithSpent> {
     const budget = await prisma.budget.findFirst({
       where: { id, userId },
       include: { category: true },
@@ -51,9 +57,7 @@ export class BudgetService {
     return { ...budget, spent: spentAmount, percentage: Number(budget.limit) > 0 ? (spentAmount / Number(budget.limit)) * 100 : 0 };
   }
 
-  async create(userId: string, data: {
-    categoryId?: string; limit: number; period: 'WEEKLY' | 'MONTHLY' | 'YEARLY'; startDate: string; endDate: string;
-  }) {
+  async create(userId: string, data: CreateBudgetData): Promise<BudgetWithCategory> {
     const categoryId = await resolveCategoryId(userId, 'EXPENSE', data.categoryId);
     return prisma.budget.create({
       data: {
@@ -68,12 +72,7 @@ export class BudgetService {
     });
   }
 
-  async update(userId: string, id: string, data: Partial<{
-    limit: number;
-    period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-    startDate: string;
-    endDate: string;
-  }>) {
+  async update(userId: string, id: string, data: UpdateBudgetData): Promise<BudgetWithCategory> {
     await this.findById(userId, id);
     return prisma.budget.update({
       where: { id },
@@ -87,7 +86,7 @@ export class BudgetService {
     });
   }
 
-  async delete(userId: string, id: string) {
+  async delete(userId: string, id: string): Promise<void> {
     await this.findById(userId, id);
     await prisma.budget.delete({ where: { id } });
   }

@@ -1,40 +1,24 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, TransactionType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { NotFoundError } from '../utils/errors';
 import { parsePagination } from '../utils/helpers';
 import { resolveCategoryId } from '../utils/category.helpers';
-import { TransactionQuery } from '../interfaces';
-
-interface CreateTransactionData {
-  amount: number;
-  description: string;
-  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-  categoryId?: string;
-  date: string;
-  paymentMethod?: string;
-  notes?: string;
-  receiptUrl?: string | null;
-  tags?: string[];
-}
-
-interface UpdateTransactionData {
-  amount?: number;
-  description?: string;
-  type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
-  categoryId?: string | null;
-  date?: string;
-  paymentMethod?: string | null;
-  notes?: string | null;
-  receiptUrl?: string | null;
-  tags?: string[];
-}
+import {
+  TransactionQuery,
+  CreateTransactionData,
+  UpdateTransactionData,
+  TransactionSummary,
+} from '../interfaces';
 
 export class TransactionService {
-  async findAll(userId: string, query: TransactionQuery) {
+  async findAll(userId: string, query: TransactionQuery): Promise<{
+    data: Prisma.TransactionGetPayload<{ include: { category: { select: { id: true; name: true; icon: true; color: true } } } }>[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
     const { page, limit, skip } = parsePagination(query);
     const where: Prisma.TransactionWhereInput = { userId };
 
-    if (query.type) where.type = query.type as 'INCOME' | 'EXPENSE' | 'TRANSFER';
+    if (query.type) where.type = query.type as TransactionType;
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.search) where.description = { contains: query.search, mode: 'insensitive' };
     if (query.paymentMethod) where.paymentMethod = query.paymentMethod;
@@ -73,7 +57,7 @@ export class TransactionService {
     };
   }
 
-  async findById(userId: string, id: string) {
+  async findById(userId: string, id: string): Promise<Prisma.TransactionGetPayload<{ include: { category: true } }>> {
     const transaction = await prisma.transaction.findFirst({
       where: { id, userId },
       include: { category: true },
@@ -82,7 +66,7 @@ export class TransactionService {
     return transaction;
   }
 
-  async create(userId: string, data: CreateTransactionData) {
+  async create(userId: string, data: CreateTransactionData): Promise<Prisma.TransactionGetPayload<{ include: { category: { select: { id: true; name: true; icon: true; color: true } } } }>> {
     const categoryId = await resolveCategoryId(userId, data.type || 'EXPENSE', data.categoryId);
 
     return prisma.transaction.create({
@@ -103,7 +87,7 @@ export class TransactionService {
     });
   }
 
-  async update(userId: string, id: string, data: UpdateTransactionData) {
+  async update(userId: string, id: string, data: UpdateTransactionData): Promise<Prisma.TransactionGetPayload<{ include: { category: { select: { id: true; name: true; icon: true; color: true } } } }>> {
     await this.findById(userId, id);
 
     const updateData: Prisma.TransactionUpdateInput = {};
@@ -130,30 +114,32 @@ export class TransactionService {
     });
   }
 
-  async delete(userId: string, id: string) {
+  async delete(userId: string, id: string): Promise<void> {
     await this.findById(userId, id);
     await prisma.transaction.delete({ where: { id } });
   }
 
-  async bulkDelete(userId: string, ids: string[]) {
+  async bulkDelete(userId: string, ids: string[]): Promise<{ deleted: number }> {
     const result = await prisma.transaction.deleteMany({ where: { id: { in: ids }, userId } });
     if (result.count === 0) throw new NotFoundError('Transactions');
     return { deleted: result.count };
   }
 
-  async getSummary(userId: string, startDate?: string, endDate?: string) {
-    const dateFilter: Record<string, unknown> = {};
+  async getSummary(userId: string, startDate?: string, endDate?: string): Promise<TransactionSummary> {
+    const dateFilter: Prisma.DateTimeFilter = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
 
+    const hasDateFilter = Object.keys(dateFilter).length > 0;
+
     const [incomeAgg, expenseAgg] = await Promise.all([
       prisma.transaction.aggregate({
-        where: { userId, type: 'INCOME', ...(Object.keys(dateFilter).length && { date: dateFilter as Prisma.TransactionWhereInput['date'] }) },
+        where: { userId, type: 'INCOME', ...(hasDateFilter && { date: dateFilter }) },
         _sum: { amount: true },
         _count: true,
       }),
       prisma.transaction.aggregate({
-        where: { userId, type: 'EXPENSE', ...(Object.keys(dateFilter).length && { date: dateFilter as Prisma.TransactionWhereInput['date'] }) },
+        where: { userId, type: 'EXPENSE', ...(hasDateFilter && { date: dateFilter }) },
         _sum: { amount: true },
         _count: true,
       }),

@@ -1,9 +1,10 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, SavingsGoal } from '@prisma/client';
 import { prisma } from '../config/database';
 import { NotFoundError, ValidationError } from '../utils/errors';
+import { SavingsGoalWithProgress, CreateGoalData, UpdateGoalData } from '../interfaces';
 
 export class GoalService {
-  async findAll(userId: string) {
+  async findAll(userId: string): Promise<SavingsGoalWithProgress[]> {
     const goals = await prisma.savingsGoal.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -15,7 +16,7 @@ export class GoalService {
     }));
   }
 
-  async findById(userId: string, id: string) {
+  async findById(userId: string, id: string): Promise<SavingsGoalWithProgress> {
     const goal = await prisma.savingsGoal.findFirst({ where: { id, userId } });
     if (!goal) throw new NotFoundError('Savings goal');
     return {
@@ -24,7 +25,7 @@ export class GoalService {
     };
   }
 
-  async create(userId: string, data: { name: string; targetAmount: number; currentAmount?: number; deadline?: string | null }) {
+  async create(userId: string, data: CreateGoalData): Promise<SavingsGoal> {
     return prisma.savingsGoal.create({
       data: {
         userId,
@@ -36,12 +37,7 @@ export class GoalService {
     });
   }
 
-  async update(userId: string, id: string, data: Partial<{
-    name: string;
-    targetAmount: number;
-    currentAmount: number;
-    deadline: string | null;
-  }>) {
+  async update(userId: string, id: string, data: UpdateGoalData): Promise<SavingsGoal> {
     await this.findById(userId, id);
     return prisma.savingsGoal.update({
       where: { id },
@@ -54,12 +50,12 @@ export class GoalService {
     });
   }
 
-  async delete(userId: string, id: string) {
+  async delete(userId: string, id: string): Promise<void> {
     await this.findById(userId, id);
     await prisma.savingsGoal.delete({ where: { id } });
   }
 
-  async contribute(userId: string, id: string, amount: number) {
+  async contribute(userId: string, id: string, amount: number): Promise<SavingsGoal> {
     if (amount <= 0) {
       throw new ValidationError({ amount: ['Contribution amount must be positive'] });
     }

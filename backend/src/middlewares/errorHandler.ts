@@ -11,7 +11,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ): void => {
-  if (err instanceof SyntaxError && 'status' in err && (err as any).status === 400) {
+  if (err instanceof SyntaxError && 'status' in err && (err as SyntaxError & { status: number }).status === 400) {
     res.status(400).json({
       success: false,
       message: 'Invalid JSON in request body',

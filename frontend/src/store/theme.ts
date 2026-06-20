@@ -4,7 +4,6 @@ import { persist } from 'zustand/middleware';
 interface ThemeState {
   isDark: boolean;
   toggle: () => void;
-  setDark: (dark: boolean) => void;
 }
 
 function applyDarkClass(isDark: boolean) {
@@ -21,10 +20,6 @@ export const useThemeStore = create<ThemeState>()(
           applyDarkClass(newDark);
           return { isDark: newDark };
         }),
-      setDark: (dark) => {
-        applyDarkClass(dark);
-        set({ isDark: dark });
-      },
     }),
     {
       name: 'theme-storage',

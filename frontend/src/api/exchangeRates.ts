@@ -38,4 +38,3 @@ export async function fetchRates(base: string = 'USD'): Promise<ExchangeRates> {
   }
 }
 
-export { FALLBACK_RATES };

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { useAuthStore } from '@/store/auth';
 import { useThemeStore } from '@/store/theme';
 import { authApi } from '@/api';
@@ -29,7 +30,6 @@ export default function SettingsPage() {
   const { isDark, toggle } = useThemeStore();
   const logout = useLogout();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
@@ -43,7 +43,7 @@ export default function SettingsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
 
-  const selectedCurrency = CURRENCIES.find(c => c.value === user?.currency) || CURRENCIES[0];
+  
 
   const profileMutation = useMutation({
     mutationFn: (data: { name?: string; email?: string }) => authApi.updateProfile(data),
@@ -51,7 +51,6 @@ export default function SettingsPage() {
       const updatedUser = res.data.data!.user;
       setUser(updatedUser);
       setProfileOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 
@@ -71,7 +70,6 @@ export default function SettingsPage() {
     onSuccess: (res) => {
       const updatedUser = res.data.data!.user;
       setUser(updatedUser);
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 
@@ -217,7 +215,7 @@ export default function SettingsPage() {
                 <Input id="profile-email" type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} />
               </div>
               {profileMutation.isError && (
-                <p className="text-sm text-destructive">{(profileMutation.error as any)?.response?.data?.message || 'Update failed'}</p>
+                <p className="text-sm text-destructive">{(profileMutation.error as AxiosError<{ message?: string }>)?.response?.data?.message || 'Update failed'}</p>
               )}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setProfileOpen(false)}>Cancel</Button>
@@ -252,7 +250,7 @@ export default function SettingsPage() {
                 <p className="text-sm text-destructive">Passwords do not match</p>
               )}
               {passwordMutation.isError && (
-                <p className="text-sm text-destructive">{(passwordMutation.error as any)?.response?.data?.errors?.currentPassword?.[0] || (passwordMutation.error as any)?.response?.data?.message || 'Change failed'}</p>
+                <p className="text-sm text-destructive">{(passwordMutation.error as AxiosError<{ errors?: Record<string, string[]>; message?: string }>)?.response?.data?.errors?.currentPassword?.[0] || (passwordMutation.error as AxiosError<{ message?: string }>)?.response?.data?.message || 'Change failed'}</p>
               )}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setPasswordOpen(false)}>Cancel</Button>
@@ -276,7 +274,7 @@ export default function SettingsPage() {
                 <Input id="delete-confirm" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="DELETE" />
               </div>
               {deleteMutation.isError && (
-                <p className="text-sm text-destructive">{(deleteMutation.error as any)?.response?.data?.message || 'Deletion failed'}</p>
+                <p className="text-sm text-destructive">{(deleteMutation.error as AxiosError<{ message?: string }>)?.response?.data?.message || 'Deletion failed'}</p>
               )}
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>

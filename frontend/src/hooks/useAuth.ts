@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/auth';
@@ -30,25 +30,17 @@ export function useRegister() {
 
 export function useLogout() {
   const logout = useAuthStore((s) => s.logout);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
+      queryClient.clear();
       logout();
     },
     onError: () => {
+      queryClient.clear();
       logout();
     },
-  });
-}
-
-export function useProfile() {
-  return useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const res = await authApi.getProfile();
-      return res.data.data!;
-    },
-    retry: false,
   });
 }

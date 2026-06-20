@@ -123,7 +123,7 @@ export function TransactionFormDialog({ open, onOpenChange, transaction, categor
       setUploadError('');
       try {
         const res = await uploadApi.uploadReceipt(receiptFile);
-        finalReceiptUrl = res.data.data.url;
+        finalReceiptUrl = res.data.data!.url;
         setReceiptUrl(finalReceiptUrl);
       } catch {
         setUploadError('Failed to upload receipt. Please try again.');

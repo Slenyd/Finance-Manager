@@ -1,33 +1,33 @@
 import { Response } from 'express';
 import { CategoryService } from '../services';
-import { AuthenticatedRequest } from '../interfaces';
+import { AuthorizedRequest, ApiResponse, Category, CreateCategoryData, UpdateCategoryData } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const categoryService = new CategoryService();
 
 export class CategoryController {
-  findAll = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const categories = await categoryService.findAll(req.user!.id);
-    res.json({ success: true, data: categories });
+  findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const categories = await categoryService.findAll(req.user.id);
+    res.json({ success: true, data: categories } satisfies ApiResponse<Category[]>);
   });
 
-  findById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const category = await categoryService.findById(req.user!.id, req.params.id);
-    res.json({ success: true, data: category });
+  findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const category = await categoryService.findById(req.user.id, req.params.id);
+    res.json({ success: true, data: category } satisfies ApiResponse<Category>);
   });
 
-  create = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const category = await categoryService.create(req.user!.id, req.body);
-    res.status(201).json({ success: true, data: category, message: 'Category created' });
+  create = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const category = await categoryService.create(req.user.id, req.body as CreateCategoryData);
+    res.status(201).json({ success: true, data: category, message: 'Category created' } satisfies ApiResponse);
   });
 
-  update = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const category = await categoryService.update(req.user!.id, req.params.id, req.body);
-    res.json({ success: true, data: category, message: 'Category updated' });
+  update = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const category = await categoryService.update(req.user.id, req.params.id, req.body as UpdateCategoryData);
+    res.json({ success: true, data: category, message: 'Category updated' } satisfies ApiResponse);
   });
 
-  delete = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    await categoryService.delete(req.user!.id, req.params.id);
-    res.json({ success: true, data: null, message: 'Category deleted' });
+  delete = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    await categoryService.delete(req.user.id, req.params.id);
+    res.json({ success: true, data: null, message: 'Category deleted' } satisfies ApiResponse<null>);
   });
 }

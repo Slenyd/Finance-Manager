@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { transactionApi, categoryApi } from '@/api';
+import { transactionApi } from '@/api';
+import { useCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -47,13 +48,7 @@ export default function TransactionsPage() {
     },
   });
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await categoryApi.getAll();
-      return res.data.data!;
-    },
-  });
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => transactionApi.delete(id),

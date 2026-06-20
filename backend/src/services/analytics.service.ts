@@ -1,9 +1,14 @@
 import { prisma } from '../config/database';
 import { Prisma } from '@prisma/client';
 import { calculateFinancialHealth } from '../utils/helpers';
+import { DashboardData, MonthlySpendingData, CategoryBreakdownData, NetWorthData, OverviewData } from '../interfaces';
+
+type TransactionWithCategory = Prisma.TransactionGetPayload<{
+  include: { category: { select: { id: true; name: true; icon: true; color: true } } };
+}>;
 
 export class AnalyticsService {
-  async getDashboard(userId: string) {
+  async getDashboard(userId: string): Promise<DashboardData> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -62,7 +67,7 @@ export class AnalyticsService {
       savings: totalIncome - totalExpenses,
       monthlyBudgetUsage: totalBudgetLimit > 0 ? (monthExpenses / totalBudgetLimit) * 100 : 0,
       healthScore: healthData,
-      recentTransactions,
+      recentTransactions: recentTransactions as TransactionWithCategory[],
       monthIncome,
       monthExpenses,
       totalBudgets: budgets.length,
@@ -70,7 +75,7 @@ export class AnalyticsService {
     };
   }
 
-  async getMonthlySpending(userId: string, months = 6) {
+  async getMonthlySpending(userId: string, months = 6): Promise<MonthlySpendingData[]> {
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
 
@@ -98,8 +103,8 @@ export class AnalyticsService {
     return Array.from(monthlyMap.entries()).map(([month, data]) => ({ month, ...data }));
   }
 
-  async getCategoryBreakdown(userId: string, startDate?: string, endDate?: string) {
-    const dateFilter: Record<string, unknown> = {};
+  async getCategoryBreakdown(userId: string, startDate?: string, endDate?: string): Promise<CategoryBreakdownData[]> {
+    const dateFilter: Prisma.DateTimeFilter = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
 
@@ -135,11 +140,11 @@ export class AnalyticsService {
       .sort((a, b) => b.total - a.total);
   }
 
-  async getCashFlow(userId: string, months = 12) {
+  async getCashFlow(userId: string, months = 12): Promise<MonthlySpendingData[]> {
     return this.getMonthlySpending(userId, months);
   }
 
-  async getOverview(userId: string) {
+  async getOverview(userId: string): Promise<OverviewData> {
     const [dashboard, monthlySpending] = await Promise.all([
       this.getDashboard(userId),
       this.getMonthlySpending(userId, 6),
@@ -147,7 +152,7 @@ export class AnalyticsService {
     return { dashboard, monthlySpending };
   }
 
-  async getNetWorth(userId: string) {
+  async getNetWorth(userId: string): Promise<NetWorthData> {
     const [incomeAgg, expenseAgg] = await Promise.all([
       prisma.transaction.aggregate({
         where: { userId, type: 'INCOME' },
