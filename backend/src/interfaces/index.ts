@@ -282,6 +282,7 @@ export interface JwtPayload {
   type: 'access' | 'refresh';
   tokenFamily?: string;
   tokenVersion?: number;
+  jti?: string;
   name?: string;
   email?: string;
   isVerified?: boolean;

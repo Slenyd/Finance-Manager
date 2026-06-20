@@ -363,7 +363,7 @@ export class AuthService {
   }
 
   private generateRefreshToken(userId: string, role: string, family: string, expiresIn: `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`): string {
-    const payload: JwtPayload = { userId, role, type: 'refresh', tokenFamily: family };
+    const payload: JwtPayload = { userId, role, type: 'refresh', tokenFamily: family, jti: uuidv4() };
     return jwt.sign(payload, config.jwt.refreshSecret, { expiresIn });
   }
 
