@@ -8,7 +8,7 @@ import { execSync } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const SCREENSHOT_DIR = path.join(__dirname, '..', '..', 'Documentation', 'design', 'screenshots');
+const SCREENSHOT_DIR = path.join(__dirname, '..', '..', 'תיק אפיון', 'design', 'screenshots');
 const BASE_URL = 'http://localhost:5173';
 const API_LOGIN_URL = 'http://localhost:5000/api/v1/auth/login';
 
@@ -142,7 +142,7 @@ async function main() {
   }
 
   await browser.close();
-  console.log('\nDone! Screenshots saved to Documentation/design/screenshots/');
+  console.log('\nDone! Screenshots saved to תיק אפיון/design/screenshots/');
 }
 
 main().catch(console.error);
