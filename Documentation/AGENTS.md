@@ -10,7 +10,7 @@ Coin Toss is a full-stack personal finance web app. Users can track income and e
 finance-manager/
 ├── frontend/          # React + Vite SPA
 ├── backend/           # Express + Prisma API
-├── תיק אפיון/          # This folder
+├── Documentation/     # This folder
 └── docker/            # Dockerfiles
 ```
 

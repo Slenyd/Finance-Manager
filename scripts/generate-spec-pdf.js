@@ -2,7 +2,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
-const outputPath = path.join(__dirname, '..', 'תיק אפיון', 'Coin-Toss-Project-Specification.pdf');
+const outputPath = path.join(__dirname, '..', 'Documentation', 'Coin-Toss-Project-Specification.pdf');
 
 const BROWN = '#704c35';
 const BROWN_LIGHT = '#a8866e';
@@ -35,8 +35,7 @@ function ensureSpace(h) {
 }
 
 function sectionHeading(letter, text) {
-  ensureSpace(80);
-  if (doc.y > 80) doc.moveDown(0.6);
+  if (doc.y > 56) doc.addPage();
   doc.rect(MARGIN, doc.y, CONTENT_WIDTH, 34).fill(BROWN);
   doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(17);
   doc.text(letter + '.  ' + text, MARGIN + 14, doc.y + 8, { width: CONTENT_WIDTH - 28 });

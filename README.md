@@ -105,26 +105,26 @@ finance-manager/
 │       └── utils/           # Error classes, helpers, logger
 ├── backend/prisma/          # Database schema and seed script
 ├── docker/                  # Dockerfiles
-└── תיק אפיון/              # See below
+└── Documentation/           # See below
 ```
 
-## תיק אפיון (Documentation)
+## Documentation
 
-All documentation lives in the `תיק אפיון/` folder:
+All documentation lives in the `Documentation/` folder:
 
 | File | What's In It |
 |------|-------------|
-| [system-description.md](תיק אפיון/overview/system-description.md) | What the app does, who it's for, tech stack |
-| [user-flow.md](תיק אפיון/overview/user-flow.md) | How users move through the app (login, navigation, token refresh, cron) |
-| [wireframes.md](תיק אפיון/design/wireframes.md) | ASCII drawings of every page + real screenshots |
-| [erd.md](תיק אפיון/architecture/erd.md) | Database tables, relationships, and indexes |
-| [data-dictionary.md](תיק אפיון/architecture/data-dictionary.md) | Every field in every table explained |
-| [api-reference.md](תיק אפיון/api/api-reference.md) | All 38 API endpoints with examples, params, and error cases |
-| [AGENTS.md](תיק אפיון/AGENTS.md) | Project context for developers and AI assistants |
+| [system-description.md](Documentation/overview/system-description.md) | What the app does, who it's for, tech stack |
+| [user-flow.md](Documentation/overview/user-flow.md) | How users move through the app (login, navigation, token refresh, cron) |
+| [wireframes.md](Documentation/design/wireframes.md) | ASCII drawings of every page + real screenshots |
+| [erd.md](Documentation/architecture/erd.md) | Database tables, relationships, and indexes |
+| [data-dictionary.md](Documentation/architecture/data-dictionary.md) | Every field in every table explained |
+| [api-reference.md](Documentation/api/api-reference.md) | All 38 API endpoints with examples, params, and error cases |
+| [AGENTS.md](Documentation/AGENTS.md) | Project context for developers and AI assistants |
 
 ## API
 
-All endpoints are under `/api/v1`. See [api-reference.md](תיק אפיון/api/api-reference.md) for full details.
+All endpoints are under `/api/v1`. See [api-reference.md](Documentation/api/api-reference.md) for full details.
 
 Quick overview:
 
