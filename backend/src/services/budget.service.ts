@@ -2,20 +2,31 @@ import { prisma } from '../config/database';
 import { Prisma } from '@prisma/client';
 import { NotFoundError } from '../utils/errors';
 import { resolveCategoryId } from '../utils/category.helpers';
-import { BudgetWithSpent, CreateBudgetData, UpdateBudgetData } from '../interfaces';
+import { parsePagination } from '../utils/helpers';
+import { BudgetWithSpent, CreateBudgetData, UpdateBudgetData, BudgetQuery, PaginationMeta } from '../interfaces';
 
 type BudgetWithCategory = Prisma.BudgetGetPayload<{
   include: { category: { select: { id: true; name: true; icon: true; color: true } } };
 }>;
 
 export class BudgetService {
-  async findAll(userId: string): Promise<BudgetWithSpent[]> {
-    const budgets = await prisma.budget.findMany({
-      where: { userId },
-      include: { category: { select: { id: true, name: true, icon: true, color: true } } },
-    });
+  async findAll(userId: string, query: BudgetQuery): Promise<{ data: BudgetWithSpent[]; meta: PaginationMeta }> {
+    const { page, limit, skip } = parsePagination(query);
+    const where: Prisma.BudgetWhereInput = { userId };
 
-    if (budgets.length === 0) return [];
+    const [budgets, total] = await Promise.all([
+      prisma.budget.findMany({
+        where,
+        include: { category: { select: { id: true, name: true, icon: true, color: true } } },
+        skip,
+        take: limit,
+      }),
+      prisma.budget.count({ where }),
+    ]);
+
+    const meta: PaginationMeta = { page, limit, total, totalPages: Math.ceil(total / limit) || (total > 0 ? 1 : 0) };
+
+    if (budgets.length === 0) return { data: [], meta };
 
     const spentResults = await prisma.$transaction(
       budgets.map(b =>
@@ -31,10 +42,12 @@ export class BudgetService {
       ),
     );
 
-    return budgets.map((budget, i) => {
+    const data = budgets.map((budget, i) => {
       const spent = Number(spentResults[i]._sum.amount) || 0;
       return { ...budget, spent, percentage: Number(budget.limit) > 0 ? (spent / Number(budget.limit)) * 100 : 0 };
     });
+
+    return { data, meta };
   }
 
   async findById(userId: string, id: string): Promise<BudgetWithSpent> {

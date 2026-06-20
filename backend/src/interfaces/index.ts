@@ -41,6 +41,12 @@ export interface TransactionQuery extends PaginationQuery {
   paymentMethod?: string;
 }
 
+export interface BudgetQuery extends PaginationQuery {}
+
+export interface GoalQuery extends PaginationQuery {}
+
+export interface NotificationQuery extends PaginationQuery {}
+
 // ---------------------------------------------------------------------------
 // Entity types (Prisma-generated aliases for convenience)
 // ---------------------------------------------------------------------------
@@ -299,7 +305,7 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
-export interface NotificationMeta {
+export interface NotificationMeta extends PaginationMeta {
   unreadCount: number;
 }
 

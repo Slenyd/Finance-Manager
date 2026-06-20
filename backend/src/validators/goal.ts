@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const goalQuerySchema = z.object({
+  query: z.object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+  }),
+});
+
 export const createGoalSchema = z.object({
   body: z.object({
     name: z.string().min(1, 'Name is required').max(100),

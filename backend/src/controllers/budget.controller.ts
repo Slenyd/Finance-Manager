@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { BudgetService } from '../services';
-import { AuthorizedRequest, ApiResponse, BudgetWithSpent, CreateBudgetData, UpdateBudgetData } from '../interfaces';
+import { AuthorizedRequest, ApiResponse, BudgetWithSpent, CreateBudgetData, UpdateBudgetData, BudgetQuery } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const budgetService = new BudgetService();
@@ -8,8 +8,8 @@ const budgetService = new BudgetService();
 export class BudgetController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
     res.set('Cache-Control', 'private, max-age=30');
-    const budgets = await budgetService.findAll(req.user.id);
-    res.json({ success: true, data: budgets } satisfies ApiResponse<BudgetWithSpent[]>);
+    const result = await budgetService.findAll(req.user.id, req.query as unknown as BudgetQuery);
+    res.json({ success: true, data: result.data, meta: result.meta } satisfies ApiResponse<BudgetWithSpent[]>);
   });
 
   findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {

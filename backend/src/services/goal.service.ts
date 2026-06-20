@@ -1,19 +1,30 @@
 import { Prisma, SavingsGoal } from '@prisma/client';
 import { prisma } from '../config/database';
 import { NotFoundError, ValidationError } from '../utils/errors';
-import { SavingsGoalWithProgress, CreateGoalData, UpdateGoalData } from '../interfaces';
+import { parsePagination } from '../utils/helpers';
+import { SavingsGoalWithProgress, CreateGoalData, UpdateGoalData, GoalQuery, PaginationMeta } from '../interfaces';
 
 export class GoalService {
-  async findAll(userId: string): Promise<SavingsGoalWithProgress[]> {
-    const goals = await prisma.savingsGoal.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(userId: string, query: GoalQuery): Promise<{ data: SavingsGoalWithProgress[]; meta: PaginationMeta }> {
+    const { page, limit, skip } = parsePagination(query);
+    const where: Prisma.SavingsGoalWhereInput = { userId };
 
-    return goals.map((goal) => ({
+    const [goals, total] = await Promise.all([
+      prisma.savingsGoal.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.savingsGoal.count({ where }),
+    ]);
+
+    const data = goals.map((goal) => ({
       ...goal,
       progress: Number(goal.targetAmount) > 0 ? (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100 : 0,
     }));
+
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || (total > 0 ? 1 : 0) } };
   }
 
   async findById(userId: string, id: string): Promise<SavingsGoalWithProgress> {

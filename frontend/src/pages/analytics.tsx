@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -46,8 +47,8 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
   });
 
   const isLoading = loadingMonthly && loadingCategories;
-const hasError = dashboardError || monthlyError || categoriesError || cashFlowError;
-  const retryAll = () => { refetchDashboard(); refetchMonthly(); refetchCategories(); refetchCashFlow(); };
+  const hasError = dashboardError || monthlyError || categoriesError || cashFlowError;
+  const retryAll = useCallback(() => { refetchDashboard(); refetchMonthly(); refetchCategories(); refetchCashFlow(); }, [refetchDashboard, refetchMonthly, refetchCategories, refetchCashFlow]);
 
   if (isLoading) {
     return (

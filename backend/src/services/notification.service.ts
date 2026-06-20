@@ -1,21 +1,37 @@
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
-import { Notification } from '../interfaces';
+import { Notification, NotificationQuery, NotificationMeta } from '../interfaces';
+import { parsePagination } from '../utils/helpers';
 
 export class NotificationService {
-  async findAll(userId: string, limit = 50): Promise<{ notifications: Notification[]; unreadCount: number }> {
-    const [notifications, unreadResult] = await Promise.all([
+  async findAll(userId: string, query: NotificationQuery): Promise<{ data: Notification[]; meta: NotificationMeta }> {
+    const { page, limit, skip } = parsePagination(query);
+    const where: Prisma.NotificationWhereInput = { userId };
+
+    const [notifications, unreadResult, total] = await Promise.all([
       prisma.notification.findMany({
-        where: { userId },
+        where,
         orderBy: { createdAt: 'desc' },
+        skip,
         take: limit,
       }),
       prisma.notification.aggregate({
         where: { userId, isRead: false },
         _count: true,
       }),
+      prisma.notification.count({ where }),
     ]);
-    return { notifications, unreadCount: unreadResult._count };
+
+    return {
+      data: notifications,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || (total > 0 ? 1 : 0),
+        unreadCount: unreadResult._count,
+      },
+    };
   }
 
   async markAsRead(userId: string, id: string): Promise<{ count: number }> {

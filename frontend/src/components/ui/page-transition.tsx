@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 type AnimationType = 'fade-in' | 'fade-in-up' | 'fade-in-down' | 'slide-up' | 'slide-in-right' | 'scale-in' | 'bounce-in';
@@ -41,7 +42,7 @@ export function StaggerChildren({ children, className }: {
   );
 }
 
-export function StaggerItem({ children, className, index = 0, baseDelay = 50, staggerBy = 80, animation = 'slide-up' }: {
+function StaggerItemBase({ children, className, index = 0, baseDelay = 50, staggerBy = 80, animation = 'slide-up' }: {
   children: React.ReactNode;
   className?: string;
   index?: number;
@@ -61,3 +62,5 @@ export function StaggerItem({ children, className, index = 0, baseDelay = 50, st
     </div>
   );
 }
+
+export const StaggerItem = memo(StaggerItemBase);

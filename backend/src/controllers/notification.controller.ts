@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { NotificationService } from '../services';
-import { AuthorizedRequest, ApiResponse, Notification } from '../interfaces';
+import { AuthorizedRequest, ApiResponse, Notification, NotificationQuery } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
 import { NotFoundError } from '../utils/errors';
 
@@ -9,9 +9,8 @@ const notificationService = new NotificationService();
 export class NotificationController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
     res.set('Cache-Control', 'private, max-age=15');
-    const limit = (req.query as { limit?: number }).limit ?? 50;
-    const { notifications, unreadCount } = await notificationService.findAll(req.user.id, limit);
-    res.json({ success: true, data: notifications, meta: { unreadCount } } satisfies ApiResponse<Notification[]>);
+    const result = await notificationService.findAll(req.user.id, req.query as unknown as NotificationQuery);
+    res.json({ success: true, data: result.data, meta: result.meta } satisfies ApiResponse<Notification[]>);
   });
 
   markAsRead = asyncHandler(async (req: AuthorizedRequest, res: Response) => {

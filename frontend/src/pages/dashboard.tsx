@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -7,12 +7,45 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useFormatters } from '@/hooks/useFormatters';
+import { Transaction } from '@/types';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
 
 const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#eab308'];
+
+interface RecentTransactionRowProps {
+  tx: Transaction;
+  index: number;
+  formatCurrency: (n: number) => string;
+  formatDate: (d: string) => string;
+  convertFromBase: (n: number) => number;
+}
+
+const RecentTransactionRowBase = ({ tx, index, formatCurrency, formatDate, convertFromBase }: RecentTransactionRowProps) => (
+  <div
+    className="flex items-center justify-between py-2 border-b last:border-0 animate-fade-in"
+    style={{ animationDelay: `${100 + index * 80}ms`, animationFillMode: 'both' }}
+  >
+    <div className="flex items-center gap-3">
+      {tx.category ? (
+        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.category.color }} />
+      ) : (
+        <div className="w-2 h-2 rounded-full bg-muted" />
+      )}
+      <div>
+        <p className="font-medium">{tx.description}</p>
+        <p className="text-xs text-muted-foreground">{tx.category ? `${tx.category.name} · ` : ''}{formatDate(tx.date)}</p>
+      </div>
+    </div>
+    <span className={tx.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+      {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(convertFromBase(tx.amount))}
+    </span>
+  </div>
+);
+
+const RecentTransactionRow = memo(RecentTransactionRowBase);
 
 export default function DashboardPage() {
   const { formatCurrency, formatDate, convertFromBase } = useFormatters();
@@ -153,26 +186,14 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 {dashboard.recentTransactions.slice(0, 5).map((tx, i) => (
-                  <div
+                  <RecentTransactionRow
                     key={tx.id}
-                    className="flex items-center justify-between py-2 border-b last:border-0 animate-fade-in"
-                    style={{ animationDelay: `${100 + i * 80}ms`, animationFillMode: 'both' }}
-                  >
-                    <div className="flex items-center gap-3">
-                      {tx.category ? (
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tx.category.color }} />
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-muted" />
-                      )}
-                      <div>
-                        <p className="font-medium">{tx.description}</p>
-                        <p className="text-xs text-muted-foreground">{tx.category ? `${tx.category.name} · ` : ''}{formatDate(tx.date)}</p>
-                      </div>
-                    </div>
-                    <span className={tx.type === 'INCOME' ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                      {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(convertFromBase(tx.amount))}
-                    </span>
-                  </div>
+                    tx={tx}
+                    index={i}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                    convertFromBase={convertFromBase}
+                  />
                 ))}
               </div>
             </CardContent>

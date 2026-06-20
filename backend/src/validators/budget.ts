@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const budgetQuerySchema = z.object({
+  query: z.object({
+    page: z.string().optional(),
+    limit: z.string().optional(),
+  }),
+});
+
 export const createBudgetSchema = z.object({
   body: z.object({
     categoryId: z.string().uuid().optional(),

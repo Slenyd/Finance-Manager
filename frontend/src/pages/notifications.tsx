@@ -1,26 +1,60 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, memo } from 'react';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { notificationApi } from '@/api';
+import { useFormatters } from '@/hooks/useFormatters';
+import { Notification, PaginationMeta } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { useFormatters } from '@/hooks/useFormatters';
 import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { PageTransition, StaggerItem } from '@/components/ui/page-transition';
+
+const PAGE_SIZE = 15;
+
+interface NotificationItemProps {
+  notification: Notification;
+  index: number;
+  onDelete: (id: string) => void;
+  formatDate: (d: string) => string;
+}
+
+const NotificationItemBase = ({ notification, index, onDelete, formatDate }: NotificationItemProps) => (
+  <div
+    className={`flex items-start justify-between p-4 rounded-lg border animate-slide-up ${!notification.isRead ? 'bg-muted/50' : ''}`}
+    style={{ animationDelay: `${50 + index * 60}ms`, animationFillMode: 'both' }}
+  >
+    <div className="flex gap-3">
+      <Bell className={`h-5 w-5 mt-0.5 ${!notification.isRead ? 'text-primary' : 'text-muted-foreground'}`} />
+      <div>
+        <p className="font-medium">{notification.title}</p>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+        <p className="text-xs text-muted-foreground mt-1">{formatDate(notification.createdAt)}</p>
+      </div>
+    </div>
+    <Button variant="ghost" size="icon" onClick={() => onDelete(notification.id)} aria-label="Delete notification">
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  </div>
+);
+
+const NotificationItem = memo(NotificationItemBase);
 
 export default function NotificationsPage() {
   const { formatDate } = useFormatters();
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', page],
     queryFn: async () => {
-      const res = await notificationApi.getAll();
-      return { data: res.data.data!, unreadCount: res.data.meta?.unreadCount || 0 };
+      const res = await notificationApi.getAll({ page: String(page), limit: String(PAGE_SIZE) });
+      return { data: res.data.data!, meta: res.data.meta! };
     },
+    placeholderData: keepPreviousData,
   });
 
   const markAllRead = useMutation({
@@ -33,14 +67,25 @@ export default function NotificationsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId);
+      setDeleteId(null);
+    }
+  }, [deleteId, deleteMutation]);
+
+  const notifications = data?.data;
+  const meta = data?.meta;
+  const unreadCount = meta?.unreadCount ?? 0;
+
   return (
     <PageTransition>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold">Notifications</h1>
-            {data && data.unreadCount > 0 && (
-              <Badge>{data.unreadCount} unread</Badge>
+            {unreadCount > 0 && (
+              <Badge>{unreadCount} unread</Badge>
             )}
           </div>
           <Button variant="outline" disabled={markAllRead.isPending} onClick={() => markAllRead.mutate()}>
@@ -51,39 +96,29 @@ export default function NotificationsPage() {
         <StaggerItem index={0}>
           <Card>
             <CardContent className="p-6">
-{isLoading ? (
-                 <div className="space-y-4">
-                   {Array.from({ length: 5 }).map((_, i) => (
-                     <div key={i} className="flex gap-4"><Skeleton className="h-16 w-full animate-pulse-soft" /></div>
-                   ))}
-                 </div>
-               ) : isError ? (
-                 <div className="text-center py-8">
-                   <p className="text-muted-foreground mb-4">Failed to load notifications.</p>
-                   <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
-                 </div>
-               ) : (
-                <div className="space-y-2">
-                  {data?.data.map((notification, i) => (
-                    <div
-                      key={notification.id}
-                      className={`flex items-start justify-between p-4 rounded-lg border animate-slide-up ${!notification.isRead ? 'bg-muted/50' : ''}`}
-                      style={{ animationDelay: `${50 + i * 60}ms`, animationFillMode: 'both' }}
-                    >
-                      <div className="flex gap-3">
-                        <Bell className={`h-5 w-5 mt-0.5 ${!notification.isRead ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <div>
-                          <p className="font-medium">{notification.title}</p>
-                          <p className="text-sm text-muted-foreground">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{formatDate(notification.createdAt)}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(notification.id)} aria-label="Delete notification">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex gap-4"><Skeleton className="h-16 w-full animate-pulse-soft" /></div>
                   ))}
-                  {(!data?.data || data.data.length === 0) && (
+                </div>
+              ) : isError ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">Failed to load notifications.</p>
+                  <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {notifications?.map((notification, i) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      index={i}
+                      onDelete={setDeleteId}
+                      formatDate={formatDate}
+                    />
+                  ))}
+                  {(!notifications || notifications.length === 0) && (
                     <p className="text-center text-muted-foreground py-8">No notifications</p>
                   )}
                 </div>
@@ -91,6 +126,8 @@ export default function NotificationsPage() {
             </CardContent>
           </Card>
         </StaggerItem>
+
+        {meta && <Pagination page={page} meta={meta as PaginationMeta} onPageChange={setPage} />}
 
         <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null) }}>
           <DialogContent>
@@ -100,7 +137,7 @@ export default function NotificationsPage() {
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" disabled={deleteMutation.isPending} onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</Button>
+              <Button variant="destructive" disabled={deleteMutation.isPending} onClick={handleDeleteConfirm}>{deleteMutation.isPending ? 'Deleting...' : 'Delete'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

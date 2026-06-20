@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { GoalService } from '../services';
-import { AuthorizedRequest, ApiResponse, SavingsGoalWithProgress, CreateGoalData, UpdateGoalData } from '../interfaces';
+import { AuthorizedRequest, ApiResponse, SavingsGoalWithProgress, CreateGoalData, UpdateGoalData, GoalQuery } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
 
 const goalService = new GoalService();
@@ -8,8 +8,8 @@ const goalService = new GoalService();
 export class GoalController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
     res.set('Cache-Control', 'private, max-age=30');
-    const goals = await goalService.findAll(req.user.id);
-    res.json({ success: true, data: goals } satisfies ApiResponse<SavingsGoalWithProgress[]>);
+    const result = await goalService.findAll(req.user.id, req.query as unknown as GoalQuery);
+    res.json({ success: true, data: result.data, meta: result.meta } satisfies ApiResponse<SavingsGoalWithProgress[]>);
   });
 
   findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
