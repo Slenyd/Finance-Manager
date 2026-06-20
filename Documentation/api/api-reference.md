@@ -1,80 +1,53 @@
-# API Endpoints Reference
+# API Reference
 
 **Base URL:** `/api/v1`  
-**Authentication:** JWT Bearer token in `Authorization: Bearer <token>` header (unless noted otherwise)  
+**Auth:** Most endpoints need `Authorization: Bearer <token>` in the header. The token comes from login.  
 **Content-Type:** `application/json` (except file uploads, which use `multipart/form-data`)
 
-All amounts are stored in USD (base currency) and converted client-side at display time.
+All money amounts are stored and returned in USD. The frontend converts them for display.
 
 ---
 
 ## Table of Contents
 
-- [Response Envelope](#response-envelope)
-- [Error Handling](#error-handling)
-- [Authentication](#authentication-apiv1auth)
-- [Transactions](#transactions-apiv1transactions)
-- [Categories](#categories-apiv1categories)
-- [Budgets](#budgets-apiv1budgets)
-- [Savings Goals](#savings-goals-apiv1goals)
-- [Notifications](#notifications-apiv1notifications)
-- [Analytics](#analytics-apiv1analytics)
-- [File Uploads](#file-uploads-apiv1uploads)
-- [Recurring Transactions](#recurring-transactions-apiv1recurring)
-- [Cron Jobs](#cron-jobs-apiv1cron)
-- [Health Check](#health-check-apiv1health)
-- [Authentication Flow Diagram](#authentication-flow-diagram)
-- [Summary Statistics](#summary-statistics)
+- [How Responses Work](#how-responses-work)
+- [Errors](#errors)
+- [Authentication](#authentication)
+- [Transactions](#transactions)
+- [Categories](#categories)
+- [Budgets](#budgets)
+- [Savings Goals](#savings-goals)
+- [Notifications](#notifications)
+- [Analytics](#analytics)
+- [File Uploads](#file-uploads)
+- [Recurring Transactions](#recurring-transactions)
+- [Cron Job](#cron-job)
+- [Health Check](#health-check)
 
 ---
 
-## Response Envelope
+## How Responses Work
 
-Every API response follows a consistent JSON envelope.
+Every API response uses the same format.
 
-### Success Response
+### Success
 
 ```json
 {
   "success": true,
   "data": { ... },
-  "message": "Optional human-readable message"
+  "message": "Optional confirmation message"
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `success` | `boolean` | Always | `true` on success |
-| `data` | `object \| array \| null` | Always | The response payload. `null` for action-only endpoints (delete, logout, etc.) |
-| `message` | `string` | Optional | Human-readable confirmation (present on most mutation endpoints) |
-| `meta` | `object` | Optional | Pagination metadata (present on list endpoints) |
-
-### Error Response
+- `data` holds the actual content. For delete/logout endpoints, `data` is `null`.
+- `message` appears on most create/update/delete responses. Not always present on GET.
+- Some list endpoints also include `meta` for pagination info:
 
 ```json
 {
-  "success": false,
-  "error": "Human-readable error message",
-  "code": "ERROR_CODE",
-  "errors": {
-    "field": ["Validation error message"]
-  }
-}
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `success` | `boolean` | Always | `false` on error |
-| `error` | `string` | Always | Human-readable error description |
-| `code` | `string` | Optional | Machine-readable error code (e.g., `VALIDATION_ERROR`, `CRON_NOT_CONFIGURED`) |
-| `errors` | `Record<string, string[]>` | Optional | Per-field validation errors (Zod validation failures only) |
-
-### Pagination Metadata
-
-List endpoints that support pagination include a `meta` object:
-
-```json
-{
+  "success": true,
+  "data": [...],
   "meta": {
     "page": 1,
     "limit": 15,
@@ -84,37 +57,43 @@ List endpoints that support pagination include a `meta` object:
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `page` | `number` | Current page number (1-based) |
-| `limit` | `number` | Items per page (max 100) |
-| `total` | `number` | Total item count across all pages |
-| `totalPages` | `number` | Total number of pages |
+### Error
 
-> **Note:** The notifications endpoint extends `meta` with an additional `unreadCount: number` field.
+```json
+{
+  "success": false,
+  "error": "What went wrong",
+  "code": "ERROR_CODE",
+  "errors": {
+    "field": ["What was wrong with this field"]
+  }
+}
+```
+
+- `errors` only appears on validation errors (when the data you sent doesn't match the rules)
 
 ---
 
-## Error Handling
+## Errors
 
 ### HTTP Status Codes
 
-| Code | Meaning | When Used |
-|------|---------|-----------|
+| Code | What It Means | When It Happens |
+|------|--------------|----------------|
 | 200 | OK | Successful GET, PATCH, DELETE |
-| 201 | Created | Successful POST (create) |
-| 400 | Bad Request | Validation errors, malformed input |
-| 401 | Unauthorized | Missing, expired, or invalid JWT |
-| 403 | Forbidden | Insufficient permissions (e.g., modifying a default category) |
-| 404 | Not Found | Resource doesn't exist or doesn't belong to the authenticated user |
-| 409 | Conflict | Duplicate email on registration |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Unexpected server errors (generic message in production) |
-| 503 | Service Unavailable | External service not configured (Blob storage, Cron secret) |
+| 201 | Created | Successful POST (creating something new) |
+| 400 | Bad Request | You sent invalid or missing data |
+| 401 | Unauthorized | Your token is missing, expired, or invalid |
+| 403 | Forbidden | You're trying to do something you don't have permission for (like editing a default category) |
+| 404 | Not Found | The thing you're looking for doesn't exist or belongs to someone else |
+| 409 | Conflict | You're trying to create a duplicate (like registering an email that's already taken) |
+| 429 | Too Many Requests | You've sent too many requests too fast (rate limited) |
+| 500 | Server Error | Something broke on the server side |
+| 503 | Service Unavailable | A required service isn't configured (like Blob storage or Cron secret) |
 
-### Common Error Examples
+### Example Error Responses
 
-**Zod validation error (400):**
+**Validation error (400):**
 ```json
 {
   "success": false,
@@ -127,16 +106,7 @@ List endpoints that support pagination include a `meta` object:
 }
 ```
 
-**Authentication error (401):**
-```json
-{
-  "success": false,
-  "error": "Invalid or expired token",
-  "code": "AUTHENTICATION_ERROR"
-}
-```
-
-**Not found error (404):**
+**Not found (404):**
 ```json
 {
   "success": false,
@@ -145,35 +115,35 @@ List endpoints that support pagination include a `meta` object:
 }
 ```
 
-**Rate limit exceeded (429):**
+**Rate limited (429):**
 ```json
 {
   "success": false,
-  "error": "Too many requests, please try again later",
+  "message": "Too many requests, please try again later",
   "code": "RATE_LIMIT_EXCEEDED"
 }
 ```
 
 ### Rate Limiting
 
-| Scope | Limit | Window | Endpoints |
-|-------|-------|--------|-----------|
-| Auth endpoints | 5 requests | 15 minutes | `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/logout` |
-| General API | 100 requests | 15 minutes | All other endpoints |
+| Type | Limit | Which Endpoints |
+|------|-------|----------------|
+| Auth | 10 requests per 15 minutes | `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/logout` |
+| General | 1000 requests per 15 minutes | Everything else |
 
-> Rate limiting uses Upstash Redis (via Lua script for accurate fixed-window behavior) in production and falls back to in-memory for local development.
+> In production, rate limiting uses Upstash Redis. In development, it uses in-memory storage.
 
 ---
 
-## Authentication (`/api/v1/auth`)
+## Authentication
 
-All auth endpoints set `Cache-Control: no-store`. Public endpoints are rate-limited.
+These endpoints handle user accounts and login. Most are public (no token needed). They're rate-limited to prevent abuse.
 
 ### POST `/auth/register`
 
-Create a new user account.
+Create a new account.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "name": "John Doe",
@@ -183,22 +153,22 @@ Create a new user account.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `name` | `string` | Yes | 2–100 characters |
-| `email` | `string` | Yes | Valid email format |
-| `password` | `string` | Yes | Min 8 chars, must contain uppercase, lowercase, and a number |
-| `passwordConfirmation` | `string` | Yes | Must match `password` |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `name` | Yes | 2–100 characters |
+| `email` | Yes | Must be a valid email |
+| `password` | Yes | At least 8 chars, must have uppercase + lowercase + a number |
+| `passwordConfirmation` | Yes | Must match `password` |
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ...",
     "user": {
-      "id": "a1b2c3d4-...",
+      "id": "uuid-here",
       "name": "John Doe",
       "email": "john@example.com",
       "role": "USER",
@@ -212,22 +182,19 @@ Create a new user account.
 }
 ```
 
-> **Note:** The `user` object in `register`/`login` responses does **not** include `createdAt`/`updatedAt`. The `refreshToken` is also set as an `httpOnly` cookie.
+> The `refreshToken` is also set as an httpOnly cookie. The `user` object here doesn't include `createdAt`/`updatedAt` (unlike the profile endpoint).
 
 **Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `VALIDATION_ERROR` | Missing/invalid fields, passwords don't match |
-| 409 | `CONFLICT` | Email already registered |
+- 400 — Missing/invalid fields, passwords don't match
+- 409 — Email already registered
 
 ---
 
 ### POST `/auth/login`
 
-Authenticate and receive tokens.
+Log in and get tokens.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "email": "john@example.com",
@@ -236,21 +203,21 @@ Authenticate and receive tokens.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `email` | `string` | Yes | Valid email format |
-| `password` | `string` | Yes | Min 1 character |
-| `rememberMe` | `boolean` | No | Defaults to `false`. Extends refresh token cookie lifetime to 30 days (1 day otherwise) |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `email` | Yes | Valid email |
+| `password` | Yes | At least 1 character |
+| `rememberMe` | No | `true` or `false`. Defaults to `false`. Extends refresh token to 30 days (1 day otherwise). |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ...",
     "user": {
-      "id": "a1b2c3d4-...",
+      "id": "uuid-here",
       "name": "John Doe",
       "email": "john@example.com",
       "role": "USER",
@@ -264,64 +231,58 @@ Authenticate and receive tokens.
 }
 ```
 
-> Sets `refreshToken` as an `httpOnly` cookie. Cookie `maxAge` is 30 days if `rememberMe` is `true`, 1 day otherwise.
+> Sets `refreshToken` as an httpOnly cookie. Cookie lasts 30 days if `rememberMe` is `true`, 1 day otherwise.
 
 **Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `VALIDATION_ERROR` | Missing/invalid fields |
-| 401 | `AUTHENTICATION_ERROR` | Invalid credentials |
+- 400 — Missing fields
+- 401 — Wrong email or password
 
 ---
 
 ### POST `/auth/refresh`
 
-Get a new access/refresh token pair. Requires either the `refreshToken` cookie or a `refreshToken` in the request body.
+Get new tokens when the access token expires. The refresh token comes from the httpOnly cookie (or you can send it in the body).
 
-**Request Body (optional if cookie present):**
+**Send (optional if cookie is present):**
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  "refreshToken": "eyJ..."
 }
 ```
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+    "accessToken": "eyJ...",
+    "refreshToken": "eyJ..."
   }
 }
 ```
 
-> Sets a new `refreshToken` httpOnly cookie. Cookie `maxAge` matches the new refresh token's actual expiry. No `message` field is returned.
+> Sets a new `refreshToken` cookie. The old refresh token is revoked. No `message` field here.
 
 **Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `VALIDATION_ERROR` | No refresh token provided (neither cookie nor body) |
-| 401 | `AUTHENTICATION_ERROR` | Invalid, expired, or revoked refresh token |
+- 400 — No refresh token provided
+- 401 — Invalid, expired, or revoked refresh token
 
 ---
 
 ### POST `/auth/logout`
 
-Revoke the refresh token and clear the cookie.
+Log out and revoke all refresh tokens.
 
-**Request Body (optional):**
+**Send (optional):**
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  "refreshToken": "eyJ..."
 }
 ```
 
-> If no body is provided, the `refreshToken` cookie is used instead.
+> If no body, uses the cookie.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -330,20 +291,22 @@ Revoke the refresh token and clear the cookie.
 }
 ```
 
+> Also clears the `refreshToken` cookie and increments `tokenVersion` (invalidates all access tokens immediately).
+
 ---
 
 ### POST `/auth/forgot-password`
 
-Request a password reset email. Always returns success regardless of whether the email exists.
+Request a password reset email. Always returns success, even if the email doesn't exist (for security).
 
-**Request Body:**
+**Send:**
 ```json
 {
   "email": "john@example.com"
 }
 ```
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -356,9 +319,9 @@ Request a password reset email. Always returns success regardless of whether the
 
 ### POST `/auth/reset-password`
 
-Reset password using the token from the reset email.
+Reset password using the token from the email.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "token": "reset-token-from-email",
@@ -367,13 +330,13 @@ Reset password using the token from the reset email.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `token` | `string` | Yes | Reset token from email |
-| `password` | `string` | Yes | Same rules as registration (min 8, uppercase, lowercase, number) |
-| `passwordConfirmation` | `string` | Yes | Must match `password` |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `token` | Yes | The token from the reset email |
+| `password` | Yes | Same rules as registration (8+ chars, uppercase, lowercase, number) |
+| `passwordConfirmation` | Yes | Must match `password` |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -382,27 +345,23 @@ Reset password using the token from the reset email.
 }
 ```
 
-> All existing refresh tokens are revoked after a password reset.
+> All existing refresh tokens are revoked after a password reset, forcing re-login everywhere.
 
 **Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `VALIDATION_ERROR` | Missing/invalid fields, passwords don't match |
-| 400 | `BAD_REQUEST` | Invalid or expired reset token |
+- 400 — Invalid/expired token, passwords don't match
 
 ---
 
 ### GET `/auth/me`
 
-Get the current user's profile. Requires JWT authentication.
+Get the logged-in user's profile. Requires auth.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": {
-    "id": "a1b2c3d4-...",
+    "id": "uuid-here",
     "name": "John Doe",
     "email": "john@example.com",
     "role": "USER",
@@ -415,15 +374,15 @@ Get the current user's profile. Requires JWT authentication.
 }
 ```
 
-> The `data` field is the `SafeUser` object — note it includes `createdAt` and `updatedAt`, unlike the login/register response.
+> Note: This response includes `createdAt` and `updatedAt`, unlike the login/register response.
 
 ---
 
 ### PATCH `/auth/profile`
 
-Update the user's name and/or email.
+Update name and/or email. Requires auth.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "name": "Jane Doe",
@@ -431,17 +390,17 @@ Update the user's name and/or email.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `name` | `string` | No | 2–100 characters |
-| `email` | `string` | No | Valid email format |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `name` | No | 2–100 characters |
+| `email` | No | Valid email |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": {
-    "id": "a1b2c3d4-...",
+    "id": "uuid-here",
     "name": "Jane Doe",
     "email": "jane@example.com",
     "role": "USER",
@@ -459,9 +418,9 @@ Update the user's name and/or email.
 
 ### PATCH `/auth/me/password`
 
-Change the current password.
+Change password. Requires auth.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "currentPassword": "OldPassword123",
@@ -470,13 +429,13 @@ Change the current password.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `currentPassword` | `string` | Yes | Min 1 character |
-| `newPassword` | `string` | Yes | Same rules as registration (min 8, uppercase, lowercase, number) |
-| `newPasswordConfirmation` | `string` | Yes | Must match `newPassword` |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `currentPassword` | Yes | Your current password |
+| `newPassword` | Yes | Same rules as registration (8+ chars, uppercase, lowercase, number) |
+| `newPasswordConfirmation` | Yes | Must match `newPassword` |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -485,20 +444,19 @@ Change the current password.
 }
 ```
 
-**Errors:**
+> All existing sessions are revoked — you'll need to log in again everywhere.
 
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `VALIDATION_ERROR` | New passwords don't match, new password too weak |
-| 401 | `AUTHENTICATION_ERROR` | Current password is incorrect |
+**Errors:**
+- 400 — New passwords don't match / too weak
+- 401 — Current password is wrong
 
 ---
 
 ### PATCH `/auth/preferences`
 
-Update currency and/or locale preferences.
+Change currency and/or locale. Requires auth.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "currency": "EUR",
@@ -506,17 +464,17 @@ Update currency and/or locale preferences.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `currency` | `string` | No | One of: `USD`, `EUR`, `GBP`, `JPY`, `CNY`, `INR`, `ILS` |
-| `locale` | `string` | No | 2–10 characters |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `currency` | No | One of: `USD`, `EUR`, `GBP`, `JPY`, `CNY`, `INR`, `ILS` |
+| `locale` | No | 2–10 characters (e.g., `en-US`, `de-DE`, `ja-JP`) |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": {
-    "id": "a1b2c3d4-...",
+    "id": "uuid-here",
     "name": "John Doe",
     "email": "john@example.com",
     "role": "USER",
@@ -534,11 +492,11 @@ Update currency and/or locale preferences.
 
 ### DELETE `/auth/account`
 
-Permanently delete the user's account and all associated data. This action is irreversible.
+Permanently delete your account and all data. Requires auth.
 
-> **Note:** This endpoint does not require password confirmation. All refresh tokens are revoked and the user record is deleted atomically in a database transaction.
+> This action is permanent and can't be undone. All transactions, budgets, goals, categories, notifications, and tokens are deleted.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -551,39 +509,39 @@ Permanently delete the user's account and all associated data. This action is ir
 
 ---
 
-## Transactions (`/api/v1/transactions`)
+## Transactions
 
-All endpoints require JWT authentication.
+All endpoints require auth. All amounts are in USD.
 
 ### GET `/transactions`
 
-List transactions with filtering, sorting, and pagination.
+List transactions with filters and pagination.
 
-**Query Parameters:**
+**Query parameters (all optional, added to the URL):**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | `string` | `"1"` | Page number (1-based) |
-| `limit` | `string` | `"15"` | Items per page (max 100) |
-| `sortBy` | `string` | `"date"` | One of: `date`, `amount`, `createdAt`, `description` |
-| `sortOrder` | `string` | `"desc"` | `asc` or `desc` |
-| `type` | `string` | — | Filter by type: `INCOME`, `EXPENSE`, `TRANSFER` |
-| `categoryId` | `string` | — | Filter by category (UUID) |
-| `startDate` | `string` | — | Filter from date (ISO 8601) |
-| `endDate` | `string` | — | Filter to date (ISO 8601) |
-| `minAmount` | `string` | — | Minimum amount (in base currency) |
-| `maxAmount` | `string` | — | Maximum amount (in base currency) |
-| `search` | `string` | — | Full-text search on description/notes |
-| `tags` | `string` | — | Comma-separated tags |
-| `paymentMethod` | `string` | — | Filter by payment method |
+| Parameter | Default | What It Does |
+|-----------|---------|-------------|
+| `page` | `"1"` | Which page of results |
+| `limit` | `"15"` | How many per page (max 100) |
+| `sortBy` | `"date"` | Sort by: `date`, `amount`, `createdAt`, or `description` |
+| `sortOrder` | `"desc"` | `asc` (oldest first) or `desc` (newest first) |
+| `type` | — | Filter by: `INCOME`, `EXPENSE`, or `TRANSFER` |
+| `categoryId` | — | Filter by category (UUID) |
+| `startDate` | — | Only transactions from this date onward (ISO 8601) |
+| `endDate` | — | Only transactions up to this date (ISO 8601) |
+| `minAmount` | — | Minimum amount |
+| `maxAmount` | — | Maximum amount |
+| `search` | — | Search in description and notes |
+| `tags` | — | Comma-separated tags to filter by |
+| `paymentMethod` | — | Filter by payment method |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "tx-uuid-1",
+      "id": "tx-uuid",
       "userId": "user-uuid",
       "categoryId": "cat-uuid",
       "amount": 5000,
@@ -605,31 +563,19 @@ List transactions with filtering, sorting, and pagination.
       "updatedAt": "2025-06-01T10:00:00.000Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 15,
-    "total": 42,
-    "totalPages": 3
-  }
+  "meta": { "page": 1, "limit": 15, "total": 42, "totalPages": 3 }
 }
 ```
-
-> `Cache-Control: private, max-age=15`
 
 ---
 
 ### GET `/transactions/summary`
 
-Get income/expense summary for a date range.
+Get totals for a date range.
 
-**Query Parameters:**
+**Query parameters:** `startDate` and `endDate` (both optional, ISO 8601).
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `startDate` | `string` | — | Start date (ISO 8601) |
-| `endDate` | `string` | — | End date (ISO 8601) |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -642,44 +588,40 @@ Get income/expense summary for a date range.
 }
 ```
 
-> `Cache-Control: private, max-age=30`
-
 ---
 
 ### GET `/transactions/:id`
 
-Get a single transaction by ID.
+Get one transaction by ID. Returns 404 if it doesn't exist or belongs to another user.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": {
-    "id": "tx-uuid-1",
+    "id": "tx-uuid",
     "userId": "user-uuid",
     "categoryId": "cat-uuid",
-    "amount": 5000,
-    "description": "Monthly salary",
-    "type": "INCOME",
-    "date": "2025-06-01T00:00:00.000Z",
-    "paymentMethod": "bank",
-    "notes": "June paycheck",
+    "amount": 42.50,
+    "description": "Lunch at cafe",
+    "type": "EXPENSE",
+    "date": "2025-06-20T12:30:00.000Z",
+    "paymentMethod": "credit_card",
+    "notes": "Team lunch",
     "receiptUrl": null,
     "isRecurring": false,
-    "tags": ["salary"],
+    "tags": ["food", "team"],
     "category": {
       "id": "cat-uuid",
-      "name": "Salary",
-      "icon": "dollar",
-      "color": "#22c55e"
+      "name": "Food",
+      "icon": "utensils",
+      "color": "#ef4444"
     },
-    "createdAt": "2025-06-01T10:00:00.000Z",
-    "updatedAt": "2025-06-01T10:00:00.000Z"
+    "createdAt": "2025-06-20T12:30:00.000Z",
+    "updatedAt": "2025-06-20T12:30:00.000Z"
   }
 }
 ```
-
-> `Cache-Control: private, max-age=30`. Returns 404 if the transaction doesn't exist or belongs to another user.
 
 ---
 
@@ -687,7 +629,7 @@ Get a single transaction by ID.
 
 Create a new transaction.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "amount": 42.50,
@@ -702,45 +644,23 @@ Create a new transaction.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `amount` | `number` | Yes | Must be positive (> 0) |
-| `description` | `string` | Yes | 1–255 characters |
-| `type` | `string` | Yes | `INCOME`, `EXPENSE`, or `TRANSFER` |
-| `categoryId` | `string` | No | UUID of an existing category |
-| `date` | `string` | No | ISO 8601 datetime. Defaults to current time |
-| `paymentMethod` | `string` | No | Max 50 characters |
-| `notes` | `string` | No | Max 1000 characters |
-| `receiptUrl` | `string` | No | URL to uploaded receipt |
-| `isRecurring` | `boolean` | No | Defaults to `false` |
-| `tags` | `string[]` | No | Max 10 tags, each max 30 characters. Defaults to `[]` |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `amount` | Yes | Must be positive (> 0) |
+| `description` | Yes | 1–255 characters |
+| `type` | Yes | `INCOME`, `EXPENSE`, or `TRANSFER` |
+| `categoryId` | No | UUID of a category |
+| `date` | No | ISO 8601 datetime. Defaults to now. |
+| `paymentMethod` | No | Max 50 characters |
+| `notes` | No | Max 1000 characters |
+| `receiptUrl` | No | URL to an uploaded receipt |
+| `tags` | No | Array of strings, max 10, each max 30 chars |
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
-  "data": {
-    "id": "new-tx-uuid",
-    "userId": "user-uuid",
-    "categoryId": "cat-uuid",
-    "amount": 42.50,
-    "description": "Lunch at cafe",
-    "type": "EXPENSE",
-    "date": "2025-06-20T12:30:00.000Z",
-    "paymentMethod": "credit_card",
-    "notes": "Team lunch",
-    "receiptUrl": "https://blob.vercel-storage.com/...",
-    "isRecurring": false,
-    "tags": ["food", "team"],
-    "category": {
-      "id": "cat-uuid",
-      "name": "Food",
-      "icon": "utensils",
-      "color": "#ef4444"
-    },
-    "createdAt": "2025-06-20T12:30:00.000Z",
-    "updatedAt": "2025-06-20T12:30:00.000Z"
-  },
+  "data": { "...same shape as GET /:id..." },
   "message": "Transaction created"
 }
 ```
@@ -749,31 +669,20 @@ Create a new transaction.
 
 ### PUT `/transactions/:id`
 
-Update an existing transaction. All fields are optional — only provided fields are updated.
+Update a transaction. All fields are optional — only send what you want to change.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "amount": 50.00,
   "description": "Lunch and coffee",
-  "categoryId": null,
-  "notes": null
+  "categoryId": null
 }
 ```
 
-| Field | Type | Constraints |
-|-------|------|-------------|
-| `amount` | `number` | Must be positive |
-| `description` | `string` | 1–255 characters |
-| `type` | `string` | `INCOME`, `EXPENSE`, or `TRANSFER` |
-| `categoryId` | `string \| null` | UUID or `null` to unset |
-| `date` | `string` | ISO 8601 datetime |
-| `paymentMethod` | `string \| null` | Max 50 characters |
-| `notes` | `string \| null` | Max 1000 characters |
-| `receiptUrl` | `string \| null` | URL to uploaded receipt |
-| `tags` | `string[]` | Max 10 tags, each max 30 characters |
+> `categoryId: null` removes the category from the transaction.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -788,7 +697,7 @@ Update an existing transaction. All fields are optional — only provided fields
 
 Delete a transaction.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -801,20 +710,20 @@ Delete a transaction.
 
 ### POST `/transactions/bulk-delete`
 
-Delete multiple transactions in one request.
+Delete multiple transactions at once.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "ids": ["uuid-1", "uuid-2", "uuid-3"]
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `ids` | `string[]` | Yes | 1–100 UUIDs |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `ids` | Yes | Array of 1–100 UUIDs |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -825,21 +734,21 @@ Delete multiple transactions in one request.
 
 ---
 
-## Categories (`/api/v1/categories`)
+## Categories
 
-All endpoints require JWT authentication.
+All endpoints require auth.
 
 ### GET `/categories`
 
-List all user-created and default (system) categories.
+List all categories for the user, including system defaults.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "cat-uuid-1",
+      "id": "cat-uuid",
       "userId": "user-uuid",
       "name": "Salary",
       "icon": "dollar",
@@ -858,30 +767,13 @@ List all user-created and default (system) categories.
 }
 ```
 
-> `Cache-Control: private, max-age=300`. Categories with `userId: null` are default/system categories available to all users.
+> Categories with `userId: null` are system defaults available to all users.
 
 ---
 
 ### GET `/categories/:id`
 
-Get a single category.
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "cat-uuid-1",
-    "userId": "user-uuid",
-    "name": "Salary",
-    "icon": "dollar",
-    "color": "#22c55e",
-    "type": "INCOME"
-  }
-}
-```
-
-> `Cache-Control: private, max-age=300`. Returns 404 if the category doesn't exist or belongs to another user. Default categories are accessible to all users.
+Get one category. Returns 404 if not found or belongs to another user.
 
 ---
 
@@ -889,7 +781,7 @@ Get a single category.
 
 Create a custom category.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "name": "Coffee",
@@ -899,30 +791,23 @@ Create a custom category.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `name` | `string` | Yes | 1–50 characters |
-| `icon` | `string` | No | Max 30 characters. Defaults to `"circle"` |
-| `color` | `string` | No | Hex color `#RRGGBB`. Defaults to `"#6366f1"` |
-| `type` | `string` | Yes | `INCOME` or `EXPENSE` |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `name` | Yes | 1–50 characters |
+| `icon` | No | Lucide icon name. Defaults to `"circle"`. |
+| `color` | No | Hex color like `#8b5cf6`. Defaults to `"#6366f1"`. |
+| `type` | Yes | `INCOME` or `EXPENSE` |
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
-  "data": {
-    "id": "new-cat-uuid",
-    "userId": "user-uuid",
-    "name": "Coffee",
-    "icon": "coffee",
-    "color": "#8b5cf6",
-    "type": "EXPENSE"
-  },
+  "data": { "...category object..." },
   "message": "Category created"
 }
 ```
 
-> Duplicate `(userId, name, type)` combinations are rejected with a 409 Conflict.
+> Can't have two categories with the same name and type (returns 409 Conflict).
 
 ---
 
@@ -930,15 +815,9 @@ Create a custom category.
 
 Update a category. All fields are optional.
 
-**Request Body:**
-```json
-{
-  "name": "Coffee & Tea",
-  "color": "#ec4899"
-}
-```
+> Can't edit default (system) categories — returns 403 Forbidden.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -947,17 +826,15 @@ Update a category. All fields are optional.
 }
 ```
 
-> Returns 403 if attempting to modify a default (system) category.
-
 ---
 
 ### DELETE `/categories/:id`
 
-Delete a category. Transactions referencing this category will have their `categoryId` set to `null` (`onDelete: SetNull`). Budgets and recurring transactions referencing this category will be reassigned to a lazily-created "Uncategorized" fallback category. This operation is atomic (wrapped in a database transaction).
+Delete a category. Transactions using it will have their `categoryId` set to null. Budgets and recurring transactions using it will be reassigned to a fallback "Uncategorized" category. This is done atomically (all or nothing).
 
-> Returns 403 if attempting to delete a default (system) category.
+> Can't delete default (system) categories — returns 403 Forbidden.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -968,22 +845,17 @@ Delete a category. Transactions referencing this category will have their `categ
 
 ---
 
-## Budgets (`/api/v1/budgets`)
+## Budgets
 
-All endpoints require JWT authentication.
+All endpoints require auth. Budgets support pagination.
 
 ### GET `/budgets`
 
-List budgets with spent amount and percentage calculation. Supports pagination.
+List budgets with how much has been spent and the percentage used.
 
-**Query Parameters:**
+**Query parameters:** `page` (default 1) and `limit` (default 10, max 100).
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | `string` | `"1"` | Page number (1-based) |
-| `limit` | `string` | `"10"` | Items per page (max 100) |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1006,58 +878,22 @@ List budgets with spent amount and percentage calculation. Supports pagination.
       "percentage": 72.5
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 5,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 10, "total": 5, "totalPages": 1 }
 }
 ```
 
-> `Cache-Control: private, max-age=30`. `spent` and `percentage` are computed server-side based on the budget's date range and the user's transactions.
-
-**Response Object Fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `limit` | `number` | Budget limit in base currency (USD) |
-| `spent` | `number` | Total expenses in the budget's category and date range |
-| `percentage` | `number` | `spent / limit * 100` |
-| `period` | `string` | `WEEKLY`, `MONTHLY`, or `YEARLY` |
-| `category` | `object \| null` | Flattened category subset: `{ id, name, icon, color }` |
+| Field | What It Means |
+|-------|--------------|
+| `limit` | The spending limit you set (in USD) |
+| `spent` | How much has been spent in this category within the date range |
+| `percentage` | `spent / limit * 100` |
+| `period` | `WEEKLY`, `MONTHLY`, or `YEARLY` |
 
 ---
 
 ### GET `/budgets/:id`
 
-Get a single budget with spent/percentage.
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "budget-uuid",
-    "userId": "user-uuid",
-    "categoryId": "cat-uuid",
-    "limit": 2000,
-    "spent": 1450,
-    "period": "MONTHLY",
-    "startDate": "2025-06-01T00:00:00.000Z",
-    "endDate": "2025-06-30T23:59:59.999Z",
-    "category": {
-      "id": "cat-uuid",
-      "name": "Food",
-      "icon": "utensils",
-      "color": "#ef4444"
-    },
-    "percentage": 72.5
-  }
-}
-```
-
-> `Cache-Control: private, max-age=30`
+Get one budget.
 
 ---
 
@@ -1065,7 +901,7 @@ Get a single budget with spent/percentage.
 
 Create a budget.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "categoryId": "cat-uuid",
@@ -1076,15 +912,15 @@ Create a budget.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `categoryId` | `string` | No | UUID of a category. If omitted, budget applies to all expenses |
-| `limit` | `number` | Yes | Must be positive (> 0) |
-| `period` | `string` | No | `WEEKLY`, `MONTHLY`, or `YEARLY`. Defaults to `MONTHLY` |
-| `startDate` | `string` | No | ISO 8601 datetime. Defaults to current time |
-| `endDate` | `string` | No | ISO 8601 datetime. Defaults to end of current month |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `categoryId` | No | UUID of a category. Omit for a general budget. |
+| `limit` | Yes | Must be positive (> 0) |
+| `period` | No | `WEEKLY`, `MONTHLY`, or `YEARLY`. Defaults to `MONTHLY`. |
+| `startDate` | No | ISO 8601. Defaults to now. |
+| `endDate` | No | ISO 8601. Defaults to end of current month. |
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
@@ -1093,17 +929,15 @@ Create a budget.
 }
 ```
 
-> Duplicate `(userId, categoryId, period)` combinations are rejected with a 409 Conflict.
+> Can't have two budgets for the same category and period (returns 409 Conflict).
 
 ---
 
 ### PUT `/budgets/:id`
 
-Update a budget. All fields are optional.
+Update a budget. Note: you can't change `categoryId` — delete and recreate instead.
 
-> **Note:** `categoryId` cannot be changed via update. To change the category, delete and recreate the budget.
-
-**Request Body:**
+**Send:**
 ```json
 {
   "limit": 2500,
@@ -1111,7 +945,7 @@ Update a budget. All fields are optional.
 }
 ```
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1126,7 +960,7 @@ Update a budget. All fields are optional.
 
 Delete a budget.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1137,22 +971,15 @@ Delete a budget.
 
 ---
 
-## Savings Goals (`/api/v1/goals`)
+## Savings Goals
 
-All endpoints require JWT authentication.
+All endpoints require auth. Goals support pagination.
 
 ### GET `/goals`
 
-List savings goals with progress percentage. Supports pagination.
+List goals with progress percentage.
 
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | `string` | `"1"` | Page number (1-based) |
-| `limit` | `string` | `"10"` | Items per page (max 100) |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1168,47 +995,25 @@ List savings goals with progress percentage. Supports pagination.
       "createdAt": "2025-01-15T10:00:00.000Z"
     }
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 3,
-    "totalPages": 1
-  }
+  "meta": { "page": 1, "limit": 10, "total": 3, "totalPages": 1 }
 }
 ```
 
-> `Cache-Control: private, max-age=30`. `progress` is computed as `currentAmount / targetAmount * 100`.
+> `progress` = `currentAmount / targetAmount * 100`
 
 ---
 
 ### GET `/goals/:id`
 
-Get a single goal with progress.
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "goal-uuid",
-    "userId": "user-uuid",
-    "name": "Emergency Fund",
-    "targetAmount": 10000,
-    "currentAmount": 3500,
-    "deadline": "2025-12-31T00:00:00.000Z",
-    "progress": 35,
-    "createdAt": "2025-01-15T10:00:00.000Z"
-  }
-}
-```
+Get one goal.
 
 ---
 
 ### POST `/goals`
 
-Create a savings goal.
+Create a goal.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "name": "Vacation Fund",
@@ -1218,18 +1023,18 @@ Create a savings goal.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `name` | `string` | Yes | 1–100 characters |
-| `targetAmount` | `number` | Yes | Must be positive (> 0) |
-| `currentAmount` | `number` | No | Min 0. Defaults to `0` |
-| `deadline` | `string \| null` | No | ISO 8601 datetime. `null` means no deadline |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `name` | Yes | 1–100 characters |
+| `targetAmount` | Yes | Must be positive (> 0) |
+| `currentAmount` | No | Min 0. Defaults to 0. |
+| `deadline` | No | ISO 8601 or `null` (no deadline) |
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
-  "data": { "...goal object with progress..." },
+  "data": { "...goal object..." },
   "message": "Goal created"
 }
 ```
@@ -1240,22 +1045,7 @@ Create a savings goal.
 
 Update a goal. All fields are optional.
 
-**Request Body:**
-```json
-{
-  "name": "Vacation Fund 2026",
-  "targetAmount": 6000
-}
-```
-
-| Field | Type | Constraints |
-|-------|------|-------------|
-| `name` | `string` | 1–100 characters |
-| `targetAmount` | `number` | Must be positive |
-| `currentAmount` | `number` | Min 0 |
-| `deadline` | `string \| null` | ISO 8601 datetime or `null` |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1270,7 +1060,7 @@ Update a goal. All fields are optional.
 
 Delete a goal.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1283,20 +1073,20 @@ Delete a goal.
 
 ### POST `/goals/:id/contribute`
 
-Add funds to a savings goal. Uses an atomic database increment to prevent race conditions.
+Add money to a goal. Uses an atomic database increment (prevents race conditions if two people contribute at the same time).
 
-**Request Body:**
+**Send:**
 ```json
 {
   "amount": 500
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `amount` | `number` | Yes | Must be positive (> 0) |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `amount` | Yes | Must be positive (> 0) |
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1314,31 +1104,19 @@ Add funds to a savings goal. Uses an atomic database increment to prevent race c
 }
 ```
 
-**Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `VALIDATION_ERROR` | Amount is not positive |
-| 404 | `NOT_FOUND` | Goal doesn't exist or belongs to another user |
-
 ---
 
-## Notifications (`/api/v1/notifications`)
+## Notifications
 
-All endpoints require JWT authentication.
+All endpoints require auth. Notifications support pagination.
 
 ### GET `/notifications`
 
-List notifications with unread count. Supports pagination.
+List notifications.
 
-**Query Parameters:**
+**Query parameters:** `page` (default 1) and `limit` (default 50, max 100).
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | `string` | `"1"` | Page number (1-based) |
-| `limit` | `string` | `"50"` | Items per page (1–100) |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1364,13 +1142,11 @@ List notifications with unread count. Supports pagination.
 }
 ```
 
-> `Cache-Control: private, max-age=15`. The `meta` object extends standard pagination with `unreadCount`.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | `string` | One of: `INFO`, `WARNING`, `ERROR`, `SUCCESS` |
-| `isRead` | `boolean` | Whether the notification has been read |
-| `meta.unreadCount` | `number` | Total unread notifications across all pages |
+| Field | What It Means |
+|-------|--------------|
+| `type` | `INFO`, `WARNING`, `ERROR`, or `SUCCESS` |
+| `isRead` | `true` if the user has read this notification |
+| `meta.unreadCount` | Total unread notifications (across all pages) |
 
 ---
 
@@ -1378,7 +1154,7 @@ List notifications with unread count. Supports pagination.
 
 Mark all notifications as read.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1391,9 +1167,9 @@ Mark all notifications as read.
 
 ### PATCH `/notifications/:id/read`
 
-Mark a single notification as read.
+Mark one notification as read. Returns 404 if not found.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1402,19 +1178,13 @@ Mark a single notification as read.
 }
 ```
 
-**Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 404 | `NOT_FOUND` | Notification doesn't exist or belongs to another user |
-
 ---
 
 ### DELETE `/notifications/:id`
 
-Delete a notification.
+Delete a notification. Returns 404 if not found.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1423,25 +1193,17 @@ Delete a notification.
 }
 ```
 
-**Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 404 | `NOT_FOUND` | Notification doesn't exist or belongs to another user |
-
 ---
 
-## Analytics (`/api/v1/analytics`)
+## Analytics
 
-All endpoints require JWT authentication. All responses are cached with `Cache-Control: private, max-age=N`.
+All endpoints require auth. All responses are cached by the browser for 1–5 minutes.
 
 ### GET `/analytics/dashboard`
 
-Get dashboard summary including KPIs, health score, and recent transactions.
+Dashboard summary: KPIs, health score, and recent transactions.
 
-> `Cache-Control: private, max-age=60`
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1451,34 +1213,8 @@ Get dashboard summary including KPIs, health score, and recent transactions.
     "totalExpenses": 8500,
     "savings": 6500,
     "monthlyBudgetUsage": 42.5,
-    "healthScore": {
-      "score": 75,
-      "label": "Good"
-    },
-    "recentTransactions": [
-      {
-        "id": "tx-uuid",
-        "userId": "user-uuid",
-        "categoryId": "cat-uuid",
-        "amount": 42.50,
-        "description": "Lunch at cafe",
-        "type": "EXPENSE",
-        "date": "2025-06-20T12:30:00.000Z",
-        "paymentMethod": "credit_card",
-        "notes": null,
-        "receiptUrl": null,
-        "isRecurring": false,
-        "tags": [],
-        "category": {
-          "id": "cat-uuid",
-          "name": "Food",
-          "icon": "utensils",
-          "color": "#ef4444"
-        },
-        "createdAt": "2025-06-20T12:30:00.000Z",
-        "updatedAt": "2025-06-20T12:30:00.000Z"
-      }
-    ],
+    "healthScore": { "score": 75, "label": "Good" },
+    "recentTransactions": [ { "...up to 10 recent transactions..." } ],
     "monthIncome": 5000,
     "monthExpenses": 1450,
     "totalBudgets": 3,
@@ -1487,77 +1223,40 @@ Get dashboard summary including KPIs, health score, and recent transactions.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `currentBalance` | `number` | Total income minus total expenses (all time) |
-| `totalIncome` | `number` | Sum of all income transactions (all time) |
-| `totalExpenses` | `number` | Sum of all expense transactions (all time) |
-| `savings` | `number` | `totalIncome - totalExpenses` |
-| `monthlyBudgetUsage` | `number` | Percentage of total budget used this month |
-| `healthScore.score` | `number \| null` | Financial health score (0–100), or `null` if insufficient data |
-| `healthScore.label` | `string` | Human-readable health label (e.g., "Good", "Excellent", "Needs Attention") |
-| `recentTransactions` | `Transaction[]` | 10 most recent transactions |
-| `monthIncome` | `number` | Income this calendar month |
-| `monthExpenses` | `number` | Expenses this calendar month |
-| `totalBudgets` | `number` | Count of user's budgets |
-| `totalGoals` | `number` | Count of user's savings goals |
+| Field | What It Means |
+|-------|--------------|
+| `currentBalance` | Total income minus total expenses (all time) |
+| `savings` | Same as currentBalance (total income minus total expenses) |
+| `monthlyBudgetUsage` | Percentage of total budget used this month |
+| `healthScore.score` | 0–100, or `null` if not enough data |
+| `healthScore.label` | "Excellent" (80+), "Good" (60+), "Fair" (40+), or "Poor" (<40) |
+| `recentTransactions` | 10 most recent transactions |
+| `monthIncome` / `monthExpenses` | Income/expenses for the current calendar month |
 
 ---
 
 ### GET `/analytics/overview`
 
-Combined dashboard summary + monthly spending data.
-
-> `Cache-Control: private, max-age=60`
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "dashboard": { "...DashboardData object (same as /dashboard)..." },
-    "monthlySpending": [
-      { "month": "Jan '25", "income": 5000, "expenses": 3200 },
-      { "month": "Feb '25", "income": 5000, "expenses": 2850 }
-    ]
-  }
-}
-```
+Combined dashboard + monthly spending data. Same as calling `/dashboard` and `/monthly-spending` in one request.
 
 ---
 
 ### GET `/analytics/monthly-spending`
 
-Monthly income and expense breakdown.
+Income and expenses broken down by month.
 
-> `Cache-Control: private, max-age=120`
+**Query parameter:** `months` (default 6, range 1–36).
 
-**Query Parameters:**
-
-| Parameter | Type | Default | Constraints |
-|-----------|------|---------|-------------|
-| `months` | `string` | `"6"` | Integer 1–36 |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": [
     { "month": "Jan '25", "income": 5000, "expenses": 3200 },
-    { "month": "Feb '25", "income": 5000, "expenses": 2850 },
-    { "month": "Mar '25", "income": 5500, "expenses": 3100 },
-    { "month": "Apr '25", "income": 5000, "expenses": 2900 },
-    { "month": "May '25", "income": 5000, "expenses": 3400 },
-    { "month": "Jun '25", "income": 5000, "expenses": 1450 }
+    { "month": "Feb '25", "income": 5000, "expenses": 2850 }
   ]
 }
 ```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `month` | `string` | Short month name + 2-digit year (e.g., `"Jan '25"`) |
-| `income` | `number` | Total income for that month |
-| `expenses` | `number` | Total expenses for that month |
 
 ---
 
@@ -1565,90 +1264,42 @@ Monthly income and expense breakdown.
 
 Expense breakdown by category for a date range.
 
-> `Cache-Control: private, max-age=120`
+**Query parameters:** `startDate` and `endDate` (both optional, ISO 8601). If omitted, returns all-time breakdown.
 
-**Query Parameters:**
-
-| Parameter | Type | Default | Constraints |
-|-----------|------|---------|-------------|
-| `startDate` | `string` | — | ISO 8601 datetime |
-| `endDate` | `string` | — | ISO 8601 datetime |
-
-> If both are omitted, returns breakdown for all time.
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
   "data": [
     {
-      "categoryId": "cat-uuid-1",
+      "categoryId": "cat-uuid",
       "categoryName": "Food",
       "categoryColor": "#ef4444",
       "categoryIcon": "utensils",
       "total": 1450,
       "count": 23
-    },
-    {
-      "categoryId": "cat-uuid-2",
-      "categoryName": "Transport",
-      "categoryColor": "#3b82f6",
-      "categoryIcon": "car",
-      "total": 850,
-      "count": 12
     }
   ]
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `categoryId` | `string \| null` | Category UUID, or `null` for uncategorized |
-| `categoryName` | `string` | Category name, or `"Unknown"` if category was deleted |
-| `categoryColor` | `string` | Hex color code |
-| `categoryIcon` | `string` | Icon identifier |
-| `total` | `number` | Total expenses in this category |
-| `count` | `number` | Number of expense transactions |
-
-> Results are sorted by `total` descending.
+> Results are sorted by `total` (highest first).
 
 ---
 
 ### GET `/analytics/cash-flow`
 
-Cash flow (income vs expenses) over time.
+Income vs expenses over time. Same format as `/monthly-spending` but defaults to 12 months.
 
-> `Cache-Control: private, max-age=300`
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Constraints |
-|-----------|------|---------|-------------|
-| `months` | `string` | `"12"` | Integer 1–36 |
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": [
-    { "month": "Jul '24", "income": 5000, "expenses": 3000 },
-    { "month": "Aug '24", "income": 5000, "expenses": 2800 },
-    { "month": "Sep '24", "income": 5500, "expenses": 3100 }
-  ]
-}
-```
-
-> Same shape as `/analytics/monthly-spending`, but defaults to 12 months.
+**Query parameter:** `months` (default 12, range 1–36).
 
 ---
 
 ### GET `/analytics/net-worth`
 
-Net worth calculation with monthly cumulative trend.
+Current net worth and monthly trend.
 
-> `Cache-Control: private, max-age=60`
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1657,82 +1308,67 @@ Net worth calculation with monthly cumulative trend.
     "trend": [
       { "date": "2025-01", "netWorth": 1800 },
       { "date": "2025-02", "netWorth": 3950 },
-      { "date": "2025-03", "netWorth": 6350 },
-      { "date": "2025-04", "netWorth": 8450 },
-      { "date": "2025-05", "netWorth": 5050 },
-      { "date": "2025-06", "netWorth": 6500 }
+      { "date": "2025-03", "netWorth": 6350 }
     ]
   }
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `currentNetWorth` | `number` | Total income minus total expenses (all time) |
-| `trend` | `object[]` | Monthly cumulative net worth |
-| `trend[].date` | `string` | `YYYY-MM` format |
-| `trend[].netWorth` | `number` | Running cumulative sum income minus expenses |
+> `trend[].date` is `YYYY-MM` format. `netWorth` is a running cumulative sum of income minus expenses.
 
 ---
 
-## File Uploads (`/api/v1/uploads`)
+## File Uploads
 
-All endpoints require JWT authentication.
+All endpoints require auth.
 
 ### POST `/uploads/receipt`
 
-Upload a receipt file. File is stored via Vercel Blob storage.
+Upload a receipt file. Uses `multipart/form-data`.
 
-**Request:** `multipart/form-data`
+**Send:** A file in the `file` field.
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `file` | `File` | Yes | JPEG, PNG, WebP, or PDF. Max 5 MB |
+| Rules | Details |
+|-------|---------|
+| Allowed types | JPEG, PNG, WebP, PDF |
+| Max size | 5 MB |
 
-**Request Example (curl):**
+**Example (curl):**
 ```bash
-curl -X POST https://api.example.com/api/v1/uploads/receipt \
+curl -X POST https://your-api.com/api/v1/uploads/receipt \
   -H "Authorization: Bearer <token>" \
   -F "file=@receipt.jpg"
 ```
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
   "data": {
-    "url": "https://blob.vercel-storage.com/user-uuid/receipt-123456.jpg"
+    "url": "https://blob.vercel-storage.com/..."
   },
   "message": "File uploaded"
 }
 ```
 
 **Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `BAD_REQUEST` | No file provided |
-| 400 | `VALIDATION_ERROR` | Invalid MIME type or file too large |
-| 503 | `SERVICE_UNAVAILABLE` | Blob storage not configured (missing `BLOB_READ_WRITE_TOKEN`) |
+- 400 — No file sent, or wrong file type
+- 503 — Blob storage not configured on the server
 
 ---
 
 ### POST `/uploads/receipt/delete`
 
-Delete a previously uploaded receipt. Verifies ownership before deletion. Any transactions referencing this receipt URL will have their `receiptUrl` set to `null` before the blob is deleted.
+Delete a receipt. Verifies that the file belongs to the user before deleting. Any transactions using this receipt URL will have it cleared.
 
-**Request Body:**
+**Send:**
 ```json
 {
-  "url": "https://blob.vercel-storage.com/user-uuid/receipt-123456.jpg"
+  "url": "https://blob.vercel-storage.com/..."
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `url` | `string` | Yes | Must be a valid Vercel Blob URL |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1742,26 +1378,21 @@ Delete a previously uploaded receipt. Verifies ownership before deletion. Any tr
 ```
 
 **Errors:**
-
-| Status | Error | When |
-|--------|-------|------|
-| 400 | `BAD_REQUEST` | No URL provided |
-| 403 | `AUTHORIZATION_ERROR` | URL does not belong to the authenticated user |
-| 503 | `SERVICE_UNAVAILABLE` | Blob storage not configured |
+- 400 — No URL provided
+- 403 — This URL doesn't belong to you
+- 503 — Blob storage not configured
 
 ---
 
-## Recurring Transactions (`/api/v1/recurring`)
+## Recurring Transactions
 
-All endpoints require JWT authentication.
-
-> **Note:** Unlike transactions, budgets, goals, and notifications, the `GET /recurring` list endpoint does **not** support pagination — all recurring templates are returned in a single response.
+All endpoints require auth. Note: the list endpoint does NOT support pagination — all templates are returned at once.
 
 ### GET `/recurring`
 
 List all recurring transaction templates.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1793,35 +1424,27 @@ List all recurring transaction templates.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `interval` | `string` | `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` |
-| `dayOfMonth` | `number \| null` | Day of month (1–31) for monthly/yearly intervals |
-| `dayOfWeek` | `number \| null` | Day of week (0=Sunday – 6=Saturday) for weekly intervals |
-| `nextDate` | `string` | Next scheduled execution date (ISO 8601) |
-| `isActive` | `boolean` | Whether the template is active (paused templates are skipped by cron) |
+| Field | What It Means |
+|-------|--------------|
+| `interval` | `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` |
+| `dayOfMonth` | Day of month (1–31) for MONTHLY/YEARLY |
+| `dayOfWeek` | Day of week (0=Sunday – 6=Saturday) for WEEKLY |
+| `nextDate` | When the cron job should next create a transaction |
+| `isActive` | `false` = paused or past end date. `true` = still running. |
 
 ---
 
 ### GET `/recurring/:id`
 
-Get a single recurring transaction template.
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": { "...single recurring transaction object..." }
-}
-```
+Get one recurring template.
 
 ---
 
 ### POST `/recurring`
 
-Create a recurring transaction template.
+Create a recurring template.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "categoryId": "cat-uuid",
@@ -1835,23 +1458,23 @@ Create a recurring transaction template.
 }
 ```
 
-| Field | Type | Required | Constraints |
-|-------|------|----------|-------------|
-| `categoryId` | `string` | Yes | UUID of a category |
-| `amount` | `number` | Yes | Must be positive (> 0) |
-| `description` | `string` | Yes | 1–255 characters |
-| `type` | `string` | Yes | `INCOME`, `EXPENSE`, or `TRANSFER` |
-| `interval` | `string` | Yes | `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` |
-| `dayOfMonth` | `number \| null` | No | Integer 1–31. For MONTHLY/YEARLY intervals |
-| `dayOfWeek` | `number \| null` | No | Integer 0–6 (0=Sunday). For WEEKLY interval |
-| `startDate` | `string` | No | ISO 8601 datetime. Defaults to current time |
-| `endDate` | `string \| null` | No | ISO 8601 datetime or `null` for no end date |
+| Field | Required? | Rules |
+|-------|-----------|-------|
+| `categoryId` | Yes | UUID of a category |
+| `amount` | Yes | Must be positive (> 0) |
+| `description` | Yes | 1–255 characters |
+| `type` | Yes | `INCOME`, `EXPENSE`, or `TRANSFER` |
+| `interval` | Yes | `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` |
+| `dayOfMonth` | No | 1–31 (for MONTHLY/YEARLY) |
+| `dayOfWeek` | No | 0–6 (for WEEKLY) |
+| `startDate` | No | ISO 8601. Defaults to now. |
+| `endDate` | No | ISO 8601 or `null` (runs forever) |
 
-**Response (201):**
+**Returns (201):**
 ```json
 {
   "success": true,
-  "data": { "...recurring transaction object..." },
+  "data": { "...recurring transaction..." },
   "message": "Recurring transaction created"
 }
 ```
@@ -1860,35 +1483,21 @@ Create a recurring transaction template.
 
 ### PATCH `/recurring/:id`
 
-Update a recurring transaction template. All fields are optional.
+Update a recurring template. All fields are optional.
 
-**Request Body:**
+**Send:**
 ```json
 {
   "amount": 1600,
-  "isActive": false,
-  "endDate": "2025-12-31T00:00:00.000Z"
+  "isActive": false
 }
 ```
 
-| Field | Type | Constraints |
-|-------|------|-------------|
-| `categoryId` | `string` | UUID of a category |
-| `amount` | `number` | Must be positive |
-| `description` | `string` | 1–255 characters |
-| `type` | `string` | `INCOME`, `EXPENSE`, or `TRANSFER` |
-| `interval` | `string` | `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY` |
-| `dayOfMonth` | `number \| null` | Integer 1–31 |
-| `dayOfWeek` | `number \| null` | Integer 0–6 |
-| `startDate` | `string` | ISO 8601 datetime |
-| `endDate` | `string \| null` | ISO 8601 datetime or `null` |
-| `isActive` | `boolean` | `true` = active, `false` = paused |
-
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
-  "data": { "...updated recurring transaction..." },
+  "data": { "...updated template..." },
   "message": "Recurring transaction updated"
 }
 ```
@@ -1897,9 +1506,9 @@ Update a recurring transaction template. All fields are optional.
 
 ### DELETE `/recurring/:id`
 
-Delete a recurring transaction template.
+Delete a recurring template.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1910,50 +1519,36 @@ Delete a recurring transaction template.
 
 ---
 
-## Cron Jobs (`/api/v1/cron`)
+## Cron Job
 
 ### POST `/cron/recurring`
 
-Process all due recurring transactions. Authenticated via `X-Cron-Secret` header (not JWT).
+Process all due recurring transactions. This is called automatically by Vercel Cron daily at midnight. You don't call this manually.
 
-**Request Headers:**
-```
-X-Cron-Secret: <CRON_SECRET value from environment>
-```
+**Authentication:** Uses `X-Cron-Secret` header (not JWT).
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
-  "data": {
-    "processed": 5
-  },
+  "data": { "processed": 5 },
   "message": "Recurring transactions processed"
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `data.processed` | `number` | Count of recurring transactions that were executed |
-
-> This endpoint is designed to be called by Vercel's cron scheduler (configured in `backend/vercel.json` for daily midnight execution). Each matching recurring template creates a new transaction and advances its `nextDate`.
-
 **Errors:**
-
-| Status | Error Code | When |
-|--------|------------|------|
-| 401 | `AUTHENTICATION_ERROR` | Missing or incorrect `X-Cron-Secret` header |
-| 503 | `CRON_NOT_CONFIGURED` | `CRON_SECRET` environment variable not set on server |
+- 401 — Wrong or missing secret
+- 503 — Cron secret not configured on the server
 
 ---
 
-## Health Check (`/api/v1/health`)
+## Health Check
 
-### GET `/health`
+### GET `/api/v1/health`
 
-Verify the API is running. No authentication required.
+Check if the API is running. No auth needed.
 
-**Response (200):**
+**Returns (200):**
 ```json
 {
   "success": true,
@@ -1964,83 +1559,15 @@ Verify the API is running. No authentication required.
 
 ---
 
-## Authentication Flow Diagram
+## Summary
 
-```
-Client                                      Server
-  │                                           │
-  │── POST /auth/login ─────────────────────►  │
-  │   { email, password, rememberMe }         │
-  │                                           │
-  │◄── 200 ───────────────────────────────── │
-  │   { accessToken, refreshToken, user }     │
-  │   Set-Cookie: refreshToken (httpOnly)     │
-  │                                           │
-  │── GET /transactions ───────────────────►  │
-  │   Authorization: Bearer <accessToken>     │
-  │                                           │
-  │◄── 200 { success, data, meta } ──────────│
-  │                                           │
-  │   ... (accessToken valid for 15 min) ...  │
-  │                                           │
-  │── GET /budgets ────────────────────────►  │
-  │   Authorization: Bearer <expired token>   │
-  │                                           │
-  │◄── 401 { success: false } ───────────────│
-  │                                           │
-  │── POST /auth/refresh ───────────────────► │
-  │   (refreshToken sent via cookie)          │
-  │                                           │
-  │◄── 200 ────────────────────────────────── │
-  │   { accessToken, refreshToken }           │
-  │   Set-Cookie: refreshToken (httpOnly)     │
-  │                                           │
-  │── GET /budgets ────────────────────────►  │
-  │   Authorization: Bearer <new accessToken> │
-  │                                           │
-  │◄── 200 { success, data, meta } ──────────│
-  │                                           │
-  │── POST /auth/logout ───────────────────►  │
-  │   (refreshToken sent via cookie)          │
-  │                                           │
-  │◄── 200 { success: true, data: null } ─────│
-  │   Clear-Cookie: refreshToken              │
-```
-
-**Token details:**
-- Access tokens expire after 15 minutes
-- Refresh tokens expire after 1 day (or 30 days if `rememberMe: true`)
-- Refresh tokens are stored as httpOnly cookies and rotated on each refresh (old token is revoked)
-- All refresh tokens are revoked on password change/reset and account deletion
-- The `tokenVersion` field in the database is checked on every authenticated request, enabling global session invalidation
-
----
-
-## Summary Statistics
-
-| Metric | Count |
-|--------|-------|
-| Total endpoints | **38** |
-| Public (no auth) | **7** |
-| JWT-authenticated | **30** |
-| Cron-secret authenticated | **1** |
-| Rate-limited (auth endpoints) | **6** |
-| Zod-validated endpoints | **23** |
-| Cached endpoints (Cache-Control) | **6** |
-| Paginated endpoints | **4** (transactions, budgets, goals, notifications) |
-
-### Endpoint Inventory by Domain
-
-| Domain | Endpoints | Methods |
-|--------|-----------|---------|
-| Auth | 11 | POST ×6, GET ×1, PATCH ×3, DELETE ×1 |
-| Transactions | 7 | GET ×3, POST ×2, PUT ×1, DELETE ×1 |
-| Categories | 5 | GET ×2, POST ×1, PUT ×1, DELETE ×1 |
-| Budgets | 5 | GET ×2, POST ×1, PUT ×1, DELETE ×1 |
-| Goals | 6 | GET ×2, POST ×2, PUT ×1, DELETE ×1 |
-| Notifications | 4 | GET ×1, PATCH ×2, DELETE ×1 |
-| Analytics | 6 | GET ×6 |
-| Uploads | 2 | POST ×2 |
-| Recurring | 5 | GET ×2, POST ×1, PATCH ×1, DELETE ×1 |
-| Cron | 1 | POST ×1 |
-| Health | 1 | GET ×1 |
+| What | Count |
+|------|-------|
+| Total endpoints | 38 |
+| Public (no login needed) | 7 |
+| Require login (JWT) | 30 |
+| Cron job (special auth) | 1 |
+| Rate-limited | 6 (auth endpoints) |
+| Validated with Zod | 23 |
+| Cached by browser | 6 (analytics) |
+| Paginated | 4 (transactions, budgets, goals, notifications) |

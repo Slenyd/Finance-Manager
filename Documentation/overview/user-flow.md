@@ -1,168 +1,211 @@
-# D. User Flow
+# User Flow
 
-## Primary User Journey
+This document explains how users move through the app and what happens behind the scenes.
 
-```mermaid
-flowchart TD
-    A[User Opens App] --> B{Has Access Token?}
-    B -->|No| C[/login]
-    B -->|Yes| D[/loading]
-    D --> E{Token Valid?}
-    E -->|Yes| F[/dashboard]
-    E -->|No| G{Has Refresh Token?}
-    G -->|Yes| H[Refresh Token]
-    H -->|Success| F
-    H -->|Fail| C
-    G -->|No| C
+---
 
-    C --> I[Enter Email + Password]
-    I --> J{Valid Credentials?}
-    J -->|Yes| K[Store Tokens]
-    K --> F
-    J -->|No| L[Show Error]
-    L --> C
+## 1. Login and Registration Flow
 
-    C --> M[Forgot Password?]
-    M --> N[/forgot-password]
-    N --> O[Enter Email]
-    O --> P[Send Reset Link]
-    P --> Q[/reset-password?token=xxx]
-    Q --> R[Enter New Password]
-    R --> C
+When someone opens the app, here's what happens:
 
-    C --> S[Create Account]
-    S --> T[/register]
-    T --> U[Enter Name + Email + Password]
-    U --> V{Valid?}
-    V -->|Yes| W[Account Created]
-    W --> C
-    V -->|No| X[Show Validation Errors]
-    X --> T
+```
+User opens the app
+       │
+       ▼
+Does the user have an access token (login session)?
+       │
+       ├── No ──> Show /login page
+       │                │
+       │                ├── User enters email + password ──> Correct? ──> Store tokens ──> Go to /dashboard
+       │                │                                     │
+       │                │                                     └── Wrong? ──> Show error message
+       │                │
+       │                ├── "Create account" link ──> /register ──> Fill name + email + password ──> Account created ──> Go to /login
+       │                │
+       │                └── "Forgot password?" link ──> /forgot-password ──> Enter email ──> Send reset email ──> /reset-password?token=xxx ──> Enter new password ──> Go to /login
+       │
+       └── Yes ──> Try using the token to fetch data
+                    │
+                    ├── Token still valid ──> Go to /dashboard
+                    │
+                    └── Token expired ──> Try refreshing with refresh token
+                                         │
+                                         ├── Refresh works ──> Go to /dashboard
+                                         └── Refresh fails ──> Go to /login
 ```
 
-## Authenticated Navigation
+### Key details:
+- Access tokens expire after 15 minutes
+- Refresh tokens last 1 day (or 30 days if "Remember me" was checked)
+- After 5 failed logins, the account is locked for 15 minutes
+- Password changes revoke all existing sessions (forces re-login everywhere)
 
-```mermaid
-flowchart LR
-    DASH[/dashboard] --> TXN[/transactions]
-    DASH --> BUD[/budgets]
-    DASH --> GOAL[/goals]
-    DASH --> ANAL[/analytics]
-    DASH --> NOTIF[/notifications]
-    DASH --> SET[/settings]
+---
 
-    TXN --> TXN_ADD[Add Transaction]
-    TXN --> TXN_EDIT[Edit Transaction]
-    TXN --> TXN_DEL[Delete Transaction]
-    TXN --> TXN_BULK[Bulk Delete]
-    TXN --> TXN_UPLOAD[Upload Receipt]
+## 2. Main App Navigation
 
-    BUD --> BUD_ADD[Add Budget]
-    BUD --> BUD_EDIT[Edit Budget]
-    BUD --> BUD_DEL[Delete Budget]
+Once logged in, users can move between these pages:
 
-    GOAL --> GOAL_ADD[Add Goal]
-    GOAL --> GOAL_EDIT[Edit Goal]
-    GOAL --> GOAL_DEL[Delete Goal]
-    GOAL --> GOAL_CONTR[Contribute to Goal]
-
-    SET --> SET_PROFILE[Edit Profile]
-    SET --> SET_PASS[Change Password]
-    SET --> SET_CURRENCY[Change Currency/Locale]
-    SET --> SET_THEME[Toggle Dark Mode]
-    SET --> SET_LOGOUT[Sign Out]
-    SET --> SET_DELETE[Delete Account]
+```
+                    ┌─────────────────────────────────────┐
+                    │           /dashboard                 │
+                    │  (KPIs, charts, recent transactions)│
+                    └──────────────┬──────────────────────┘
+                                   │
+          ┌──────────┬─────────────┼──────────────┬────────────────┐
+          │          │             │              │                │
+          ▼          ▼             ▼              ▼                ▼
+   /transactions  /budgets      /goals       /analytics       /notifications
+          │          │             │              │                │
+          │          │             │              │                │
+   Add/Edit/Delete  Add/Edit      Add/Edit        View charts    Mark read
+   Upload receipt   Delete        Delete          (read-only)    Delete
+   Bulk delete     View progress  Contribute                     (unread count badge)
+   Search/filter
+                          │
+                          ▼
+                       /settings
+                   Edit profile
+                   Change password
+                   Change currency
+                   Toggle dark mode
+                   Sign out
+                   Delete account
 ```
 
-## Error & Edge-Case Flows
+### Desktop vs Mobile:
+- **Desktop:** Left sidebar with all 7 links + user info + dark mode toggle + logout
+- **Mobile:** Bottom navigation bar with 4 main tabs (Home, Transactions, Budgets, Goals) + a "More" button that opens a sheet for Analytics, Notifications, Settings, dark mode, and logout
 
-```mermaid
-flowchart TD
-    subgraph Auth Errors
-        LOCK[5 Failed Logins] --> LOCKOUT[Account Locked 15 min]
-        LOCKOUT --> WAIT[Wait or Password Reset]
-    end
+---
 
-    subgraph Token Lifecycle
-        REFRESH[Refresh Token Used] --> ROTATE[New Token Family]
-        REFRESH --> |Revoked token reused| REVOKE_ALL[Revoke All Family Tokens]
-        REVOKE_ALL --> FORCE_LOGIN[Force Re-login]
-        PASSWORD_CHANGE[Password Changed] --> REVOKE_ALL2[Revoke All Refresh Tokens]
-        REVOKE_ALL2 --> FORCE_LOGIN
-    end
+## 3. Token Refresh Flow
 
-    subgraph API Errors
-        API_401[401 Unauthorized] --> CLEAR_TOKENS[Clear Tokens]
-        CLEAR_TOKENS --> REDIRECT_LOGIN[Redirect to /login]
-        API_429[429 Rate Limited] --> SHOW_RETRY[Show Retry Message]
-        API_500[500 Server Error] --> SHOW_ERROR[Show Error with Retry Button]
-    end
+When the frontend makes an API request and the access token has expired:
+
+```
+Frontend sends request with expired access token
+       │
+       ▼
+Backend returns 401 Unauthorized
+       │
+       ▼
+Frontend intercepts the 401 error
+       │
+       ├── Is another refresh already in progress?
+       │    ├── Yes ──> Wait in a queue. When the first refresh finishes, retry with the new token.
+       │    └── No  ──> Send POST /auth/refresh (refresh token comes from the httpOnly cookie)
+       │                    │
+       │                    ├── Success ──> Get new access + refresh tokens ──> Retry original request
+       │                    │
+       │                    └── Fail ──> Log out the user ──> Redirect to /login
 ```
 
-## Category Deletion Flow
+This is handled in `frontend/src/api/client.ts`. The refresh token is stored in an httpOnly cookie, so JavaScript can't read it (prevents XSS attacks from stealing it).
 
-```mermaid
-flowchart TD
-    DEL_CAT[User Deletes Category] --> FIND_OTHER{Other category of same type?}
-    FIND_OTHER -->|Yes| USE_OTHER[Reassign transactions & budgets to other category]
-    FIND_OTHER -->|No| CREATE_UNCATEG[Create "Uncategorized" fallback category]
-    CREATE_UNCATEG --> USE_OTHER
-    USE_OTHER --> DELETE_CAT[Delete the category]
-    DELETE_CAT --> DONE[Done — No orphaned data]
+---
 
-    style CREATE_UNCATEG fill:#f0ad4e
-    style DELETE_CAT fill:#d9534f
-    style DONE fill:#5cb85c
+## 4. Category Deletion Flow
+
+When a user deletes a category, the app needs to handle all the transactions and budgets that were using it:
+
+```
+User clicks "Delete" on a category
+       │
+       ▼
+Is it a default (system) category?
+       │
+       ├── Yes ──> Return 403 Forbidden (can't delete system categories)
+       │
+       └── No ──> Start a database transaction:
+                   1. Find or create an "Uncategorized" fallback category of the same type
+                   2. Reassign all transactions from the deleted category to the fallback
+                   3. Reassign all budgets from the deleted category to the fallback
+                   4. Delete the category
+                   5. Commit the transaction (all steps succeed or all fail together)
 ```
 
-## Recurring Transaction Processing Flow (Daily Cron)
+This is handled in `backend/src/services/category.service.ts`. Using a database transaction means if anything fails (like creating the fallback category), nothing changes — no transactions or budgets are left orphaned.
 
-```mermaid
-flowchart TD
-    CRON[Vercel Cron: Daily at Midnight] --> AUTH{Valid CRON_SECRET?}
-    AUTH -->|No| REJECT[401 Unauthorized]
-    AUTH -->|Yes| FIND[Find all active recurring transactions where nextDate <= now]
-    FIND --> |None found| EMPTY[Return { processed: 0 }]
-    FIND --> |Found N records| CREATE[Create N Transaction records from templates]
-    CREATE --> UPDATE[Update nextDate on each RecurringTransaction]
-    UPDATE --> |nextDate > endDate| DEACTIVATE[Set isActive = false]
-    UPDATE --> |nextDate <= endDate| KEEP_ACTIVE[Keep isActive = true]
-    DEACTIVATE --> RESULT[Return { processed: N }]
-    KEEP_ACTIVE --> RESULT
+---
+
+## 5. Recurring Transactions (Daily Cron Job)
+
+Every day at midnight, Vercel Cron calls the `POST /api/v1/cron/recurring` endpoint:
+
+```
+Cron job fires at midnight
+       │
+       ▼
+Check the X-Cron-Secret header matches the server's CRON_SECRET?
+       │
+       ├── No ──> Return 401 (reject the request)
+       │
+       └── Yes ──> Find all active recurring templates where nextDate <= now
+                    │
+                    ├── None found ──> Return { processed: 0 }
+                    │
+                    └── Found N templates ──> For each one:
+                        1. Create a new Transaction (copy amount, description, type, category)
+                        2. Advance nextDate to the next interval (e.g., +1 month for MONTHLY)
+                        3. If nextDate > endDate, set isActive = false
+                        4. Return { processed: N }
 ```
 
-## Currency Conversion Flow
+This is configured in `backend/vercel.json` with the schedule `"0 0 * * *"` (daily at midnight).
 
-```mermaid
-flowchart TD
-    USER_SEL[User Selects Currency e.g. ILS] --> STORE[Zustand Auth Store: user.currency = ILS]
-    STORE --> HOOK[useFormatters Hook]
-    HOOK --> RATES[useExchangeRates: Fetch from Frankfurter API]
-    RATES --> |Cache hit < 1hr| CONV[convertFromBase: amount × rate]
-    RATES --> |Cache miss| FETCH[GET frankfurter.app]
-    FETCH --> |Success| CACHE[Cache rates for 1 hour]
-    FETCH --> |Fail| FALLBACK[Use hardcoded fallback rates]
-    CACHE --> CONV
-    FALLBACK --> CONV
-    CONV --> DISPLAY[Display: ₪12,450 instead of $3,400]
+---
 
-    FORM[User Submits Form Amount: ₪100] --> CONV_BACK[convertToBase: 100 ÷ rate]
-    CONV_BACK --> SAVE[Store in DB as USD]
+## 6. Currency Conversion Flow
+
+The app stores all amounts in USD in the database. When a user selects a different display currency:
+
+```
+User changes currency to EUR in Settings
+       │
+       ▼
+Backend saves user.currency = "EUR" in the database
+       │
+       ▼
+Frontend reads user.currency from the auth store
+       │
+       ▼
+useFormatters hook calls useExchangeRates hook
+       │
+       ▼
+useExchangeRates fetches exchange rates from frankfurter.app
+       │
+       ├── Cache hit (data less than 1 hour old) ──> Use cached rates
+       └── Cache miss ──> Fetch from frankfurter.app
+            │
+            ├── Success ──> Cache for 1 hour
+            └── Fail ──> Use hardcoded fallback rates (last-known good rates)
+                   │
+                   ▼
+Every amount shown is multiplied by the exchange rate
+(e.g., $3,400 USD shown as €3,127 EUR)
+
+When the user submits a form (like adding a transaction):
+The entered amount is divided by the exchange rate before saving
+(e.g., €100 entered → $108.70 stored in the database)
 ```
 
-## Page-by-Page User Flow Summary
+This is handled in `frontend/src/hooks/useFormatters.ts` and `frontend/src/hooks/useExchangeRates.ts`.
 
-| Page | Primary Action | Success Outcome | Error Outcome |
-|------|---------------|----------------|---------------|
-| /login | Submit email + password | Redirect to /dashboard | Show error banner |
-| /register | Submit name + email + password | Redirect to /login | Show validation errors |
-| /forgot-password | Submit email | Show "Check your email" | Show error |
-| /reset-password | Submit new password | Show "Password reset" + link to /login | Show "Invalid link" |
-| /loading | Auto-authenticate via stored token | Redirect to /dashboard | Redirect to /login |
-| /dashboard | View summary | See KPIs, charts, recent transactions | Error state with retry |
-| /transactions | CRUD transactions | List with pagination and filters | Error state with retry |
-| /budgets | CRUD budgets | Cards with progress bars | Error state with retry |
-| /goals | CRUD goals + contribute | Cards with progress | Error state with retry |
-| /analytics | View charts and KPIs | Interactive charts | Error state with retry |
-| /notifications | Mark read / delete | Updated notification list | Error state with retry |
-| /settings | Edit profile, password, currency, theme | Confirmation toast | Show field errors |
+---
+
+## 7. Page Summary
+
+| Page | What the user does | What happens on success | What happens on error |
+|------|-------------------|------------------------|----------------------|
+| /login | Enters email + password | Redirect to /dashboard | Show "Invalid email or password" |
+| /register | Enters name + email + password | Redirect to /login | Show validation errors |
+| /forgot-password | Enters email | Show "Check your email" | Always shows success (security) |
+| /reset-password | Enters new password | "Password reset" + link to /login | "Invalid or expired link" |
+| /dashboard | Views summary | Shows KPIs, charts, recent transactions | Error card with retry button |
+| /transactions | Adds, edits, searches, deletes transactions | Shows table with pagination | Error card with retry button |
+| /budgets | Adds, edits, deletes budgets | Shows budget cards with progress bars | Error card with retry button |
+| /goals | Adds, edits, contributes to, deletes goals | Shows goal cards with progress | Error card with retry button |
+| /analytics | Views charts and KPIs | Shows area, pie, and bar charts | Error card with retry button |
+| /notifications | Marks read, deletes notifications | Shows notification list with unread count | Error card with retry button |
+| /settings | Changes profile, password, currency, theme | Shows confirmation or auto-saves | Shows field-level errors |

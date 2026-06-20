@@ -1,38 +1,35 @@
 # Coin Toss
 
-A full-stack personal finance and budgeting web application built with React, Express, and PostgreSQL. Deployed on Vercel with Supabase.
+A full-stack personal finance and budgeting web app. Track your income, expenses, budgets, and savings goals in one place.
+
+## What You Can Do
+
+- **Track transactions** — Add income, expenses, and transfers. Search, filter, sort, and upload receipts.
+- **Set budgets** — Create budgets per category with weekly, monthly, or yearly periods. See progress bars with color-coded alerts.
+- **Savings goals** — Set targets and track progress. Add contributions over time.
+- **View analytics** — See your net worth, monthly trends, category breakdowns, and a financial health score.
+- **Recurring transactions** — Set up templates for repeating payments (like rent). A daily cron job creates them automatically.
+- **Multi-currency** — View amounts in 7 currencies with real-time exchange rates.
+- **Dark mode** — Toggle between light and dark themes.
+- **Mobile-friendly** — Bottom navigation bar and card-based layouts on phones.
 
 ## Tech Stack
 
-| Layer | Technologies |
-|-------|-------------|
-| **Frontend** | React 19, TypeScript, Vite, TanStack Query, Zustand, TailwindCSS, shadcn/ui, Recharts |
-| **Backend** | Node.js, Express, TypeScript, Prisma ORM, JWT (access + refresh tokens) |
-| **Database** | Supabase PostgreSQL (PgBouncer pooler) |
+| Layer | What's Used |
+|-------|------------|
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Recharts, Zustand, TanStack Query |
+| **Backend** | Node.js, Express, TypeScript, Prisma ORM, JWT, bcrypt, Zod |
+| **Database** | PostgreSQL (via Supabase) |
 | **Storage** | Vercel Blob (receipt uploads) |
-| **Infra** | Vercel (serverless), Upstash Redis (rate limiting), Vercel Cron |
-
-## Features
-
-- Dashboard with financial health score, income/expense charts, and KPIs
-- Transaction management — income, expense, transfer — with receipt uploads
-- Budget tracking with progressive alerts at 50%, 75%, 90%, 100%
-- Savings goals with progress tracking and contribution history
-- Financial analytics — net worth, spending breakdown, monthly trends
-- Category management (CRUD, type filtering)
-- Notification system
-- Recurring transactions processed daily via Vercel Cron
-- JWT authentication with refresh-token rotation and role-based access control
-- Dark mode with system preference detection
-- Mobile-responsive layout
-- Lazy-loaded form dialogs, cached formatters, compressed responses
+| **Hosting** | Vercel (frontend + backend as separate projects) |
+| **Other** | Upstash Redis (rate limiting), Vercel Cron (recurring transactions) |
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
-- PostgreSQL 16+ (or Supabase account)
+- PostgreSQL 16+ (or a Supabase account)
 
 ### 1. Install dependencies
 
@@ -48,29 +45,35 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 
-Edit `backend/.env` with your database URL, JWT secrets, and cookie secret.
+Edit `backend/.env` — you need:
+- `POSTGRES_PRISMA_URL` — your database connection string
+- `JWT_ACCESS_SECRET` — a random string for signing access tokens
+- `JWT_REFRESH_SECRET` — a different random string for refresh tokens
+- `COOKIE_SECRET` — another random string for cookies
 
-### 3. Database
+Generate secrets with: `openssl rand -base64 48`
+
+### 3. Set up the database
 
 ```bash
 cd backend
-npx prisma migrate dev
+npx prisma db push
 npx prisma db seed
 ```
 
-### 4. Run development servers
+### 4. Run the development servers
 
 ```bash
-# Terminal 1 — backend
+# Terminal 1 — backend (port 5000)
 cd backend && npm run dev
 
-# Terminal 2 — frontend
+# Terminal 2 — frontend (port 5173)
 cd frontend && npm run dev
 ```
 
-The frontend runs on `http://localhost:5173` and proxies `/api/*` to the backend on port 5000.
+Open http://localhost:5173 in your browser. The frontend proxies API calls to the backend automatically.
 
-### Docker
+### Docker (optional)
 
 ```bash
 cp .env.docker.example .env.docker   # fill in secrets
@@ -80,86 +83,104 @@ docker-compose up --build
 ## Project Structure
 
 ```
-coin-toss/
-├── frontend/                # React + Vite SPA
+finance-manager/
+├── frontend/
 │   └── src/
-│       ├── api/            # Domain API modules (auth, transactions, uploads, …)
-│       ├── components/     # UI components, forms, layouts
-│       ├── hooks/          # Custom React hooks
-│       ├── pages/          # Route page components
-│       ├── routes/          # React Router config
-│       ├── store/           # Zustand stores
-│       ├── schemas/         # Zod validation schemas
-│       ├── lib/             # Utilities, formatters
-│       └── types/           # Shared TypeScript types
-├── backend/                 # Express + Prisma API
+│       ├── api/           # API call functions (one file per domain)
+│       ├── components/     # UI components, forms, layout
+│       ├── hooks/          # Custom React hooks (useFormatters, useAuth, etc.)
+│       ├── pages/          # One file per page (dashboard, transactions, etc.)
+│       ├── routes/         # React Router configuration
+│       ├── store/          # Zustand stores (auth, theme)
+│       ├── lib/            # Utilities (crypto, formatting)
+│       └── types/          # Shared TypeScript types
+├── backend/
 │   └── src/
-│       ├── config/          # Env config, database
-│       ├── controllers/     # Route handlers
-│       ├── services/        # Business logic
+│       ├── config/          # Environment config, database setup
+│       ├── controllers/     # Route handlers (call services, send responses)
+│       ├── services/        # Business logic (the actual work)
 │       ├── middlewares/     # Auth, rate limiting, validation, logging
-│       ├── routes/          # Express routers
-│       ├── validators/      # Zod request schemas
-│       ├── jobs/            # Background cron jobs
+│       ├── routes/          # Express route definitions
+│       ├── validators/      # Zod schemas for request validation
 │       └── utils/           # Error classes, helpers, logger
-├── backend/prisma/          # Schema, migrations, seed
-├── docker/                  # Dockerfiles for frontend & backend
-└── Documentation/         # overview/, architecture/, api/, design/ + AGENTS.md
+├── backend/prisma/          # Database schema and seed script
+├── docker/                  # Dockerfiles
+└── Documentation/           # See below
 ```
+
+## Documentation
+
+All documentation lives in the `Documentation/` folder:
+
+| File | What's In It |
+|------|-------------|
+| [system-description.md](Documentation/overview/system-description.md) | What the app does, who it's for, tech stack |
+| [user-flow.md](Documentation/overview/user-flow.md) | How users move through the app (login, navigation, token refresh, cron) |
+| [wireframes.md](Documentation/design/wireframes.md) | ASCII drawings of every page + real screenshots |
+| [erd.md](Documentation/architecture/erd.md) | Database tables, relationships, and indexes |
+| [data-dictionary.md](Documentation/architecture/data-dictionary.md) | Every field in every table explained |
+| [api-reference.md](Documentation/api/api-reference.md) | All 38 API endpoints with examples, params, and error cases |
+| [AGENTS.md](Documentation/AGENTS.md) | Project context for developers and AI assistants |
 
 ## API
 
-All endpoints are under `/api/v1`. See [`Documentation/api/api-reference.md`](Documentation/api/api-reference.md) for the complete endpoint reference with request/response schemas.
+All endpoints are under `/api/v1`. See [api-reference.md](Documentation/api/api-reference.md) for full details.
 
-| Domain | Methods | Key Endpoints |
-|--------|---------|--------------|
-| Auth | POST, GET, PATCH, DELETE | `/auth/register`, `/auth/login`, `/auth/logout`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/me`, `/auth/profile`, `/auth/me/password`, `/auth/preferences`, `/auth/account` |
-| Transactions | GET, POST, PUT, DELETE | CRUD + `GET /summary`, `POST /bulk-delete` |
-| Categories | GET, POST, PUT, DELETE | CRUD with automatic reassignment on delete |
-| Budgets | GET, POST, PUT, DELETE | CRUD with real-time spending progress |
-| Goals | GET, POST, PUT, DELETE | CRUD + `POST /:id/contribute` |
-| Recurring | GET, POST, PATCH, DELETE | CRUD for recurring transaction templates |
-| Analytics | GET | `/dashboard`, `/overview`, `/monthly-spending`, `/category-breakdown`, `/cash-flow`, `/net-worth` |
-| Notifications | GET, PATCH, DELETE | List, mark read, mark all read, delete |
-| Uploads | POST | `POST /receipt`, `POST /receipt/delete` |
-| Cron | POST | `POST /recurring` (daily, protected by `CRON_SECRET`) |
+Quick overview:
 
-## Deployment (Vercel)
+| Domain | Endpoints |
+|--------|----------|
+| Auth | Register, login, logout, refresh, forgot/reset password, profile, preferences, delete account |
+| Transactions | CRUD + summary + bulk delete |
+| Categories | CRUD (default categories provided, custom ones on signup) |
+| Budgets | CRUD with spending progress |
+| Goals | CRUD + contribute |
+| Analytics | Dashboard, overview, monthly spending, category breakdown, cash flow, net worth |
+| Notifications | List, mark read, mark all read, delete |
+| Uploads | Upload receipt, delete receipt |
+| Recurring | CRUD for recurring transaction templates |
+| Cron | Daily processing of due recurring transactions |
 
-The app is deployed as two Vercel projects with git auto-deploy on push to `main`:
+## Deployment
+
+The app is deployed as two Vercel projects. Pushing to the `main` branch auto-deploys both.
 
 ```bash
-# Frontend — from frontend/ directory
-vercel --prod
+# Frontend
+cd frontend && vercel --prod
 
-# Backend — from backend/ directory
-vercel --prod --project coin-toss-backend
+# Backend
+cd backend && vercel --prod --project finance-manager-backend
 ```
 
-### Required Vercel Environment Variables (backend)
+### Required Vercel Environment Variables (Backend)
 
-| Variable | Purpose |
-|----------|---------|
-| `POSTGRES_PRISMA_URL` | Supabase pooler connection string (port 6543) |
-| `JWT_ACCESS_SECRET` | Access token signing key |
-| `JWT_REFRESH_SECRET` | Refresh token signing key |
-| `COOKIE_SECRET` | Cookie signing key |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage (receipt uploads) |
-| `KV_REST_API_URL` | Upstash Redis URL (rate limiting) |
-| `KV_REST_API_TOKEN` | Upstash Redis token |
-| `CRON_SECRET` | Auth header for cron endpoint |
+| Variable | What It's For |
+|----------|--------------|
+| `POSTGRES_PRISMA_URL` | Database connection (pooler, port 6543) |
+| `POSTGRES_URL_NON_POOLING` | Database connection (direct, port 5432) |
+| `JWT_ACCESS_SECRET` | Signs access tokens |
+| `JWT_REFRESH_SECRET` | Signs refresh tokens |
+| `COOKIE_SECRET` | Signs cookies |
+| `BLOB_READ_WRITE_TOKEN` | Receipt file storage |
+| `KV_REST_API_URL` | Redis for rate limiting |
+| `KV_REST_API_TOKEN` | Redis auth token |
+| `CRON_SECRET` | Authenticates the daily cron job |
 
-The frontend proxies `/api/*` to the backend via `vercel.json` rewrites — no CORS needed.
+## Testing
 
-## Seed Accounts
+```bash
+# Backend — 66 tests across 7 suites
+cd backend && npm test
 
-| Role | Email | Password |
-|------|-------|----------|
-| User | `user@cointoss.app` | `Password123` |
-| Admin | `admin@cointoss.app` | `Password123` |
+# Frontend
+cd frontend && npm test
 
-> These are for local development only. Set `SEED_PASSWORD` or change the seed script in production.
+# Type checking
+cd backend && npx tsc --noEmit
+cd frontend && npx tsc --noEmit
 
-## License
-
-MIT
+# Linting
+cd backend && npm run lint
+cd frontend && npm run lint
+```
