@@ -224,14 +224,23 @@ const featureList = [
   ['Settings', 'Edit profile, change password, switch currency, toggle dark mode, delete account'],
 ];
 for (const item of featureList) {
-  ensureSpace(18);
+  ensureSpace(20);
   const name = item[0], desc = item[1];
   const lineY = doc.y;
-  doc.fontSize(11).fillColor(BROWN).font('Helvetica-Bold').text(name, MARGIN, lineY, { width: 125 });
+  const nameW = 125;
+  const descX = MARGIN + nameW + 10;
+  const descW = CONTENT_WIDTH - nameW - 10;
+  const lh = doc.currentLineHeight();
+
+  doc.fontSize(11).fillColor(BROWN).font('Helvetica-Bold');
+  const nameLines = doc.heightOfString(name, { width: nameW, align: 'left' });
+  doc.text(name, MARGIN, lineY, { width: nameW, align: 'left' });
+
   doc.fillColor(GREY_DARK).font('Helvetica');
-  doc.text(desc, MARGIN + 135, lineY, { width: CONTENT_WIDTH - 135 });
-  doc.y = lineY + doc.currentLineHeight();
-  doc.moveDown(0.15);
+  const descLines = doc.heightOfString(desc, { width: descW, align: 'left' });
+  doc.text(desc, descX, lineY, { width: descW, align: 'left' });
+
+  doc.y = lineY + Math.max(nameLines, descLines) + 3;
 }
 
 // ==================== SECTION B ====================
