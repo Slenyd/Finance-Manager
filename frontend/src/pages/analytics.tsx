@@ -14,7 +14,7 @@ const COLORS = ['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6'
 
 export default function AnalyticsPage() {
   const { formatCurrency, convertFromBase } = useFormatters();
-  const { data: dashboard, isError: dashboardError, refetch: refetchDashboard } = useQuery({
+  const { data: dashboard, isLoading: loadingDashboard, isError: dashboardError, refetch: refetchDashboard } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
       const res = await analyticsApi.getDashboard();
@@ -38,7 +38,7 @@ export default function AnalyticsPage() {
     },
   });
 
-const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = useQuery({
+const { data: cashFlow, isLoading: loadingCashFlow, isError: cashFlowError, refetch: refetchCashFlow } = useQuery({
     queryKey: ['cashFlow'],
     queryFn: async () => {
       const res = await analyticsApi.getCashFlow(12);
@@ -46,7 +46,7 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
     },
   });
 
-  const isLoading = loadingMonthly && loadingCategories;
+  const isLoading = loadingDashboard || loadingMonthly || loadingCategories || loadingCashFlow;
   const hasError = dashboardError || monthlyError || categoriesError || cashFlowError;
   const retryAll = useCallback(() => { refetchDashboard(); refetchMonthly(); refetchCategories(); refetchCashFlow(); }, [refetchDashboard, refetchMonthly, refetchCategories, refetchCashFlow]);
 
@@ -128,11 +128,11 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
-          <StaggerItem index={4}>
-            <Card>
-              <CardHeader><CardTitle>Monthly Spending Trend</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
+          <Card>
+            <CardHeader><CardTitle>Monthly Spending Trend</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-[220px] sm:h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={monthlySpending || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
@@ -148,15 +148,15 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
                     <Area type="monotone" dataKey="income" stroke="#22c55e" fill="none" name="Income" />
                   </AreaChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </StaggerItem>
+              </div>
+            </CardContent>
+          </Card>
 
-          <StaggerItem index={5}>
-            <Card>
-              <CardHeader><CardTitle>Category Breakdown</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
+          <Card>
+            <CardHeader><CardTitle>Category Breakdown</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-[220px] sm:h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={categoryBreakdown || []}
@@ -175,15 +175,15 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </StaggerItem>
+              </div>
+            </CardContent>
+          </Card>
 
-          <StaggerItem index={6}>
-            <Card className="md:col-span-2">
-              <CardHeader><CardTitle>Cash Flow (12 months)</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
+          <Card className="md:col-span-2">
+            <CardHeader><CardTitle>Cash Flow (12 months)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-[220px] sm:h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={cashFlow || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
@@ -193,9 +193,9 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
                     <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
                   </BarChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </StaggerItem>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </PageTransition>

@@ -128,11 +128,11 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <StaggerItem index={4}>
-            <Card>
-              <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
+          <Card>
+            <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-[220px] sm:h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={[{ name: 'This Month', income: convertFromBase(dashboard.monthIncome), expenses: convertFromBase(dashboard.monthExpenses) }]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -142,15 +142,15 @@ export default function DashboardPage() {
                     <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
                   </BarChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </StaggerItem>
+              </div>
+            </CardContent>
+          </Card>
 
-          <StaggerItem index={5}>
-            <Card>
-              <CardHeader><CardTitle>Income vs Expenses Breakdown</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
+          <Card>
+            <CardHeader><CardTitle>Income vs Expenses Breakdown</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-[220px] sm:h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={75} dataKey="value" label>
                       {pieData.map((_, i) => (
@@ -160,12 +160,12 @@ export default function DashboardPage() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </StaggerItem>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <StaggerItem index={6}>
+        <StaggerItem index={4}>
           <Card>
             <CardHeader><CardTitle>Monthly Budget Usage</CardTitle></CardHeader>
             <CardContent>
@@ -180,7 +180,7 @@ export default function DashboardPage() {
           </Card>
         </StaggerItem>
 
-        <StaggerItem index={7}>
+        <StaggerItem index={5}>
           <Card>
             <CardHeader><CardTitle>Recent Transactions</CardTitle></CardHeader>
             <CardContent>
