@@ -22,7 +22,7 @@ const navItems = [
 
 const bottomNav = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Txns', icon: ArrowLeftRight },
+  { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { href: '/budgets', label: 'Budgets', icon: PiggyBank },
   { href: '/goals', label: 'Goals', icon: Target },
 ];
