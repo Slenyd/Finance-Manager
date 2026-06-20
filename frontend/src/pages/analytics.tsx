@@ -87,20 +87,20 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
         <h1 className="text-2xl sm:text-3xl font-bold">Analytics</h1>
 
         {dashboard && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <StaggerItem index={0}>
               <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Avg Monthly Spending</p>
-                  <p className="text-2xl font-bold">{formatCurrency(convertFromBase(dashboard.monthExpenses))}</p>
+                <CardContent className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Avg Monthly Spending</p>
+                  <p className="text-xl sm:text-2xl font-bold">{formatCurrency(convertFromBase(dashboard.monthExpenses))}</p>
                 </CardContent>
               </Card>
             </StaggerItem>
             <StaggerItem index={1}>
               <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Avg Savings Rate</p>
-                  <p className="text-2xl font-bold">
+                <CardContent className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Avg Savings Rate</p>
+                  <p className="text-xl sm:text-2xl font-bold">
                     {dashboard.totalIncome > 0
                       ? `${Math.round(((dashboard.totalIncome - dashboard.totalExpenses) / dashboard.totalIncome) * 100)}%`
                       : '0%'}
@@ -110,17 +110,17 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
             </StaggerItem>
             <StaggerItem index={2}>
               <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Health Score</p>
-                  <p className="text-2xl font-bold">{dashboard.healthScore.score ?? 'N/A'}</p>
+                <CardContent className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Health Score</p>
+                  <p className="text-xl sm:text-2xl font-bold">{dashboard.healthScore.score ?? 'N/A'}</p>
                 </CardContent>
               </Card>
             </StaggerItem>
             <StaggerItem index={3}>
               <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Net Worth</p>
-                  <p className="text-2xl font-bold">{formatCurrency(convertFromBase(dashboard.currentBalance))}</p>
+                <CardContent className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Net Worth</p>
+                  <p className="text-xl sm:text-2xl font-bold">{formatCurrency(convertFromBase(dashboard.currentBalance))}</p>
                 </CardContent>
               </Card>
             </StaggerItem>
@@ -132,7 +132,7 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
             <Card>
               <CardHeader><CardTitle>Monthly Spending Trend</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
                   <AreaChart data={monthlySpending || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
@@ -156,14 +156,14 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
             <Card>
               <CardHeader><CardTitle>Category Breakdown</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
                   <PieChart>
                     <Pie
                       data={categoryBreakdown || []}
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
-                      outerRadius={90}
+                      innerRadius={45}
+                      outerRadius={75}
                       dataKey="total"
                       nameKey="categoryName"
                       label={({ categoryName }) => categoryName}
@@ -183,7 +183,7 @@ const { data: cashFlow, isError: cashFlowError, refetch: refetchCashFlow } = use
             <Card className="md:col-span-2">
               <CardHeader><CardTitle>Cash Flow (12 months)</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
                   <BarChart data={cashFlow || []}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />

@@ -74,9 +74,9 @@ export default function DashboardPage() {
       <PageTransition>
         <div className="space-y-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 animate-pulse-soft" /></CardContent></Card>
+              <Card key={i}><CardContent className="p-4 sm:p-6"><Skeleton className="h-20 animate-pulse-soft" /></CardContent></Card>
             ))}
           </div>
         </div>
@@ -114,13 +114,13 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {summaryCards.map((card, i) => (
             <StaggerItem key={card.label} index={i}>
               <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                  <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+                <CardContent className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-muted-foreground">{card.label}</p>
+                  <p className={`text-xl sm:text-2xl font-bold ${card.color}`}>{card.value}</p>
                 </CardContent>
               </Card>
             </StaggerItem>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
             <Card>
               <CardHeader><CardTitle>Income vs Expenses</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
                   <BarChart data={[{ name: 'This Month', income: convertFromBase(dashboard.monthIncome), expenses: convertFromBase(dashboard.monthExpenses) }]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -150,9 +150,9 @@ export default function DashboardPage() {
             <Card>
               <CardHeader><CardTitle>Income vs Expenses Breakdown</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220} className="sm:!h-[280px]">
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value" label>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={75} dataKey="value" label>
                       {pieData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
