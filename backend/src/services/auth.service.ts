@@ -90,9 +90,11 @@ export class AuthService {
     });
 
     const tokenFamily = uuidv4();
-    const accessToken = this.generateAccessToken(user.id, user.role, { name: user.name, email: user.email, isVerified: user.isVerified });
-    const refreshToken = this.generateRefreshToken(user.id, user.role, tokenFamily);
+    const tokenVersion = user.tokenVersion;
+    const accessToken = this.generateAccessToken(user.id, user.role, tokenVersion, { name: user.name, email: user.email, isVerified: user.isVerified });
     const refreshDays = data.rememberMe ? 30 : 1;
+    const refreshExpiresIn = `${refreshDays}d` as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`;
+    const refreshToken = this.generateRefreshToken(user.id, user.role, tokenFamily, refreshExpiresIn);
     const expiresAt = new Date(Date.now() + refreshDays * 24 * 60 * 60 * 1000);
 
     await prisma.refreshToken.create({
@@ -121,12 +123,24 @@ export class AuthService {
   }
 
   async refresh(token: string): Promise<RefreshResult> {
+    // Fix 1: Verify JWT signature — refresh token is now validated cryptographically
+    let decoded: JwtPayload;
+    try {
+      decoded = jwt.verify(token, config.jwt.refreshSecret) as JwtPayload;
+    } catch {
+      throw new AuthenticationError('Invalid refresh token');
+    }
+    if (decoded.type !== 'refresh') {
+      throw new AuthenticationError('Invalid token type');
+    }
+
     const storedToken = await prisma.refreshToken.findUnique({ where: { token } });
     if (!storedToken || storedToken.expiresAt < new Date()) {
       throw new AuthenticationError('Invalid refresh token');
     }
 
     if (storedToken.isRevoked) {
+      // Fix 2: Reuse detection — revoke entire family (shared across rotations)
       await prisma.refreshToken.updateMany({
         where: { family: storedToken.family, isRevoked: false },
         data: { isRevoked: true },
@@ -144,17 +158,23 @@ export class AuthService {
       throw new AuthenticationError('User account unavailable');
     }
 
-    const newTokenFamily = uuidv4();
-    const accessToken = this.generateAccessToken(user.id, user.role, { name: user.name, email: user.email, isVerified: user.isVerified });
-    const refreshToken = this.generateRefreshToken(user.id, user.role, newTokenFamily);
+    // Fix 2: Keep the same family across rotations so reuse detection actually works
+    const family = storedToken.family;
+    const tokenVersion = user.tokenVersion;
+    const accessToken = this.generateAccessToken(user.id, user.role, tokenVersion, { name: user.name, email: user.email, isVerified: user.isVerified });
+
+    // Fix 4: Align JWT exp with DB expiresAt
     const remainingMs = storedToken.expiresAt.getTime() - Date.now();
     const expiresAt = new Date(Date.now() + Math.max(remainingMs, 24 * 60 * 60 * 1000));
+    const expiresInSeconds = Math.ceil((expiresAt.getTime() - Date.now()) / 1000);
+    const refreshExpiresIn = `${expiresInSeconds}s` as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`;
+    const refreshToken = this.generateRefreshToken(user.id, user.role, family, refreshExpiresIn);
 
     await prisma.refreshToken.create({
       data: {
         userId: user.id,
         token: refreshToken,
-        family: newTokenFamily,
+        family,
         expiresAt,
       },
     });
@@ -168,6 +188,11 @@ export class AuthService {
       await prisma.refreshToken.updateMany({
         where: { userId: storedToken.userId, isRevoked: false },
         data: { isRevoked: true },
+      });
+      // Fix 3: Increment tokenVersion to immediately invalidate all access tokens
+      await prisma.user.update({
+        where: { id: storedToken.userId },
+        data: { tokenVersion: { increment: 1 } },
       });
     }
   }
@@ -233,7 +258,10 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: {
+        passwordHash,
+        tokenVersion: { increment: 1 },
+      },
     });
     await prisma.refreshToken.updateMany({
       where: { userId, isRevoked: false },
@@ -304,6 +332,7 @@ export class AuthService {
       where: { id: user.id },
       data: {
         passwordHash,
+        tokenVersion: { increment: 1 },
         resetToken: null,
         resetTokenExpires: null,
       },
@@ -326,18 +355,16 @@ export class AuthService {
     await prisma.user.update({ where: { id: userId }, data: updateData });
   }
 
-  private generateAccessToken(userId: string, role: string, extras: { name: string; email: string; isVerified: boolean }): string {
-    const payload: JwtPayload = { userId, role, type: 'access', ...extras };
+  private generateAccessToken(userId: string, role: string, tokenVersion: number, extras: { name: string; email: string; isVerified: boolean }): string {
+    const payload: JwtPayload = { userId, role, type: 'access', tokenVersion, ...extras };
     return jwt.sign(payload, config.jwt.accessSecret, {
       expiresIn: config.jwt.accessExpiresIn as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`,
     });
   }
 
-  private generateRefreshToken(userId: string, role: string, family: string): string {
+  private generateRefreshToken(userId: string, role: string, family: string, expiresIn: `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`): string {
     const payload: JwtPayload = { userId, role, type: 'refresh', tokenFamily: family };
-    return jwt.sign(payload, config.jwt.refreshSecret, {
-      expiresIn: config.jwt.refreshExpiresIn as `${number}${'s' | 'm' | 'h' | 'd' | 'y'}`,
-    });
+    return jwt.sign(payload, config.jwt.refreshSecret, { expiresIn });
   }
 
   private async createDefaultCategories(userId: string): Promise<void> {

@@ -60,6 +60,7 @@ model User {
   resetTokenExpires DateTime?
   currency        String   @default("USD") @map("currency")
   locale          String   @default("en-US") @map("locale")
+  tokenVersion    Int      @default(0) @map("token_version")
   refreshTokens   RefreshToken[]
   categories      Category[]
   transactions    Transaction[]

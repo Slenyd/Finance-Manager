@@ -13,7 +13,16 @@ interface AuthState {
   logout: () => void;
 }
 
+// Fix 6: Only non-sensitive session metadata is persisted to browser storage.
+// Access tokens live in memory only (Zustand state, cleared on page reload).
+// Refresh tokens are exclusively in the httpOnly cookie set by the server.
 const STORAGE_KEY = 'auth-storage';
+
+interface PersistedState {
+  user: User | null;
+  isAuthenticated: boolean;
+  rememberMe: boolean;
+}
 
 function getStorage(rememberMe: boolean): Storage {
   return rememberMe ? localStorage : sessionStorage;
@@ -24,30 +33,16 @@ function clearStorage() {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-function saveToStorage(state: {
-  user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  rememberMe: boolean;
-}) {
+function saveToStorage(state: PersistedState) {
   const storage = getStorage(state.rememberMe);
   storage.setItem(STORAGE_KEY, encryptData(JSON.stringify(state)));
   const other = state.rememberMe ? sessionStorage : localStorage;
   other.removeItem(STORAGE_KEY);
 }
 
-function loadFromStorage(): {
-  user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  rememberMe: boolean;
-} {
-  const defaults = {
+function loadFromStorage(): PersistedState {
+  const defaults: PersistedState = {
     user: null,
-    accessToken: null,
-    refreshToken: null,
     isAuthenticated: false,
     rememberMe: false,
   };
@@ -64,8 +59,6 @@ function loadFromStorage(): {
       if (state && typeof state === 'object') {
         return {
           user: state.user || null,
-          accessToken: state.accessToken || null,
-          refreshToken: state.refreshToken || null,
           isAuthenticated: !!state.isAuthenticated,
           rememberMe: !!state.rememberMe,
         };
@@ -79,7 +72,10 @@ function loadFromStorage(): {
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
+  // Tokens are always null on page load — fetched via httpOnly cookie refresh
   ...loadFromStorage(),
+  accessToken: null,
+  refreshToken: null,
 
   setUser: (user) => {
     set({ user });
@@ -87,9 +83,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   login: (user, accessToken, refreshToken, rememberMe = false) => {
-    const state = { user, accessToken, refreshToken, isAuthenticated: true, rememberMe };
-    set(state);
-    saveToStorage(state);
+    set({ user, accessToken, refreshToken, isAuthenticated: true, rememberMe });
+    saveToStorage({ user, isAuthenticated: true, rememberMe });
   },
 
   logout: () => {

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { AuthService } from '../services';
 import { AuthorizedRequest, ApiResponse } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -33,11 +34,14 @@ export class AuthController {
       throw new BadRequestError('No refresh token');
     }
     const result = await authService.refresh(token);
+    // Fix 4: Cookie maxAge should match the refresh token's actual expiry, not a fixed 7d
+    const decoded = jwt.decode(result.refreshToken) as { exp?: number } | null;
+    const maxAge = decoded?.exp ? (decoded.exp * 1000) - Date.now() : 24 * 60 * 60 * 1000;
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge,
     });
     res.json({ success: true, data: result } satisfies ApiResponse);
   });

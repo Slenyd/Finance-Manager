@@ -1,14 +1,15 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { AuthenticatedRequest, AuthorizedRequest, JwtPayload } from '../interfaces';
-import { AuthenticationError, AuthorizationError } from '../utils/errors';
+import { prisma } from '../config/database';
+import { AuthenticatedRequest, JwtPayload } from '../interfaces';
+import { AuthenticationError } from '../utils/errors';
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthenticatedRequest,
   _res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -22,12 +23,26 @@ export const authenticate = (
       throw new AuthenticationError('Invalid token type');
     }
 
+    // Fix 3: Verify tokenVersion against DB to detect invalidated sessions
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { tokenVersion: true, isLocked: true },
+    });
+
+    if (!user || user.isLocked) {
+      throw new AuthenticationError('Account unavailable');
+    }
+
+    if (user.tokenVersion !== (decoded.tokenVersion ?? 0)) {
+      throw new AuthenticationError('Token has been invalidated');
+    }
+
     req.user = {
       id: decoded.userId,
       name: decoded.name ?? '',
       email: decoded.email ?? '',
       role: decoded.role,
-      isVerified: decoded.isVerified ?? true,
+      isVerified: decoded.isVerified ?? false,
     };
 
     next();
@@ -42,18 +57,4 @@ export const authenticate = (
     }
     next(new AuthenticationError('Authentication failed'));
   }
-};
-
-export const authorize = (...roles: string[]) => {
-  return (req: AuthorizedRequest, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      next(new AuthenticationError('Not authenticated'));
-      return;
-    }
-    if (!roles.includes(req.user.role)) {
-      next(new AuthorizationError('Insufficient permissions'));
-      return;
-    }
-    next();
-  };
 };

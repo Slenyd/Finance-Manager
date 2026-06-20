@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth';
 import { useThemeStore } from '@/store/theme';
+import { useLogout } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -30,8 +31,9 @@ const bottomNav = [
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const { isDark, toggle } = useThemeStore();
+  const logoutMutation = useLogout();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -84,7 +86,7 @@ export function AppLayout() {
             {isDark ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { logout(); navigate('/login'); }} aria-label="Logout">
+          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => { logoutMutation.mutate(); navigate('/login'); }} aria-label="Logout">
             <LogOut className="h-5 w-5 mr-2" /> Logout
           </Button>
         </div>

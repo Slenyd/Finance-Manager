@@ -281,6 +281,7 @@ export interface JwtPayload {
   role: string;
   type: 'access' | 'refresh';
   tokenFamily?: string;
+  tokenVersion?: number;
   name?: string;
   email?: string;
   isVerified?: boolean;
