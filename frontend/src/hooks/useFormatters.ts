@@ -18,7 +18,7 @@ export function useFormatters() {
   const locale = user?.locale || CURRENCY_MAP[currency]?.locale || 'en-US';
   const currencyInfo = CURRENCY_MAP[currency] || CURRENCY_MAP.USD;
 
-  const { data: ratesData } = useExchangeRates('USD');
+  const { data: rates } = useExchangeRates('USD');
 
   const formatCurrency = useMemo(() => {
     const formatter = new Intl.NumberFormat(locale, {
@@ -40,12 +40,11 @@ export function useFormatters() {
   }, [locale]);
 
   const convertFromBase = useMemo(() => {
-    const rates = ratesData?.rates;
     if (!rates || !rates[currency]) {
       return (amount: number) => amount;
     }
     return (amount: number) => amount * rates[currency];
-  }, [ratesData?.rates, currency]);
+  }, [rates, currency]);
 
   return {
     formatCurrency,

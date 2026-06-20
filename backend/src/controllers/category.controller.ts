@@ -7,11 +7,13 @@ const categoryService = new CategoryService();
 
 export class CategoryController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=300');
     const categories = await categoryService.findAll(req.user.id);
     res.json({ success: true, data: categories } satisfies ApiResponse<Category[]>);
   });
 
   findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=300');
     const category = await categoryService.findById(req.user.id, req.params.id);
     res.json({ success: true, data: category } satisfies ApiResponse<Category>);
   });

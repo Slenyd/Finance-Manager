@@ -1,7 +1,8 @@
 import { useState, lazy, Suspense } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { transactionApi } from '@/api';
 import { useCategories } from '@/hooks/useCategories';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -19,7 +20,7 @@ const TransactionFormDialog = lazy(() => import('@/components/forms/transaction-
 export default function TransactionsPage() {
   const { formatCurrency, formatDate, convertFromBase } = useFormatters();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
@@ -37,6 +38,8 @@ export default function TransactionsPage() {
     tags: string[];
   } | undefined>(undefined);
 
+  const search = useDebouncedValue(searchInput, 300);
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['transactions', search, typeFilter, page],
     queryFn: async () => {
@@ -46,6 +49,7 @@ export default function TransactionsPage() {
       const res = await transactionApi.getAll(params);
       return { data: res.data.data!, meta: res.data.meta! };
     },
+    placeholderData: keepPreviousData,
   });
 
   const { data: categories, isLoading: categoriesLoading } = useCategories();
@@ -117,7 +121,7 @@ export default function TransactionsPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search transactions..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+                  <Input placeholder="Search transactions..." className="pl-9" value={searchInput} onChange={(e) => { setSearchInput(e.target.value); setPage(1); }} />
                 </div>
                 <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
                   <SelectTrigger className="w-full sm:w-[180px]">

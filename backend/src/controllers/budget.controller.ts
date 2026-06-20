@@ -7,11 +7,13 @@ const budgetService = new BudgetService();
 
 export class BudgetController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=30');
     const budgets = await budgetService.findAll(req.user.id);
     res.json({ success: true, data: budgets } satisfies ApiResponse<BudgetWithSpent[]>);
   });
 
   findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=30');
     const budget = await budgetService.findById(req.user.id, req.params.id);
     res.json({ success: true, data: budget } satisfies ApiResponse<BudgetWithSpent>);
   });

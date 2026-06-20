@@ -8,6 +8,7 @@ const notificationService = new NotificationService();
 
 export class NotificationController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=15');
     const limit = (req.query as { limit?: number }).limit ?? 50;
     const { notifications, unreadCount } = await notificationService.findAll(req.user.id, limit);
     res.json({ success: true, data: notifications, meta: { unreadCount } } satisfies ApiResponse<Notification[]>);

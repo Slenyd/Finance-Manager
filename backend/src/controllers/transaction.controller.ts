@@ -7,13 +7,22 @@ const transactionService = new TransactionService();
 
 export class TransactionController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=15');
     const result = await transactionService.findAll(req.user.id, req.query as unknown as TransactionQuery);
     res.json({ success: true, data: result.data, meta: result.meta } satisfies ApiResponse);
   });
 
   findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=30');
     const transaction = await transactionService.findById(req.user.id, req.params.id);
     res.json({ success: true, data: transaction } satisfies ApiResponse);
+  });
+
+  getSummary = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=30');
+    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
+    const summary = await transactionService.getSummary(req.user.id, startDate, endDate);
+    res.json({ success: true, data: summary } satisfies ApiResponse<TransactionSummary>);
   });
 
   create = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
@@ -34,11 +43,5 @@ export class TransactionController {
   bulkDelete = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
     await transactionService.bulkDelete(req.user.id, req.body.ids);
     res.json({ success: true, data: null, message: 'Transactions deleted' } satisfies ApiResponse<null>);
-  });
-
-  getSummary = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
-    const { startDate, endDate } = req.query as { startDate?: string; endDate?: string };
-    const summary = await transactionService.getSummary(req.user.id, startDate, endDate);
-    res.json({ success: true, data: summary } satisfies ApiResponse<TransactionSummary>);
   });
 }

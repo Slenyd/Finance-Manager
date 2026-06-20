@@ -7,11 +7,13 @@ const goalService = new GoalService();
 
 export class GoalController {
   findAll = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=30');
     const goals = await goalService.findAll(req.user.id);
     res.json({ success: true, data: goals } satisfies ApiResponse<SavingsGoalWithProgress[]>);
   });
 
   findById = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    res.set('Cache-Control', 'private, max-age=30');
     const goal = await goalService.findById(req.user.id, req.params.id);
     res.json({ success: true, data: goal } satisfies ApiResponse<SavingsGoalWithProgress>);
   });
