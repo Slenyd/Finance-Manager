@@ -1,4 +1,4 @@
-# Coin Toss
+# Coin Toss!
 
 A full-stack personal finance and budgeting web app. Track your income, expenses, budgets, and savings goals in one place.
 
