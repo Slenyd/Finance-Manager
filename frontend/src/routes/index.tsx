@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from '@/components/layouts/protected-route';
 import { AppLayout } from '@/components/layouts/app-layout';
 import { AuthLayout } from '@/components/layouts/auth-layout';
 
@@ -30,15 +31,20 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'transactions', element: <TransactionsPage /> },
-      { path: 'budgets', element: <BudgetsPage /> },
-      { path: 'goals', element: <GoalsPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'notifications', element: <NotificationsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      {
+        element: <AppLayout />,
+        children: [
+          { path: 'dashboard', element: <DashboardPage /> },
+          { path: 'transactions', element: <TransactionsPage /> },
+          { path: 'budgets', element: <BudgetsPage /> },
+          { path: 'goals', element: <GoalsPage /> },
+          { path: 'analytics', element: <AnalyticsPage /> },
+          { path: 'notifications', element: <NotificationsPage /> },
+          { path: 'settings', element: <SettingsPage /> },
+        ],
+      },
     ],
   },
   {

@@ -28,22 +28,22 @@ export class BudgetService {
 
     if (budgets.length === 0) return { data: [], meta };
 
-    const spentResults = await prisma.$transaction(
-      budgets.map(b =>
-        prisma.transaction.aggregate({
-          where: {
-            userId,
-            categoryId: b.categoryId!,
-            type: 'EXPENSE',
-            date: { gte: b.startDate, lte: b.endDate },
-          },
-          _sum: { amount: true },
-        })
-      ),
-    );
+    const spentResults = await prisma.$queryRaw<{ budgetId: string; spent: Prisma.Decimal }[]>`
+      SELECT b.id as "budgetId", COALESCE(SUM(t.amount), 0::decimal) as spent
+      FROM "budgets" b
+      LEFT JOIN "transactions" t ON t.category_id = b.category_id
+        AND t.user_id = b.user_id
+        AND t.type = 'EXPENSE'
+        AND t.date >= b.start_date
+        AND t.date <= b.end_date
+      WHERE b.user_id = ${userId}
+      GROUP BY b.id
+    `;
 
-    const data = budgets.map((budget, i) => {
-      const spent = Number(spentResults[i]._sum.amount) || 0;
+    const spentMap = new Map(spentResults.map(r => [r.budgetId, Number(r.spent) || 0]));
+
+    const data = budgets.map((budget) => {
+      const spent = spentMap.get(budget.id) || 0;
       return { ...budget, spent, percentage: Number(budget.limit) > 0 ? (spent / Number(budget.limit)) * 100 : 0 };
     });
 

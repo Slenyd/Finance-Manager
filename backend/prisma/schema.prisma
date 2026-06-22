@@ -97,6 +97,7 @@ model Transaction {
   @@index([userId, type])
   @@index([userId, categoryId])
   @@index([userId, date, type])
+  @@index([userId, categoryId, type, date])
   @@map("transactions")
 }
 
@@ -115,6 +116,7 @@ model Category {
 
   @@unique([userId, name, type])
   @@index([userId])
+  @@index([userId, type])
   @@map("categories")
 }
 
@@ -135,6 +137,7 @@ model Budget {
   @@unique([userId, categoryId, period])
   @@index([userId])
   @@index([categoryId])
+  @@index([userId, categoryId, period])
   @@map("budgets")
 }
 
@@ -191,8 +194,7 @@ model Notification {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  @@index([userId])
-  @@index([isRead])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 

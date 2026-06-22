@@ -79,11 +79,21 @@ export class AnalyticsService {
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
 
-    const rows = await prisma.transaction.findMany({
-      where: { userId, date: { gte: startDate } },
-      select: { amount: true, type: true, date: true },
-    });
+    const rows = await prisma.$queryRaw<{ month: string; income: Prisma.Decimal; expenses: Prisma.Decimal }[]>(
+      Prisma.sql`
+        SELECT
+          to_char(date, 'YYYY-MM') as month,
+          SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) as income,
+          SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) as expenses
+        FROM "transactions"
+        WHERE "user_id" = ${userId}
+          AND date >= ${startDate}
+        GROUP BY to_char(date, 'YYYY-MM')
+        ORDER BY month ASC
+      `,
+    );
 
+    // Build the result with all months (including zero-spending months)
     const monthlyMap = new Map<string, { income: number; expenses: number }>();
     for (let i = months - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -91,12 +101,13 @@ export class AnalyticsService {
       monthlyMap.set(label, { income: 0, expenses: 0 });
     }
 
-    for (const t of rows) {
-      const label = t.date.toLocaleString('default', { month: 'short', year: '2-digit' });
+    for (const row of rows) {
+      const d = new Date(row.month + '-01');
+      const label = d.toLocaleString('default', { month: 'short', year: '2-digit' });
       const entry = monthlyMap.get(label);
       if (entry) {
-        if (t.type === 'INCOME') entry.income += Number(t.amount);
-        else entry.expenses += Number(t.amount);
+        entry.income = Number(row.income) || 0;
+        entry.expenses = Number(row.expenses) || 0;
       }
     }
 
@@ -104,40 +115,39 @@ export class AnalyticsService {
   }
 
   async getCategoryBreakdown(userId: string, startDate?: string, endDate?: string): Promise<CategoryBreakdownData[]> {
-    const dateFilter: Prisma.DateTimeFilter = {};
-    if (startDate) dateFilter.gte = new Date(startDate);
-    if (endDate) dateFilter.lte = new Date(endDate);
+    const dateParts: Prisma.Sql[] = [];
+    if (startDate) dateParts.push(Prisma.sql`t.date >= ${new Date(startDate)}`);
+    if (endDate) dateParts.push(Prisma.sql`t.date <= ${new Date(endDate)}`);
+    const dateClause = dateParts.length > 0
+      ? Prisma.sql`AND ${Prisma.join(dateParts, ' AND ')}`
+      : Prisma.empty;
 
-    const expenses = await prisma.transaction.groupBy({
-      by: ['categoryId'],
-      where: {
-        userId,
-        type: 'EXPENSE',
-        ...(Object.keys(dateFilter).length && { date: dateFilter }),
-      },
-      _sum: { amount: true },
-      _count: true,
-    });
+    const results = await prisma.$queryRaw<CategoryBreakdownData[]>(
+      Prisma.sql`
+        SELECT
+          c.id as "categoryId",
+          c.name as "categoryName",
+          c.color as "categoryColor",
+          c.icon as "categoryIcon",
+          COALESCE(SUM(t.amount), 0::decimal) as total,
+          COUNT(t.id)::int as count
+        FROM "categories" c
+        LEFT JOIN "transactions" t ON t.category_id = c.id
+          AND t.user_id = ${userId}
+          AND t.type = 'EXPENSE'
+          ${dateClause}
+        WHERE c.user_id = ${userId}
+        GROUP BY c.id, c.name, c.color, c.icon
+        HAVING COUNT(t.id) > 0
+        ORDER BY total DESC
+      `,
+    );
 
-    const categoryIds = expenses.map((e) => e.categoryId).filter(Boolean) as string[];
-    const categories = await prisma.category.findMany({
-      where: { id: { in: categoryIds } },
-    });
-    const categoryMap = new Map(categories.map((c) => [c.id, c]));
-
-    return expenses
-      .map((e) => {
-        const cat = e.categoryId ? categoryMap.get(e.categoryId) : undefined;
-        return {
-          categoryId: e.categoryId,
-          categoryName: cat?.name || 'Unknown',
-          categoryColor: cat?.color || '#6366f1',
-          categoryIcon: cat?.icon || 'circle',
-          total: Number(e._sum.amount) || 0,
-          count: e._count,
-        };
-      })
-      .sort((a, b) => b.total - a.total);
+    return results.map((r) => ({
+      ...r,
+      total: Number(r.total) || 0,
+      count: Number(r.count) || 0,
+    }));
   }
 
   async getCashFlow(userId: string, months = 12): Promise<MonthlySpendingData[]> {

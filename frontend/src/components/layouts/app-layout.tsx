@@ -1,115 +1,26 @@
-import { useEffect, useCallback, Suspense, useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { LoadingPage } from '@/components/ui/spinner';
-import {
-  LayoutDashboard, ArrowLeftRight, PiggyBank, Target, BarChart3, Bell, Settings, LogOut, Moon, Sun, MoreHorizontal, X,
-} from 'lucide-react';
+import { useEffect, Suspense, useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/auth';
 import { useThemeStore } from '@/store/theme';
-import { useLogout } from '@/hooks/useAuth';
-import { cn } from '@/lib/utils';
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { href: '/budgets', label: 'Budgets', icon: PiggyBank },
-  { href: '/goals', label: 'Goals', icon: Target },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
-
-const bottomNav = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { href: '/budgets', label: 'Budgets', icon: PiggyBank },
-  { href: '/goals', label: 'Goals', icon: Target },
-];
-
-const moreNav = [
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
+import { LoadingPage } from '@/components/ui/spinner';
+import { Sidebar } from './sidebar';
+import { MobileBottomNav } from './mobile-bottom-nav';
+import { MoreDrawer } from './more-drawer';
 
 export function AppLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuthStore();
   const { isDark, toggle } = useThemeStore();
-  const logoutMutation = useLogout();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
+  // Close drawer on route change
   useEffect(() => {
     setMoreOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = useCallback(() => {
-    logoutMutation.mutate();
-    navigate('/login');
-  }, [logoutMutation, navigate]);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const isMoreActive = moreNav.some(item =>
-    location.pathname === item.href || location.pathname.startsWith(item.href + '/')
-  );
-
   return (
     <div className="flex h-screen overflow-hidden">
-      <aside className="w-64 border-r bg-card hidden md:flex flex-col animate-slide-down">
-        <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-gradient">Coin Toss</h1>
-        </div>
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item, i) => {
-            const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 animate-fade-in',
-                  isActive
-                    ? 'bg-primary/10 text-primary shadow-sm nav-link-active'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                )}
-                style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
-              >
-                <item.icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary')} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="p-4 border-t space-y-3">
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-sm font-medium shadow-sm">
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate text-sm">{user?.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-accent" onClick={toggle} aria-label="Toggle dark mode">
-            {isDark ? <Sun className="h-5 w-5 mr-2" /> : <Moon className="h-5 w-5 mr-2" />}
-            {isDark ? 'Light Mode' : 'Dark Mode'}
-          </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleLogout} aria-label="Logout">
-            <LogOut className="h-5 w-5 mr-2" /> Logout
-          </Button>
-        </div>
-      </aside>
+      <Sidebar />
       <main className="flex-1 overflow-y-auto bg-background pb-16 md:pb-0 overscroll-y-contain">
         <div className="md:hidden flex items-center justify-between p-4 border-b bg-card/80 backdrop-blur-md sticky top-0 z-40 safe-area-top">
           <h1 className="text-lg font-bold text-gradient">Coin Toss</h1>
@@ -123,90 +34,8 @@ export function AppLayout() {
           </Suspense>
         </div>
       </main>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-md md:hidden flex items-center justify-around safe-area-bottom shadow-lg">
-        {bottomNav.map((item) => {
-          const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                'flex flex-col items-center gap-0.5 py-2 px-2 min-w-0 flex-1 text-[10px] font-medium transition-all duration-200',
-                isActive ? 'text-primary' : 'text-muted-foreground active:text-foreground',
-              )}
-            >
-              <item.icon className={cn('h-5 w-5 transition-transform duration-200', isActive && 'scale-110')} />
-              <span className={cn('truncate', isActive && 'font-semibold')}>{item.label}</span>
-              {isActive && <span className="absolute -top-px h-0.5 w-8 rounded-full bg-primary" />}
-            </Link>
-          );
-        })}
-        <button
-          onClick={() => setMoreOpen(true)}
-          className={cn(
-            'flex flex-col items-center gap-0.5 py-2 px-2 min-w-0 flex-1 text-[10px] font-medium transition-all duration-200',
-            isMoreActive ? 'text-primary' : 'text-muted-foreground active:text-foreground',
-          )}
-          aria-label="More navigation"
-        >
-          <MoreHorizontal className={cn('h-5 w-5 transition-transform duration-200', moreOpen && 'scale-110')} />
-          <span className={cn('truncate', isMoreActive && 'font-semibold')}>More</span>
-          {isMoreActive && <span className="absolute -top-px h-0.5 w-8 rounded-full bg-primary" />}
-        </button>
-      </nav>
-
-      {moreOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex items-end" onClick={() => setMoreOpen(false)}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" />
-          <div
-            className="relative w-full bg-card rounded-t-2xl p-4 pb-8 safe-area-bottom shadow-2xl animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">More</h2>
-              <Button variant="ghost" size="icon" onClick={() => setMoreOpen(false)} aria-label="Close menu">
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="w-10 h-1 rounded-full bg-muted mx-auto mb-4" />
-            <div className="space-y-1">
-              {moreNav.map((item) => {
-                const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 active:scale-[0.98]',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground active:bg-accent',
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-              <div className="border-t my-2" />
-              <button
-                onClick={toggle}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-muted-foreground transition-all duration-200 active:scale-[0.98] active:bg-accent w-full"
-              >
-                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                {isDark ? 'Light Mode' : 'Dark Mode'}
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-destructive transition-all duration-200 active:scale-[0.98] active:bg-destructive/10 w-full"
-              >
-                <LogOut className="h-5 w-5" />
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MobileBottomNav moreOpen={moreOpen} setMoreOpen={setMoreOpen} />
+      <MoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
     </div>
   );
 }
