@@ -226,10 +226,7 @@ for (const item of featureList) {
   ensureSpace(20);
   const name = item[0], desc = item[1];
   const lineY = doc.y;
-  const nameW = 125;
-  const descX = MARGIN + nameW + 10;
-  const descW = CONTENT_WIDTH - nameW - 10;
-  const lh = doc.currentLineHeight();
+  const nameW = 125, descX = MARGIN + nameW + 10, descW = CONTENT_WIDTH - nameW - 10;
 
   doc.fontSize(11).fillColor(BROWN).font('Helvetica-Bold');
   const nameLines = doc.heightOfString(name, { width: nameW, align: 'left' });
