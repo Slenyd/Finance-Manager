@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthenticatedRequest } from '../interfaces';
 
 interface CacheEntry {
   data: unknown;
@@ -15,7 +16,7 @@ export function cacheMiddleware(ttlSeconds: number) {
 
     // Skip caching for authenticated endpoints with different users
     // Use the full URL + user ID as cache key
-    const userId = (req as any).user?.id || 'anonymous';
+    const userId = (req as AuthenticatedRequest).user?.id || 'anonymous';
     const cacheKey = `${req.originalUrl}:${userId}`;
 
     const cached = cache.get(cacheKey);

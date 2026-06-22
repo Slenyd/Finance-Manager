@@ -14,7 +14,7 @@ vi.mock('@/hooks/useAuth', () => ({
 }));
 
 vi.mock('@/store/auth', () => ({
-  useAuthStore: (selector?: (state: any) => any) => {
+  useAuthStore: (selector?: (state: Record<string, unknown>) => unknown) => {
     const state = { isAuthenticated: false, user: null };
     return selector ? selector(state) : state;
   },
