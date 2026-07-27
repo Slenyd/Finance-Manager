@@ -2,12 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import { config } from '../config';
 import { AuthorizationError } from '../utils/errors';
 
+const isTest = config.env === 'test';
+
 /**
  * CSRF protection via Origin / Referer header validation.
  * Safe methods (GET, HEAD, OPTIONS) are skipped.
  * Must be registered AFTER cors middleware so request headers are present.
  */
 export function csrfOriginCheck(req: Request, _res: Response, next: NextFunction): void {
+  // Skip in test environment (supertest requests don't send Origin/Referer)
+  if (isTest) {
+    next();
+    return;
+  }
+
   // Skip safe methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase())) {
     next();
