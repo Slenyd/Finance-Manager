@@ -12,19 +12,19 @@ function applyDarkClass(isDark: boolean) {
 
 export const useThemeStore = create<ThemeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isDark: false,
-      toggle: () =>
-        set((state) => {
-          const newDark = !state.isDark;
-          applyDarkClass(newDark);
-          return { isDark: newDark };
-        }),
+      toggle: () => {
+        const newDark = !get().isDark;
+        set({ isDark: newDark });
+        applyDarkClass(newDark);
+      },
     }),
     {
       name: 'theme-storage',
+      partialize: (state) => ({ isDark: state.isDark }),
       onRehydrateStorage: () => (state) => {
-        if (state) applyDarkClass(state.isDark);
+        applyDarkClass(state?.isDark ?? false);
       },
     },
   ),
