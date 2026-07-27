@@ -11,11 +11,19 @@ function deobfuscate(obfuscated: string): string | null {
   }
 }
 
-export function encryptData(data: string): string {
+/**
+ * This is NOT cryptographic encryption. It is reversible obfuscation for storage only.
+ * Do not store sensitive data with this.
+ */
+export function obfuscateData(data: string): string {
   return 'v2:' + obfuscate(data);
 }
 
-export function decryptData(encrypted: string): string | null {
+/**
+ * This is NOT cryptographic encryption. It is reversible obfuscation for storage only.
+ * Do not store sensitive data with this.
+ */
+export function deobfuscateData(encrypted: string): string | null {
   try {
     const prefix = encrypted.substring(0, 3);
     const body = encrypted.substring(3);

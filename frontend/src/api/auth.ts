@@ -3,11 +3,11 @@ import { ApiResponse, User } from '@/types';
 
 export const authApi = {
   login: (data: { email: string; password: string; rememberMe?: boolean }) =>
-    api.post<ApiResponse<{ accessToken: string; refreshToken: string; user: User }>>('/auth/login', data),
+    api.post<ApiResponse<{ accessToken: string; user: User }>>('/auth/login', data),
   register: (data: { name: string; email: string; password: string; passwordConfirmation: string }) =>
     api.post<ApiResponse<{ user: User }>>('/auth/register', data),
   logout: () => api.post<ApiResponse<null>>('/auth/logout'),
-  refresh: () => api.post<ApiResponse<{ accessToken: string; refreshToken: string }>>('/auth/refresh'),
+  refresh: () => api.post<ApiResponse<{ accessToken: string }>>('/auth/refresh'),
   getProfile: () => api.get<ApiResponse<User>>('/auth/me'),
   updateProfile: (data: { name?: string; email?: string }) =>
     api.patch<ApiResponse<{ user: User }>>('/auth/profile', data),

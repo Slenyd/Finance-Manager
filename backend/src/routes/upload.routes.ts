@@ -21,6 +21,7 @@ const upload = multer({
 
 router.use(authenticate);
 
+router.get('/receipt', controller.getReceipt);
 router.post('/receipt', upload.single('file'), controller.uploadReceipt);
 router.post('/receipt/delete', controller.deleteReceipt);
 

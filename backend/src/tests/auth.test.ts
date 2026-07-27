@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from '../app';
-import { cleanupUser, uniqueEmail } from './helpers';
+import { cleanupUser, uniqueEmail, extractCookie } from './helpers';
 import { prisma } from '../config/database';
 
 jest.mock('../utils/mailer', () => ({
@@ -78,9 +78,9 @@ describe('Auth API', () => {
       .send({ email, password: 'TestPass123' });
     expect(res.status).toBe(200);
     expect(res.body.data.accessToken).toBeDefined();
-    expect(res.body.data.refreshToken).toBeDefined();
     accessToken = res.body.data.accessToken;
-    refreshToken = res.body.data.refreshToken;
+    expect(res.headers['set-cookie']).toBeDefined();
+    refreshToken = extractCookie(res.headers['set-cookie'], 'refreshToken');
   });
 
   it('should reject invalid password', async () => {
@@ -117,7 +117,8 @@ describe('Auth API', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.accessToken).toBeDefined();
     accessToken = res.body.data.accessToken;
-    refreshToken = res.body.data.refreshToken;
+    expect(res.headers['set-cookie']).toBeDefined();
+    refreshToken = extractCookie(res.headers['set-cookie'], 'refreshToken');
   });
 
   it('should reject invalid refresh token', async () => {

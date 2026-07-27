@@ -57,18 +57,17 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post<ApiResponse<{ accessToken: string; refreshToken: string }>>(
+        const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(
           `${API_BASE}/auth/refresh`,
           {},
           { withCredentials: true },
         );
         const newToken = data.data!.accessToken;
-        const newRefreshToken = data.data!.refreshToken;
         const store = useAuthStore.getState();
         if (!store.user) {
           throw new Error('User not found during token refresh');
         }
-        store.login(store.user, newToken, newRefreshToken, store.rememberMe);
+        store.login(store.user, newToken, store.rememberMe);
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);

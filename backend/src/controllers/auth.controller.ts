@@ -18,13 +18,15 @@ export class AuthController {
     res.set('Cache-Control', 'no-store');
     const result = await authService.login(req.body);
     const cookieDays = req.body.rememberMe ? 30 : 1;
-    res.cookie('refreshToken', result.refreshToken, {
+    // refreshToken is in result for cookie but not exposed in response body
+    const refreshToken = (result as unknown as { refreshToken: string }).refreshToken;
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: cookieDays * 24 * 60 * 60 * 1000,
     });
-    res.json({ success: true, data: result, message: 'Login successful' } satisfies ApiResponse);
+    res.json({ success: true, data: { accessToken: result.accessToken, user: result.user, rememberMe: result.rememberMe }, message: 'Login successful' } satisfies ApiResponse);
   });
 
   refresh = asyncHandler(async (req: Request, res: Response) => {
@@ -34,16 +36,17 @@ export class AuthController {
       throw new BadRequestError('No refresh token');
     }
     const result = await authService.refresh(token);
-    // Fix 4: Cookie maxAge should match the refresh token's actual expiry, not a fixed 7d
-    const decoded = jwt.decode(result.refreshToken) as { exp?: number } | null;
+    // refreshToken is in result for cookie but not exposed in response body
+    const refreshToken = (result as unknown as { refreshToken: string }).refreshToken;
+    const decoded = jwt.decode(refreshToken) as { exp?: number } | null;
     const maxAge = decoded?.exp ? (decoded.exp * 1000) - Date.now() : 24 * 60 * 60 * 1000;
-    res.cookie('refreshToken', result.refreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge,
     });
-    res.json({ success: true, data: result } satisfies ApiResponse);
+    res.json({ success: true, data: { accessToken: result.accessToken } } satisfies ApiResponse);
   });
 
   logout = asyncHandler(async (req: Request, res: Response) => {

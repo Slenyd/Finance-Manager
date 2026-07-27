@@ -43,5 +43,21 @@ export const config = {
     from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@cointoss.app',
   },
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
-  cronSecret: process.env.CRON_SECRET || '',
+  cronSecret: (() => {
+    const val = process.env.CRON_SECRET || '';
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction && !val) {
+      throw new Error('Missing required environment variable: CRON_SECRET');
+    }
+    if (val && val.length < 32) {
+      if (isProduction) {
+        throw new Error('CRON_SECRET must be at least 32 characters long in production');
+      }
+      console.warn('[config] WARNING: CRON_SECRET is less than 32 characters — this is insecure for production');
+    }
+    if (!val && !isProduction) {
+      console.warn('[config] WARNING: CRON_SECRET is empty — cron endpoints are disabled');
+    }
+    return val;
+  })(),
 } as const;

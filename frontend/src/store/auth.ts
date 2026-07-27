@@ -1,15 +1,14 @@
 import { create } from 'zustand';
 import { User } from '@/types';
-import { encryptData, decryptData } from '@/lib/crypto';
+import { obfuscateData, deobfuscateData } from '@/lib/crypto';
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   rememberMe: boolean;
   setUser: (user: User) => void;
-  login: (user: User, accessToken: string, refreshToken: string, rememberMe?: boolean) => void;
+  login: (user: User, accessToken: string, rememberMe?: boolean) => void;
   logout: () => void;
 }
 
@@ -35,7 +34,7 @@ function clearStorage() {
 
 function saveToStorage(state: PersistedState) {
   const storage = getStorage(state.rememberMe);
-  storage.setItem(STORAGE_KEY, encryptData(JSON.stringify(state)));
+  storage.setItem(STORAGE_KEY, obfuscateData(JSON.stringify(state)));
   const other = state.rememberMe ? sessionStorage : localStorage;
   other.removeItem(STORAGE_KEY);
 }
@@ -52,7 +51,7 @@ function loadFromStorage(): PersistedState {
       const raw = storage.getItem(STORAGE_KEY);
       if (!raw) continue;
 
-      const decrypted = decryptData(raw);
+      const decrypted = deobfuscateData(raw);
       if (!decrypted) continue;
 
       const state = JSON.parse(decrypted);
@@ -75,20 +74,19 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   // Tokens are always null on page load — fetched via httpOnly cookie refresh
   ...loadFromStorage(),
   accessToken: null,
-  refreshToken: null,
 
   setUser: (user) => {
     set({ user });
     saveToStorage({ ...get(), user });
   },
 
-  login: (user, accessToken, refreshToken, rememberMe = false) => {
-    set({ user, accessToken, refreshToken, isAuthenticated: true, rememberMe });
+  login: (user, accessToken, rememberMe = false) => {
+    set({ user, accessToken, isAuthenticated: true, rememberMe });
     saveToStorage({ user, isAuthenticated: true, rememberMe });
   },
 
   logout: () => {
     clearStorage();
-    set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, rememberMe: false });
+    set({ user: null, accessToken: null, isAuthenticated: false, rememberMe: false });
   },
 }));

@@ -7,6 +7,7 @@ import { config } from './config';
 import { errorHandler } from './middlewares/errorHandler';
 import { requestLogger } from './middlewares/logging';
 import { generalLimiter } from './middlewares/rateLimiter';
+import { csrfOriginCheck } from './middlewares/csrf';
 import authRoutes from './routes/auth.routes';
 import transactionRoutes from './routes/transaction.routes';
 import categoryRoutes from './routes/category.routes';
@@ -42,6 +43,7 @@ app.get('/api/v1/health', (_req, res) => {
 
 app.use(requestLogger);
 app.use(generalLimiter);
+app.use(csrfOriginCheck);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/transactions', transactionRoutes);

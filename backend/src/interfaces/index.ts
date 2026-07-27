@@ -268,14 +268,12 @@ export interface UpdatePreferencesData {
 
 export interface AuthResult {
   accessToken: string;
-  refreshToken: string;
   user: Pick<SafeUser, 'id' | 'name' | 'email' | 'role' | 'isVerified' | 'currency' | 'locale'>;
   rememberMe: boolean;
 }
 
 export interface RefreshResult {
   accessToken: string;
-  refreshToken: string;
 }
 
 // ---------------------------------------------------------------------------

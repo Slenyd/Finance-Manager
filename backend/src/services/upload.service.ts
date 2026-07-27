@@ -1,6 +1,6 @@
-import { put, del, head } from '@vercel/blob';
+import { put, del, head, get } from '@vercel/blob';
 import { prisma } from '../config/database';
-import { ApiError, ValidationError } from '../utils/errors';
+import { ApiError, ValidationError, NotFoundError } from '../utils/errors';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
@@ -50,7 +50,7 @@ export class UploadService {
     const key = `receipts/${userId}/${Date.now()}-${safeName}`;
 
     const blob = await put(key, file.buffer, {
-      access: 'public',
+      access: 'private',
       contentType: file.mimetype,
     });
 
@@ -77,5 +77,33 @@ export class UploadService {
     });
 
     await del(url);
+  }
+
+  async getReceiptStream(userId: string, url: string): Promise<{ stream: ReadableStream<Uint8Array>; contentType: string; size: number }> {
+    if (!isBlobConfigured()) {
+      throw new ApiError(503, 'File uploads are not configured on this server', 'SERVICE_UNAVAILABLE');
+    }
+    validateBlobUrl(url);
+
+    try {
+      const blob = await head(url);
+      if (!blob.pathname.startsWith(`/receipts/${userId}/`)) {
+        throw new ApiError(403, 'You do not have permission to access this file', 'FORBIDDEN');
+      }
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      throw new NotFoundError('Receipt');
+    }
+
+    const result = await get(url, { access: 'private' });
+    if (!result) {
+      throw new NotFoundError('Receipt');
+    }
+
+    return {
+      stream: result.stream!,
+      contentType: result.blob.contentType!,
+      size: result.blob.size!,
+    };
   }
 }

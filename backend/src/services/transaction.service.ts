@@ -1,6 +1,6 @@
 import { Prisma, TransactionType } from '@prisma/client';
 import { prisma } from '../config/database';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { parsePagination } from '../utils/helpers';
 import { resolveCategoryId } from '../utils/category.helpers';
 import {
@@ -89,6 +89,13 @@ export class TransactionService {
 
   async update(userId: string, id: string, data: UpdateTransactionData): Promise<Prisma.TransactionGetPayload<{ include: { category: { select: { id: true; name: true; icon: true; color: true } } } }>> {
     await this.findById(userId, id);
+
+    if (data.categoryId !== undefined && data.categoryId !== null) {
+      const cat = await prisma.category.findFirst({
+        where: { id: data.categoryId, OR: [{ userId }, { userId: null }] },
+      });
+      if (!cat) throw new ValidationError({ categoryId: ['Category not found'] });
+    }
 
     const updateData: Prisma.TransactionUpdateInput = {};
     if (data.amount !== undefined) updateData.amount = data.amount;

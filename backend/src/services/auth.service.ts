@@ -106,7 +106,8 @@ export class AuthService {
       },
     });
 
-    return {
+    // refreshToken returned for cookie — controller destructures it before sending body
+    const loginResult = {
       accessToken,
       refreshToken,
       user: {
@@ -120,6 +121,7 @@ export class AuthService {
       },
       rememberMe: data.rememberMe ?? false,
     };
+    return loginResult;
   }
 
   async refresh(token: string): Promise<RefreshResult> {
@@ -179,7 +181,8 @@ export class AuthService {
       },
     });
 
-    return { accessToken, refreshToken };
+    const refreshResult = { accessToken, refreshToken };
+    return refreshResult;
   }
 
   async logout(token: string): Promise<void> {

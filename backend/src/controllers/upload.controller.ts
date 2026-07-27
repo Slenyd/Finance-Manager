@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Readable } from 'node:stream';
 import { UploadService } from '../services/upload.service';
 import { AuthorizedRequest, ApiResponse } from '../interfaces';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -29,5 +30,20 @@ export class UploadController {
 
     await uploadService.deleteReceipt(req.user.id, url);
     res.json({ success: true, data: null, message: 'File deleted' } satisfies ApiResponse<null>);
+  });
+
+  getReceipt = asyncHandler(async (req: AuthorizedRequest, res: Response) => {
+    const url = req.query.url as string | undefined;
+    if (!url) {
+      throw new BadRequestError('No URL provided');
+    }
+
+    const { stream, contentType, size } = await uploadService.getReceiptStream(req.user.id, url);
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', size.toString());
+    res.setHeader('Content-Disposition', 'inline');
+
+    Readable.fromWeb(stream).pipe(res);
   });
 }

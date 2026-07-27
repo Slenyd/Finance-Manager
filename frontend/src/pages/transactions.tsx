@@ -59,7 +59,7 @@ const TransactionRowBase = ({ tx, index, onEdit, onDelete, formatCurrency, forma
     <TableCell>
       <div className="flex gap-1">
         {tx.receiptUrl && (
-          <a href={tx.receiptUrl} target="_blank" rel="noopener noreferrer" aria-label="View receipt">
+          <a href={`/api/v1/uploads/receipt?url=${encodeURIComponent(tx.receiptUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="View receipt">
             <Button variant="ghost" size="icon" type="button">
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -89,7 +89,7 @@ const TransactionMobileCardBase = ({ tx, index, onEdit, onDelete, formatCurrency
       <span className="mobile-table-value">{tx.description}</span>
       <div className="flex gap-1 shrink-0">
         {tx.receiptUrl && (
-          <a href={tx.receiptUrl} target="_blank" rel="noopener noreferrer" aria-label="View receipt">
+          <a href={`/api/v1/uploads/receipt?url=${encodeURIComponent(tx.receiptUrl)}`} target="_blank" rel="noopener noreferrer" aria-label="View receipt">
             <Button variant="ghost" size="icon" type="button">
               <Paperclip className="h-4 w-4" />
             </Button>

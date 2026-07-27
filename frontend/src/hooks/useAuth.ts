@@ -10,8 +10,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (res, variables) => {
-      const { user, accessToken, refreshToken } = res.data.data!;
-      login(user, accessToken, refreshToken, variables.rememberMe ?? false);
+      const { user, accessToken } = res.data.data!;
+      login(user, accessToken, variables.rememberMe ?? false);
       navigate('/dashboard', { replace: true });
     },
   });

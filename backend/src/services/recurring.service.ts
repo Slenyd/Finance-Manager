@@ -1,6 +1,6 @@
 import { prisma } from '../config/database';
 import { Prisma, RecurringInterval } from '@prisma/client';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError, ValidationError } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { CreateRecurringData, UpdateRecurringData } from '../interfaces';
 
@@ -30,6 +30,11 @@ export class RecurringService {
     const startDate = data.startDate ? new Date(data.startDate) : new Date();
     const nextDate = this.calculateNextDateFromStart(data.interval, startDate, data.dayOfMonth);
 
+    const cat = await prisma.category.findFirst({
+      where: { id: data.categoryId, OR: [{ userId }, { userId: null }] },
+    });
+    if (!cat) throw new ValidationError({ categoryId: ['Category not found'] });
+
     return prisma.recurringTransaction.create({
       data: {
         userId,
@@ -50,6 +55,13 @@ export class RecurringService {
 
   async update(userId: string, id: string, data: UpdateRecurringData): Promise<RecurringWithCategory> {
     await this.findById(userId, id);
+
+    if (data.categoryId !== undefined) {
+      const cat = await prisma.category.findFirst({
+        where: { id: data.categoryId, OR: [{ userId }, { userId: null }] },
+      });
+      if (!cat) throw new ValidationError({ categoryId: ['Category not found'] });
+    }
 
     const updateData: Prisma.RecurringTransactionUpdateInput = {};
     if (data.categoryId !== undefined) updateData.category = { connect: { id: data.categoryId } };

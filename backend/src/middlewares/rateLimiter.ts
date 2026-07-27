@@ -33,3 +33,18 @@ export const authLimiter = rateLimit({
   validate: { xForwardedForHeader: false },
   store: new UpstashRateLimitStore(config.rateLimit.authWindowMs),
 });
+
+export const cronLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  skip: () => isTest,
+  message: {
+    success: false,
+    message: 'Too many cron requests, please try again later',
+    code: 'CRON_RATE_LIMIT_EXCEEDED',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  store: new UpstashRateLimitStore(60 * 60 * 1000),
+});

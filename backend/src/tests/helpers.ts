@@ -8,6 +8,14 @@ export function uniqueEmail(): string {
   return `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 }
 
+export function extractCookie(cookies: string | string[] | undefined, name: string): string {
+  if (!cookies) throw new Error(`Cookie ${name} not found (no Set-Cookie header)`);
+  const arr = Array.isArray(cookies) ? cookies : [cookies];
+  const match = arr.find(c => c.startsWith(`${name}=`));
+  if (!match) throw new Error(`Cookie ${name} not found in Set-Cookie headers`);
+  return match.split(';')[0].split('=')[1];
+}
+
 export async function registerTestUser(email?: string) {
   const e = email || uniqueEmail();
   await request(app)
@@ -25,7 +33,7 @@ export async function registerTestUser(email?: string) {
     userId: loginRes.body.data.user.id,
     email: e,
     accessToken: loginRes.body.data.accessToken,
-    refreshToken: loginRes.body.data.refreshToken,
+    refreshToken: extractCookie(loginRes.headers['set-cookie'], 'refreshToken'),
   };
 }
 
