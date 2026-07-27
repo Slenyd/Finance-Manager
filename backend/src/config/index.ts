@@ -49,18 +49,13 @@ export const config = {
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   cronSecret: (() => {
     const val = process.env.CRON_SECRET || '';
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction && !val) {
-      throw new Error('Missing required environment variable: CRON_SECRET');
-    }
-    if (val && val.length < 32) {
-      if (isProduction) {
-        throw new Error('CRON_SECRET must be at least 32 characters long in production');
-      }
-      console.warn('[config] WARNING: CRON_SECRET is less than 32 characters — this is insecure for production');
-    }
-    if (!val && !isProduction) {
+    // Warn but never throw: crashing at config load takes down the entire
+    // server. The cron controller returns 503 when the secret is empty, which
+    // is the correct "endpoint disabled" behavior.
+    if (!val) {
       console.warn('[config] WARNING: CRON_SECRET is empty — cron endpoints are disabled');
+    } else if (val.length < 32) {
+      console.warn('[config] WARNING: CRON_SECRET is less than 32 characters — this is insecure for production');
     }
     return val;
   })(),
