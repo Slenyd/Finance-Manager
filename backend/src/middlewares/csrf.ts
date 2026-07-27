@@ -31,6 +31,16 @@ export function csrfOriginCheck(req: Request, _res: Response, next: NextFunction
     ? config.cors.origin
     : [config.cors.origin];
 
+  // Only enforce the Origin allowlist when CORS_ORIGIN was explicitly
+  // configured by the operator. When unset, the allowlist falls back to
+  // localhost dev defaults which won't match production deployments, so
+  // enforcing it would block legitimate same-origin requests. CSRF is still
+  // mitigated by sameSite=strict cookies + Bearer-token auth.
+  if (!config.cors.isExplicitlyConfigured) {
+    next();
+    return;
+  }
+
   if (allowedOrigins.length === 0) {
     // No origins configured — let it through (trust proxy / same-origin only)
     next();

@@ -28,6 +28,10 @@ export const config = {
     origin: process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
       : ['http://localhost:5173', 'http://localhost:4173'],
+    // True only when CORS_ORIGIN was explicitly provided. The CSRF Origin
+    // check relies on this allowlist being correct for the deployment, so it
+    // is only enforced when the operator explicitly configured it.
+    isExplicitlyConfigured: !!process.env.CORS_ORIGIN,
   },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
